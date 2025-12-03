@@ -41,14 +41,21 @@ public class AuthMutation
         [Service] AppDbContext db,
         UserLoginInput input)
     {
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
+        try
         {
-            throw new GraphQLException(new Error("Invalid email or password", "INVALID_LOGIN"));
-        }
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
+            {
+                throw new GraphQLException(new Error("Invalid email or password", "INVALID_LOGIN"));
+            }
 
-        var token = GenerateJwt(user);
-        return new AuthPayload(user.Id, user.Name, user.Email, token);
+            var token = GenerateJwt(user);
+            return new AuthPayload(user.Id, user.Name, user.Email, token);
+        }
+        catch (Exception ex)
+        {
+            throw new GraphQLException(ex.ToString());
+        }
     }
 
     private static string GenerateJwt(User user)

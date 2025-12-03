@@ -5,35 +5,34 @@
 namespace NAME_WIP_BACKEND.Migrations
 {
     /// <inheritdoc />
-    public partial class AuthMigration : Migration
+    public partial class AddedPostFields : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "Email",
-                table: "Users",
+                name: "Description",
+                table: "Posts",
                 type: "text",
                 nullable: false,
                 defaultValue: "");
 
             migrationBuilder.AddColumn<string>(
-                name: "Nickname",
-                table: "Users",
+                name: "ImageUrl",
+                table: "Posts",
                 type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "Public",
+                table: "Posts",
+                type: "boolean",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: false);
 
             migrationBuilder.AddColumn<string>(
-                name: "Password",
-                table: "Users",
-                type: "text",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Surname",
-                table: "Users",
+                name: "Title",
+                table: "Posts",
                 type: "text",
                 nullable: false,
                 defaultValue: "");
@@ -43,20 +42,20 @@ namespace NAME_WIP_BACKEND.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Email",
-                table: "Users");
+                name: "Description",
+                table: "Posts");
 
             migrationBuilder.DropColumn(
-                name: "Nickname",
-                table: "Users");
+                name: "ImageUrl",
+                table: "Posts");
 
             migrationBuilder.DropColumn(
-                name: "Password",
-                table: "Users");
+                name: "Public",
+                table: "Posts");
 
             migrationBuilder.DropColumn(
-                name: "Surname",
-                table: "Users");
+                name: "Title",
+                table: "Posts");
         }
     }
 }

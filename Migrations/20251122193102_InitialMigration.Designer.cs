@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NAME_WIP_BACKEND.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NAME_WIP_BACKEND.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251122193102_InitialMigration")]
+    partial class InitialMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,35 +176,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("FriendRequests");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Friendship", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("FriendId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsAccepted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FriendId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Friendships");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Group", b =>
                 {
                     b.Property<int>("Id")
@@ -297,22 +271,8 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("GroupId")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Public")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -324,55 +284,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsPublic")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("LikeCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ViewCount")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("OwnerId");
-
-                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.ReadBy", b =>
@@ -510,28 +421,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserGroups");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("JoinedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("UserId", "ProjectId");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("UserProjects");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserRole", b =>
                 {
                     b.Property<int>("Id")
@@ -626,37 +515,18 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasOne("NAME_WIP_BACKEND.Models.User", "Requestee")
                         .WithMany()
                         .HasForeignKey("RequesteeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("NAME_WIP_BACKEND.Models.User", "Requester")
                         .WithMany()
                         .HasForeignKey("RequesterId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Requestee");
 
                     b.Navigation("Requester");
-                });
-
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Friendship", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Friend")
-                        .WithMany("ReceivedFriendships")
-                        .HasForeignKey("FriendId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany("InitiatedFriendships")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Friend");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.GroupInvitation", b =>
@@ -710,35 +580,18 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasOne("NAME_WIP_BACKEND.Models.Group", "Group")
                         .WithMany("Posts")
                         .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Group");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Group", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId");
-
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Owner")
-                        .WithMany("OwnedProjects")
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Group");
-
-                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.ReadBy", b =>
@@ -818,25 +671,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
-                        .WithMany("Collaborators")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany("ProjectCollaborations")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
                 {
                     b.Navigation("Entries");
@@ -865,26 +699,13 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Posts");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
-                {
-                    b.Navigation("Collaborators");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
                 {
                     b.Navigation("EntryReactions");
 
-                    b.Navigation("InitiatedFriendships");
-
-                    b.Navigation("OwnedProjects");
-
                     b.Navigation("Posts");
 
-                    b.Navigation("ProjectCollaborations");
-
                     b.Navigation("ReadBys");
-
-                    b.Navigation("ReceivedFriendships");
 
                     b.Navigation("UserChats");
 

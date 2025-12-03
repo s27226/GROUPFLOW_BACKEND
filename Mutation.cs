@@ -1,9 +1,11 @@
-﻿using NAME_WIP_BACKEND.GraphQL.Mutations;
+﻿using NAME_WIP_BACKEND.Controllers;
+using NAME_WIP_BACKEND.GraphQL.Mutations;
 
 namespace NAME_WIP_BACKEND;
 
 public class Mutation
 {
+    public AuthMutation Auth => new();
     public UserMutation User => new();
     public GroupMutation Group => new();
     public ChatMutation Chat => new();

@@ -22,6 +22,9 @@ public class Query
     public UserGroupQuery UserGroup => new();
     public UserRoleQuery UserRole => new();
     public UsersQuery Users => new();
+    public PostQuery Post => new();
+    public ProjectQuery Project => new();
+    public FriendshipQuery Friendship => new();
 
 
 

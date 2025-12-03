@@ -7,73 +7,50 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NAME_WIP_BACKEND.Migrations
 {
     /// <inheritdoc />
-    public partial class AddedAllModels : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_UserGroup_Group_GroupId",
-                table: "UserGroup");
+            migrationBuilder.CreateTable(
+                name: "Emotes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Emotes", x => x.Id);
+                });
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_UserGroup_Users_UserId",
-                table: "UserGroup");
+            migrationBuilder.CreateTable(
+                name: "Groups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Desc = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.Id);
+                });
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_UserGroup",
-                table: "UserGroup");
-
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Group",
-                table: "Group");
-
-            migrationBuilder.RenameTable(
-                name: "UserGroup",
-                newName: "UserGroups");
-
-            migrationBuilder.RenameTable(
-                name: "Group",
-                newName: "Groups");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_UserGroup_UserId",
-                table: "UserGroups",
-                newName: "IX_UserGroups_UserId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_UserGroup_GroupId",
-                table: "UserGroups",
-                newName: "IX_UserGroups_GroupId");
-
-            migrationBuilder.AddColumn<DateTime>(
-                name: "DateOfBirth",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: true);
-
-            migrationBuilder.AddColumn<DateTime>(
-                name: "Joined",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
-
-            migrationBuilder.AddColumn<int>(
-                name: "UserRoleId",
-                table: "Users",
-                type: "integer",
-                nullable: true);
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_UserGroups",
-                table: "UserGroups",
-                column: "Id");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Groups",
-                table: "Groups",
-                column: "Id");
+            migrationBuilder.CreateTable(
+                name: "UserRoles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleName = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserRoles", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "Chats",
@@ -95,16 +72,48 @@ namespace NAME_WIP_BACKEND.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Emotes",
+                name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Surname = table.Column<string>(type: "text", nullable: false),
+                    Nickname = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: false),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Joined = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserRoleId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Emotes", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Users_UserRoles_UserRoleId",
+                        column: x => x.UserRoleId,
+                        principalTable: "UserRoles",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SharedFiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ChatId = table.Column<int>(type: "integer", nullable: false),
+                    Link = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SharedFiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SharedFiles_Chats_ChatId",
+                        column: x => x.ChatId,
+                        principalTable: "Chats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -225,34 +234,29 @@ namespace NAME_WIP_BACKEND.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserRoles",
+                name: "Posts",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleName = table.Column<string>(type: "text", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    GroupId = table.Column<int>(type: "integer", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserRoles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SharedFiles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ChatId = table.Column<int>(type: "integer", nullable: false),
-                    Link = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SharedFiles", x => x.Id);
+                    table.PrimaryKey("PK_Posts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SharedFiles_Chats_ChatId",
-                        column: x => x.ChatId,
-                        principalTable: "Chats",
+                        name: "FK_Posts_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Posts_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -277,6 +281,32 @@ namespace NAME_WIP_BACKEND.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UserChats_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserGroups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    GroupId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserGroups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserGroups_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserGroups_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -371,11 +401,6 @@ namespace NAME_WIP_BACKEND.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_UserRoleId",
-                table: "Users",
-                column: "UserRoleId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Chats_GroupId",
                 table: "Chats",
                 column: "GroupId");
@@ -451,6 +476,16 @@ namespace NAME_WIP_BACKEND.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Posts_GroupId",
+                table: "Posts",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Posts_UserId",
+                table: "Posts",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ReadBys_EntryId",
                 table: "ReadBys",
                 column: "EntryId");
@@ -475,45 +510,25 @@ namespace NAME_WIP_BACKEND.Migrations
                 table: "UserChats",
                 column: "UserId");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_UserGroups_Groups_GroupId",
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroups_GroupId",
                 table: "UserGroups",
-                column: "GroupId",
-                principalTable: "Groups",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                column: "GroupId");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_UserGroups_Users_UserId",
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroups_UserId",
                 table: "UserGroups",
-                column: "UserId",
-                principalTable: "Users",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                column: "UserId");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Users_UserRoles_UserRoleId",
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_UserRoleId",
                 table: "Users",
-                column: "UserRoleId",
-                principalTable: "UserRoles",
-                principalColumn: "Id");
+                column: "UserRoleId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_UserGroups_Groups_GroupId",
-                table: "UserGroups");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_UserGroups_Users_UserId",
-                table: "UserGroups");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Users_UserRoles_UserRoleId",
-                table: "Users");
-
             migrationBuilder.DropTable(
                 name: "EntryReactions");
 
@@ -530,13 +545,16 @@ namespace NAME_WIP_BACKEND.Migrations
                 name: "GroupRecommendations");
 
             migrationBuilder.DropTable(
+                name: "Posts");
+
+            migrationBuilder.DropTable(
                 name: "ReadBys");
 
             migrationBuilder.DropTable(
                 name: "SharedFiles");
 
             migrationBuilder.DropTable(
-                name: "UserRoles");
+                name: "UserGroups");
 
             migrationBuilder.DropTable(
                 name: "Emotes");
@@ -550,73 +568,14 @@ namespace NAME_WIP_BACKEND.Migrations
             migrationBuilder.DropTable(
                 name: "Chats");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Users_UserRoleId",
-                table: "Users");
+            migrationBuilder.DropTable(
+                name: "Users");
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_UserGroups",
-                table: "UserGroups");
+            migrationBuilder.DropTable(
+                name: "Groups");
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Groups",
-                table: "Groups");
-
-            migrationBuilder.DropColumn(
-                name: "DateOfBirth",
-                table: "Users");
-
-            migrationBuilder.DropColumn(
-                name: "Joined",
-                table: "Users");
-
-            migrationBuilder.DropColumn(
-                name: "UserRoleId",
-                table: "Users");
-
-            migrationBuilder.RenameTable(
-                name: "UserGroups",
-                newName: "UserGroup");
-
-            migrationBuilder.RenameTable(
-                name: "Groups",
-                newName: "Group");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_UserGroups_UserId",
-                table: "UserGroup",
-                newName: "IX_UserGroup_UserId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_UserGroups_GroupId",
-                table: "UserGroup",
-                newName: "IX_UserGroup_GroupId");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_UserGroup",
-                table: "UserGroup",
-                column: "Id");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Group",
-                table: "Group",
-                column: "Id");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_UserGroup_Group_GroupId",
-                table: "UserGroup",
-                column: "GroupId",
-                principalTable: "Group",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_UserGroup_Users_UserId",
-                table: "UserGroup",
-                column: "UserId",
-                principalTable: "Users",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+            migrationBuilder.DropTable(
+                name: "UserRoles");
         }
     }
 }
