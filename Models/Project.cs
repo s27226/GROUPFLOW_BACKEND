@@ -15,10 +15,11 @@ namespace NAME_WIP_BACKEND.Models
         // Foreign keys
         public int OwnerId { get; set; }
         public User Owner { get; set; } = null!;
-        public int? GroupId { get; set; }
-        public Group? Group { get; set; }
         
         // Navigation properties
         public ICollection<UserProject> Collaborators { get; set; } = new List<UserProject>();
+        public ICollection<ProjectEvent> Events { get; set; } = new List<ProjectEvent>();
+        public ICollection<Post> Posts { get; set; } = new List<Post>();
+        public Chat? Chat { get; set; }
     }
 }

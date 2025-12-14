@@ -47,7 +47,6 @@ public class UserModelTests
         Assert.Empty(user.Posts);
         Assert.Empty(user.OwnedProjects);
         Assert.Empty(user.ProjectCollaborations);
-        Assert.Empty(user.UserGroups);
         Assert.Empty(user.UserChats);
     }
 }
@@ -66,7 +65,7 @@ public class PostModelTests
             Public = true,
             Title = "Test Title",
             Description = "Test Description",
-            GroupId = 1
+            ProjectId = 1
         };
 
         // Assert
@@ -181,37 +180,15 @@ public class ChatModelTests
         var chat = new Chat
         {
             Id = 1,
-            GroupId = 1
+            ProjectId = 1
         };
 
         // Assert
         Assert.Equal(1, chat.Id);
-        Assert.Equal(1, chat.GroupId);
+        Assert.Equal(1, chat.ProjectId);
         Assert.NotNull(chat.UserChats);
         Assert.NotNull(chat.Entries);
         Assert.NotNull(chat.SharedFiles);
-    }
-}
-
-public class GroupModelTests
-{
-    [Fact]
-    public void Group_ShouldSetPropertiesCorrectly()
-    {
-        // Arrange & Act
-        var group = new Group
-        {
-            Id = 1,
-            Name = "Test Group",
-            Desc = "Test Description"
-        };
-
-        // Assert
-        Assert.Equal(1, group.Id);
-        Assert.Equal("Test Group", group.Name);
-        Assert.Equal("Test Description", group.Desc);
-        Assert.NotNull(group.Members);
-        Assert.NotNull(group.Posts);
     }
 }
 

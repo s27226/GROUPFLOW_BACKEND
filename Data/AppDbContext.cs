@@ -13,10 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
     public DbSet<FriendRecommendation> FriendRecommendations => Set<FriendRecommendation>();
-    public DbSet<Group> Groups => Set<Group>();
-    public DbSet<GroupInvitation> GroupInvitations => Set<GroupInvitation>();
-    public DbSet<GroupRecommendation> GroupRecommendations => Set<GroupRecommendation>();
-    public DbSet<UserGroup> UserGroups => Set<UserGroup>();
+    public DbSet<ProjectInvitation> ProjectInvitations => Set<ProjectInvitation>();
+    public DbSet<ProjectRecommendation> ProjectRecommendations => Set<ProjectRecommendation>();
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<UserChat> UserChats => Set<UserChat>();
     public DbSet<Entry> Entries => Set<Entry>();
@@ -28,6 +26,11 @@ public class AppDbContext : DbContext
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<UserProject> UserProjects => Set<UserProject>();
     public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<ProjectEvent> ProjectEvents => Set<ProjectEvent>();
+    public DbSet<SavedPost> SavedPosts => Set<SavedPost>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserSkill> UserSkills => Set<UserSkill>();
+    public DbSet<UserInterest> UserInterests => Set<UserInterest>();
     
     
 
@@ -87,9 +90,16 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Post>()
-            .HasOne(p => p.Group)
-            .WithMany(g => g.Posts)
-            .HasForeignKey(p => p.GroupId)
+            .HasOne(p => p.Project)
+            .WithMany(proj => proj.Posts)
+            .HasForeignKey(p => p.ProjectId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure self-referencing relationship for shared posts
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.SharedPost)
+            .WithMany()
+            .HasForeignKey(p => p.SharedPostId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure FriendRequest relationships to avoid conflicts
@@ -104,5 +114,35 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(fr => fr.RequesteeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure SavedPost relationships
+        modelBuilder.Entity<SavedPost>()
+            .HasKey(sp => new { sp.UserId, sp.PostId });
+
+        modelBuilder.Entity<SavedPost>()
+            .HasOne(sp => sp.User)
+            .WithMany(u => u.SavedPosts)
+            .HasForeignKey(sp => sp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SavedPost>()
+            .HasOne(sp => sp.Post)
+            .WithMany(p => p.SavedBy)
+            .HasForeignKey(sp => sp.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure UserSkill relationships
+        modelBuilder.Entity<UserSkill>()
+            .HasOne(us => us.User)
+            .WithMany(u => u.Skills)
+            .HasForeignKey(us => us.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure UserInterest relationships
+        modelBuilder.Entity<UserInterest>()
+            .HasOne(ui => ui.User)
+            .WithMany(u => u.Interests)
+            .HasForeignKey(ui => ui.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

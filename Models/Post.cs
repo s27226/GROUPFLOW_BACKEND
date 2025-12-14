@@ -5,10 +5,10 @@ namespace NAME_WIP_BACKEND.Models
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
-        public int GroupId { get; set; }
-        public Group Group { get; set; }
+        public int? ProjectId { get; set; }
+        public Project? Project { get; set; }
 
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
@@ -19,5 +19,11 @@ namespace NAME_WIP_BACKEND.Models
         public bool Public { get; set; } = true;
 
         public DateTime Created { get; set; }
+
+        // Self-referencing relationship for shared posts
+        public int? SharedPostId { get; set; }
+        public Post? SharedPost { get; set; }
+
+        public ICollection<SavedPost> SavedBy { get; set; } = new List<SavedPost>();
     }
 }

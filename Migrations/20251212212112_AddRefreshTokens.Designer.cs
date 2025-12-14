@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NAME_WIP_BACKEND.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NAME_WIP_BACKEND.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251212212112_AddRefreshTokens")]
+    partial class AddRefreshTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -559,31 +562,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserChats");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserInterest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InterestName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserInterests");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
                 {
                     b.Property<int>("UserId")
@@ -621,31 +599,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserRoles");
-                });
-
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserSkill", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("SkillName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserSkills");
                 });
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
@@ -945,17 +898,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserInterest", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany("Interests")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
                 {
                     b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
@@ -971,17 +913,6 @@ namespace NAME_WIP_BACKEND.Migrations
                         .IsRequired();
 
                     b.Navigation("Project");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserSkill", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany("Skills")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1031,8 +962,6 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.Navigation("InitiatedFriendships");
 
-                    b.Navigation("Interests");
-
                     b.Navigation("OwnedProjects");
 
                     b.Navigation("Posts");
@@ -1044,8 +973,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("ReceivedFriendships");
 
                     b.Navigation("SavedPosts");
-
-                    b.Navigation("Skills");
 
                     b.Navigation("UserChats");
                 });

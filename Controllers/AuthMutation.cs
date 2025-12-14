@@ -1,6 +1,7 @@
 ﻿namespace NAME_WIP_BACKEND.Controllers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 using HotChocolate;
@@ -34,7 +35,9 @@ public class AuthMutation
         await db.SaveChangesAsync();
 
         var token = GenerateJwt(user);
-        return new AuthPayload(user.Id, user.Name, user.Email, token);
+        var refreshToken = await GenerateRefreshToken(db, user.Id);
+        
+        return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken);
     }
 
     public async Task<AuthPayload> LoginUser(
@@ -50,12 +53,61 @@ public class AuthMutation
             }
 
             var token = GenerateJwt(user);
-            return new AuthPayload(user.Id, user.Name, user.Email, token);
+            var refreshToken = await GenerateRefreshToken(db, user.Id);
+            
+            return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken);
         }
         catch (Exception ex)
         {
             throw new GraphQLException(ex.ToString());
         }
+    }
+
+    public async Task<AuthPayload> RefreshToken(
+        [Service] AppDbContext db,
+        string refreshToken)
+    {
+        var storedToken = await db.RefreshTokens
+            .Include(rt => rt.User)
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+        if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiryDate < DateTime.UtcNow)
+        {
+            throw new GraphQLException(new Error("Invalid or expired refresh token", "INVALID_REFRESH_TOKEN"));
+        }
+
+        // Revoke the old refresh token
+        storedToken.IsRevoked = true;
+        
+        // Generate new tokens
+        var newAccessToken = GenerateJwt(storedToken.User);
+        var newRefreshToken = await GenerateRefreshToken(db, storedToken.UserId);
+
+        await db.SaveChangesAsync();
+
+        return new AuthPayload(
+            storedToken.User.Id, 
+            storedToken.User.Name, 
+            storedToken.User.Email, 
+            newAccessToken, 
+            newRefreshToken);
+    }
+
+    public async Task<bool> RevokeRefreshToken(
+        [Service] AppDbContext db,
+        string refreshToken)
+    {
+        var storedToken = await db.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+        if (storedToken == null)
+        {
+            return false;
+        }
+
+        storedToken.IsRevoked = true;
+        await db.SaveChangesAsync();
+        return true;
     }
 
     private static string GenerateJwt(User user)
@@ -81,5 +133,27 @@ public class AuthMutation
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static async Task<string> GenerateRefreshToken(AppDbContext db, int userId)
+    {
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        var token = Convert.ToBase64String(randomBytes);
+
+        var refreshToken = new RefreshToken
+        {
+            UserId = userId,
+            Token = token,
+            ExpiryDate = DateTime.UtcNow.AddDays(7), // Refresh token valid for 7 days
+            CreatedAt = DateTime.UtcNow,
+            IsRevoked = false
+        };
+
+        db.RefreshTokens.Add(refreshToken);
+        await db.SaveChangesAsync();
+
+        return token;
     }
 }

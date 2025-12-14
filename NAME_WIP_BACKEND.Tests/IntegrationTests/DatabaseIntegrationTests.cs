@@ -203,26 +203,32 @@ public class DatabaseIntegrationTests
     }
 
     [Fact]
-    public async Task CanCreateGroup()
+    public async Task CanCreateProject()
     {
         // Arrange
         using var context = GetInMemoryDbContext();
-        var group = new Group
+        
+        var user = new User { Name = "Test", Surname = "User", Nickname = "testuser", Email = "test@test.com", Password = "hash" };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        
+        var project = new Project
         {
-            Name = "Test Group",
-            Desc = "A test group"
+            Name = "Test Project",
+            Description = "A test project",
+            OwnerId = user.Id
         };
 
         // Act
-        context.Groups.Add(group);
+        context.Projects.Add(project);
         await context.SaveChangesAsync();
 
-        var retrievedGroup = await context.Groups.FirstOrDefaultAsync(g => g.Name == "Test Group");
+        var retrievedProject = await context.Projects.FirstOrDefaultAsync(p => p.Name == "Test Project");
 
         // Assert
-        Assert.NotNull(retrievedGroup);
-        Assert.Equal("Test Group", retrievedGroup.Name);
-        Assert.Equal("A test group", retrievedGroup.Desc);
+        Assert.NotNull(retrievedProject);
+        Assert.Equal("Test Project", retrievedProject.Name);
+        Assert.Equal("A test project", retrievedProject.Description);
     }
 
     [Fact]

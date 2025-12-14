@@ -23,6 +23,7 @@ builder.Services
     .AddProjections()
     .AddFiltering()
     .AddSorting()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
     .DisableIntrospection(false);
 
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
@@ -55,14 +56,14 @@ builder.Services.AddCors(options =>
 });
 
 using var app = builder.Build();
-//
 
-app.MapGraphQL("/api");
 app.UseCors();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGraphQL("/api");
 app.MapControllers();
-app.UseRouting();
 // app.Run();
 
 //

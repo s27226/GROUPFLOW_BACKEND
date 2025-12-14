@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NAME_WIP_BACKEND.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NAME_WIP_BACKEND.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251208225121_AddSavedPosts")]
+    partial class AddSavedPosts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,7 +33,7 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ProjectId")
+                    b.Property<int>("ProjectId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -231,9 +234,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Property<bool>("Public")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("SharedPostId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
@@ -244,8 +244,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId");
-
-                    b.HasIndex("SharedPostId");
 
                     b.HasIndex("UserId");
 
@@ -418,37 +416,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ReadBys");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.SavedPost", b =>
                 {
                     b.Property<int>("UserId")
@@ -559,31 +526,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserChats");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserInterest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InterestName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserInterests");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
                 {
                     b.Property<int>("UserId")
@@ -623,36 +565,13 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserSkill", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("SkillName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserSkills");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
                 {
                     b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
                         .WithOne("Chat")
-                        .HasForeignKey("NAME_WIP_BACKEND.Models.Chat", "ProjectId");
+                        .HasForeignKey("NAME_WIP_BACKEND.Models.Chat", "ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Project");
                 });
@@ -763,11 +682,6 @@ namespace NAME_WIP_BACKEND.Migrations
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.Post", "SharedPost")
-                        .WithMany()
-                        .HasForeignKey("SharedPostId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
@@ -775,8 +689,6 @@ namespace NAME_WIP_BACKEND.Migrations
                         .IsRequired();
 
                     b.Navigation("Project");
-
-                    b.Navigation("SharedPost");
 
                     b.Navigation("User");
                 });
@@ -876,17 +788,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.RefreshToken", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.SavedPost", b =>
                 {
                     b.HasOne("NAME_WIP_BACKEND.Models.Post", "Post")
@@ -945,17 +846,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserInterest", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany("Interests")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
                 {
                     b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
@@ -971,17 +861,6 @@ namespace NAME_WIP_BACKEND.Migrations
                         .IsRequired();
 
                     b.Navigation("Project");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserSkill", b =>
-                {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
-                        .WithMany("Skills")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1031,8 +910,6 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.Navigation("InitiatedFriendships");
 
-                    b.Navigation("Interests");
-
                     b.Navigation("OwnedProjects");
 
                     b.Navigation("Posts");
@@ -1044,8 +921,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("ReceivedFriendships");
 
                     b.Navigation("SavedPosts");
-
-                    b.Navigation("Skills");
 
                     b.Navigation("UserChats");
                 });
