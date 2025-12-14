@@ -12,17 +12,19 @@ public class Query
     public FriendRecommendationQuery FriendRecommendation => new FriendRecommendationQuery();
     
     public FriendRequestQuery FriendRequest => new();
-    public GroupInvitationQuery GroupInvitation => new();
-    public GroupQuery Group => new();
-    public GroupRecommendationQuery GroupRecommendation => new();
+    public ProjectInvitationQuery ProjectInvitation => new();
+    public ProjectRecommendationQuery ProjectRecommendation => new();
     public ReadByQuery ReadBy => new();
     
     public SharedFileQuery SharedFile => new();
     public UserChatQuery UserChat => new();
-    public UserGroupQuery UserGroup => new();
     public UserRoleQuery UserRole => new();
     public UsersQuery Users => new();
-
+    public PostQuery Post => new();
+    public ProjectQuery Project => new();
+    public FriendshipQuery Friendship => new();
+    public ProjectEventQuery ProjectEvent => new();
+    public SavedPostQuery SavedPost => new();
 
 
 

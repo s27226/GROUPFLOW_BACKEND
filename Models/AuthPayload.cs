@@ -4,5 +4,6 @@ public record AuthPayload(
     int Id,
     string Name,
     string Email,
-    string Token
+    string Token,
+    string RefreshToken
     );

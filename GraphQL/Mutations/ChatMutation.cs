@@ -10,7 +10,7 @@ public class ChatMutation
     {
         var chat = new Chat
         {
-            GroupId = input.GroupId
+            ProjectId = input.ProjectId
         };
 
         context.Chats.Add(chat);
@@ -23,8 +23,8 @@ public class ChatMutation
         var chat = context.Chats.Find(input.Id);
         if (chat == null) return null;
 
-        if (input.NewGroupId.HasValue)
-            chat.GroupId = input.NewGroupId.Value;
+        if (input.NewProjectId.HasValue)
+            chat.ProjectId = input.NewProjectId.Value;
 
         context.SaveChanges();
         return chat;

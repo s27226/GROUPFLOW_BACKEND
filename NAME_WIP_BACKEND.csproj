@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="NAME_WIP_BACKEND.Tests/**" />
+    <Content Remove="NAME_WIP_BACKEND.Tests/**" />
+    <EmbeddedResource Remove="NAME_WIP_BACKEND.Tests/**" />
+    <None Remove="NAME_WIP_BACKEND.Tests/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="15.1.10" />
@@ -23,7 +30,6 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
 	<PackageReference Include="HotChocolate.AspNetCore" Version="15.1.10" />
   <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.10" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
   <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
   </ItemGroup>
 
