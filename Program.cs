@@ -19,12 +19,16 @@ builder.Services
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddTypeExtension<AuthMutation>()
+    .AddAuthorization()
     .AddProjections()
     .AddFiltering()
-    .AddSorting();
+    .AddSorting()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
+    .DisableIntrospection(false);
 
-
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -41,14 +45,25 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 using var app = builder.Build();
-//
 
-
+app.UseCors();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGraphQL("/api");
 app.MapControllers();
-app.UseRouting();
 // app.Run();
 
 //
@@ -64,7 +79,7 @@ foreach (var user in db.Users)
 {
     Console.WriteLine($"{user.Id}: {user.Name}, {user.Surname}, {user.Nickname}, {user.Email}, {user.Password}");
 }
-app.MapGraphQL("/");
+
 
 
 app.Run();
