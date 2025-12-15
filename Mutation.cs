@@ -5,7 +5,7 @@ namespace NAME_WIP_BACKEND;
 public class Mutation
 {
     public UserMutation User => new();
-    public GroupMutation Group => new();
+    public ProjectMutation Project => new();
     public ChatMutation Chat => new();
     public EntryMutation Entry => new();
     public EmoteMutation Emote => new();
