@@ -7,6 +7,14 @@ public record ProjectInput(
     bool IsPublic
 );
 
+public record CreateProjectWithMembersInput(
+    string Name,
+    string Description,
+    string? ImageUrl,
+    bool IsPublic,
+    int[] MemberUserIds
+);
+
 public record UpdateProjectInput(
     int Id,
     string? Name,
