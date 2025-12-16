@@ -25,6 +25,7 @@ public class Query
     public FriendshipQuery Friendship => new();
     public ProjectEventQuery ProjectEvent => new();
     public SavedPostQuery SavedPost => new();
+    public UserTagQuery UserTag => new();
 
 
 
