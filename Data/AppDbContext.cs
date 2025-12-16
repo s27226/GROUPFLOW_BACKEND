@@ -31,6 +31,9 @@ public class AppDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserSkill> UserSkills => Set<UserSkill>();
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
+    public DbSet<PostLike> PostLikes => Set<PostLike>();
+    public DbSet<PostComment> PostComments => Set<PostComment>();
+    public DbSet<PostCommentLike> PostCommentLikes => Set<PostCommentLike>();
     
     
 
@@ -143,6 +146,52 @@ public class AppDbContext : DbContext
             .HasOne(ui => ui.User)
             .WithMany(u => u.Interests)
             .HasForeignKey(ui => ui.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure PostComment self-referencing relationship for replies
+        modelBuilder.Entity<PostComment>()
+            .HasOne(pc => pc.ParentComment)
+            .WithMany(pc => pc.Replies)
+            .HasForeignKey(pc => pc.ParentCommentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure PostComment relationships
+        modelBuilder.Entity<PostComment>()
+            .HasOne(pc => pc.User)
+            .WithMany()
+            .HasForeignKey(pc => pc.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PostComment>()
+            .HasOne(pc => pc.Post)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(pc => pc.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure PostLike relationships
+        modelBuilder.Entity<PostLike>()
+            .HasOne(pl => pl.User)
+            .WithMany()
+            .HasForeignKey(pl => pl.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PostLike>()
+            .HasOne(pl => pl.Post)
+            .WithMany(p => p.Likes)
+            .HasForeignKey(pl => pl.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure PostCommentLike relationships
+        modelBuilder.Entity<PostCommentLike>()
+            .HasOne(pcl => pcl.User)
+            .WithMany()
+            .HasForeignKey(pcl => pcl.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PostCommentLike>()
+            .HasOne(pcl => pcl.PostComment)
+            .WithMany(pc => pc.Likes)
+            .HasForeignKey(pcl => pcl.PostCommentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

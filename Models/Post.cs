@@ -25,5 +25,9 @@ namespace NAME_WIP_BACKEND.Models
         public Post? SharedPost { get; set; }
 
         public ICollection<SavedPost> SavedBy { get; set; } = new List<SavedPost>();
+        public ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
+        
+        [GraphQLIgnore]
+        public ICollection<PostComment> Comments { get; set; } = new List<PostComment>();
     }
 }

@@ -24,4 +24,5 @@ public class Mutation
     public ProjectEventMutation ProjectEvent => new();
     public SavedPostMutation SavedPost => new();
     public UserTagMutation UserTag => new();
+    public PostMutation Post => new();
 }
