@@ -559,6 +559,216 @@ public class DataInitializer
                 }
             }
 
+            // === USER SKILLS ===
+            if (!db.UserSkills.Any())
+            {
+                Console.WriteLine("Seeding UserSkills...");
+                var users = db.Users.ToList();
+
+                var skills = new List<UserSkill>
+                {
+                    new() { UserId = users.First(u => u.Nickname == "janek").Id, SkillName = "C#" },
+                    new() { UserId = users.First(u => u.Nickname == "janek").Id, SkillName = "ASP.NET Core" },
+
+                    new() { UserId = users.First(u => u.Nickname == "ania").Id, SkillName = "React" },
+                    new() { UserId = users.First(u => u.Nickname == "ania").Id, SkillName = "UI/UX" },
+
+                    new() { UserId = users.First(u => u.Nickname == "kamil").Id, SkillName = "PostgreSQL" },
+                    new() { UserId = users.First(u => u.Nickname == "kamil").Id, SkillName = "DevOps" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Alice").Id, SkillName = "PostgreSQL" },
+                    new() { UserId = users.First(u => u.Nickname == "Alice").Id, SkillName = "UI/UX" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Bob").Id, SkillName = "ASP.NET Core" },
+                    new() { UserId = users.First(u => u.Nickname == "Bob").Id, SkillName = "DevOps" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Charlie").Id, SkillName = "PostgreSQL" },
+                    new() { UserId = users.First(u => u.Nickname == "Charlie").Id, SkillName = "DevOps" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Eve").Id, SkillName = "MySQL" },
+                    new() { UserId = users.First(u => u.Nickname == "Eve").Id, SkillName = "C#" }
+                };
+
+                db.UserSkills.AddRange(skills);
+                db.SaveChanges();
+            }
+            
+            // === USER INTERESTS ===
+            if (!db.UserInterests.Any())
+            {
+                Console.WriteLine("Seeding UserInterests...");
+                var users = db.Users.ToList();
+
+                var interests = new List<UserInterest>
+                {
+                    new() { UserId = users.First(u => u.Nickname == "janek").Id, InterestName = "Project Management" },
+                    new() { UserId = users.First(u => u.Nickname == "janek").Id, InterestName = "Startups" },
+
+                    new() { UserId = users.First(u => u.Nickname == "ania").Id, InterestName = "Frontend Development" },
+                    new() { UserId = users.First(u => u.Nickname == "ania").Id, InterestName = "Design Systems" },
+
+                    new() { UserId = users.First(u => u.Nickname == "kamil").Id, InterestName = "Data Analytics" },
+                    new() { UserId = users.First(u => u.Nickname == "kamil").Id, InterestName = "Machine Learning" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Alice").Id, InterestName = "Machine Learning" },
+                    new() { UserId = users.First(u => u.Nickname == "Alice").Id, InterestName = "Project Management" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Bob").Id, InterestName = "Machine Learning" },
+                    new() { UserId = users.First(u => u.Nickname == "Bob").Id, InterestName = "Reading" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Charlie").Id, InterestName = "Machine Learning" },
+                    new() { UserId = users.First(u => u.Nickname == "Charlie").Id, InterestName = "Design Systems" },
+                    
+                    new() { UserId = users.First(u => u.Nickname == "Eve").Id, InterestName = "Reading" },
+                    new() { UserId = users.First(u => u.Nickname == "Eve").Id, InterestName = "Data Analytics" }
+                };
+
+                db.UserInterests.AddRange(interests);
+                db.SaveChanges();
+            }
+            
+            // === POST LIKES ===
+            if (!db.PostLikes.Any())
+            {
+                Console.WriteLine("Seeding PostLikes...");
+                var users = db.Users.ToList();
+                var posts = db.Posts.ToList();
+
+                if (posts.Any())
+                {
+                    var likes = new List<PostLike>
+                    {
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "janek").Id,
+                            PostId = posts[0].Id,
+                            CreatedAt = DateTime.UtcNow.AddHours(-3)
+                        },
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "ania").Id,
+                            PostId = posts[0].Id,
+                            CreatedAt = DateTime.UtcNow.AddHours(-2)
+                        },
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "kamil").Id,
+                            PostId = posts[1].Id,
+                            CreatedAt = DateTime.UtcNow.AddHours(-1)
+                        },
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "ania").Id,
+                            PostId = posts[1].Id,
+                            CreatedAt = DateTime.UtcNow.AddHours(-1)
+                        }
+                        ,
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "kamil").Id,
+                            PostId = posts[2].Id,
+                            CreatedAt = DateTime.UtcNow.AddHours(-1)
+                        }
+                    };
+
+                    db.PostLikes.AddRange(likes);
+                    db.SaveChanges();
+                }
+            }
+            
+            // === POST COMMENTS ===
+            if (!db.PostComments.Any())
+            {
+                Console.WriteLine("Seeding PostComments...");
+                var users = db.Users.ToList();
+                var posts = db.Posts.ToList();
+
+                if (posts.Any())
+                {
+                    var comment1 = new PostComment
+                    {
+                        UserId = users.First(u => u.Nickname == "ania").Id,
+                        PostId = posts[0].Id,
+                        Content = "Super post! 🔥",
+                        CreatedAt = DateTime.UtcNow.AddHours(-4)
+                    };
+
+                    var comment2 = new PostComment
+                    {
+                        UserId = users.First(u => u.Nickname == "kamil").Id,
+                        PostId = posts[0].Id,
+                        Content = "Zgadzam się, bardzo przydatne",
+                        CreatedAt = DateTime.UtcNow.AddHours(-3)
+                    };
+
+                    db.PostComments.AddRange(comment1, comment2);
+                    db.SaveChanges();
+
+                    // Reply
+                    var reply = new PostComment
+                    {
+                        UserId = users.First(u => u.Nickname == "janek").Id,
+                        PostId = posts[0].Id,
+                        Content = "Dzięki! 💪",
+                        ParentCommentId = comment1.Id,
+                        CreatedAt = DateTime.UtcNow.AddHours(-2)
+                    };
+
+                    db.PostComments.Add(reply);
+                    db.SaveChanges();
+                }
+            }
+            
+            // === POST COMMENT LIKES ===
+            if (!db.PostCommentLikes.Any())
+            {
+                Console.WriteLine("Seeding PostCommentLikes...");
+                var users = db.Users.ToList();
+                var comments = db.PostComments.ToList();
+
+                if (comments.Any())
+                {
+                    var likes = new List<PostCommentLike>
+                    {
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "janek").Id,
+                            PostCommentId = comments[0].Id,
+                            CreatedAt = DateTime.UtcNow.AddHours(-1)
+                        },
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "ania").Id,
+                            PostCommentId = comments[1].Id,
+                            CreatedAt = DateTime.UtcNow.AddMinutes(-30)
+                        }
+                        ,
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "kamil").Id,
+                            PostCommentId = comments[1].Id,
+                            CreatedAt = DateTime.UtcNow.AddMinutes(-30)
+                        },
+                        new()
+                        {
+                            UserId = users.First(u => u.Nickname == "ania").Id,
+                            PostCommentId = comments[2].Id,
+                            CreatedAt = DateTime.UtcNow.AddMinutes(-30)
+                        }
+                    };
+
+                    db.PostCommentLikes.AddRange(likes);
+                    db.SaveChanges();
+                }
+            }
+            
+            
+            
+            
+            
+            
+            
+            
 
         }
 }
