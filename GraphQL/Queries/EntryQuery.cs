@@ -13,9 +13,9 @@ public class EntryQuery
     [UseSorting]
     public IQueryable<Entry> GetEntries(AppDbContext context) => context.Entries;
     
-    [GraphQLName("entrybyid")]
-    [UseProjection]
-    public Entry? GetEntryById(AppDbContext context, int id) => context.Entries.FirstOrDefault(g => g.Id == id);
+    // [GraphQLName("entrybyid")]
+    // [UseProjection]
+    // public Entry? GetEntryById(AppDbContext context, int id) => context.Entries.FirstOrDefault(g => g.Id == id);
     
     /// <summary>
     /// Get all messages for a specific chat, ordered by sent time.
