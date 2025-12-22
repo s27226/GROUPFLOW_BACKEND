@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
 
@@ -16,7 +17,9 @@ public class PostQuery
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
-        return context.Posts.Where(p => p.Public || p.UserId == userId);
+        return context.Posts
+            .Include(p => p.Likes)
+            .Where(p => p.Public || p.UserId == userId);
     }
 
     [GraphQLName("allpostsbyid")]
@@ -28,6 +31,22 @@ public class PostQuery
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
-        return context.Posts.FirstOrDefault(p => (p.Public || p.UserId == userId) && p.Id == id);
+        return context.Posts
+            .Include(p => p.Likes)
+            .FirstOrDefault(p => (p.Public || p.UserId == userId) && p.Id == id);
+    }
+
+    [GraphQLName("isPostLikedByUser")]
+    public async Task<bool> IsPostLikedByUser(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int postId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+        
+        return await context.PostLikes
+            .AnyAsync(pl => pl.PostId == postId && pl.UserId == userId);
     }
 }
+

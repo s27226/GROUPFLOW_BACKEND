@@ -5,6 +5,7 @@ using HotChocolate;
 using HotChocolate.AspNetCore;
 using NAME_WIP_BACKEND;
 using NAME_WIP_BACKEND.Controllers;
+using NAME_WIP_BACKEND.GraphQL.Types;
 
 
 DotNetEnv.Env.Load();
@@ -19,6 +20,7 @@ builder.Services
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddTypeExtension<AuthMutation>()
+    .AddTypeExtension<PostTypeExtensions>()
     .AddAuthorization()
     .AddProjections()
     .AddFiltering()

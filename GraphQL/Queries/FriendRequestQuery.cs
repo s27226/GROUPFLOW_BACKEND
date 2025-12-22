@@ -28,7 +28,4 @@ public class FriendRequestQuery
             .Where(fr => fr.RequesteeId == userId);
     }
 
-    [GraphQLName("friendrequestbyid")]
-    [UseProjection]
-    public FriendRequest? GetFriendRequestById(AppDbContext context, int id) => context.FriendRequests.FirstOrDefault(g => g.Id == id);
 }
