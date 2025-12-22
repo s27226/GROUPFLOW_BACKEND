@@ -34,6 +34,7 @@ public class AppDbContext : DbContext
     public DbSet<PostLike> PostLikes => Set<PostLike>();
     public DbSet<PostComment> PostComments => Set<PostComment>();
     public DbSet<PostCommentLike> PostCommentLikes => Set<PostCommentLike>();
+    public DbSet<Notification> Notifications => Set<Notification>();
     
     
 
@@ -192,6 +193,25 @@ public class AppDbContext : DbContext
             .HasOne(pcl => pcl.PostComment)
             .WithMany(pc => pc.Likes)
             .HasForeignKey(pcl => pcl.PostCommentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Notification relationships
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.ActorUser)
+            .WithMany()
+            .HasForeignKey(n => n.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Post)
+            .WithMany()
+            .HasForeignKey(n => n.PostId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

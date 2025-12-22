@@ -23,6 +23,7 @@ public class Query
     public ProjectEventQuery ProjectEvent => new();
     public SavedPostQuery SavedPost => new();
     public UserTagQuery UserTag => new();
+    public NotificationQuery Notification => new();
 
 
 

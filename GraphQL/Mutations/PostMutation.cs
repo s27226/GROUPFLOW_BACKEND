@@ -17,7 +17,10 @@ public class PostMutation
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
 
         // Check if post exists
-        var post = await context.Posts.FindAsync(postId);
+        var post = await context.Posts
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == postId);
+        
         if (post == null)
         {
             throw new GraphQLException("Post not found");
@@ -40,6 +43,24 @@ public class PostMutation
         };
 
         context.PostLikes.Add(postLike);
+
+        // Create notification for the post owner (but not if they liked their own post)
+        if (post.UserId != userId)
+        {
+            var liker = await context.Users.FindAsync(userId);
+            var notification = new Notification
+            {
+                UserId = post.UserId,
+                Type = "POST_LIKE",
+                Message = $"{liker?.Nickname ?? liker?.Name} liked your post",
+                ActorUserId = userId,
+                PostId = postId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Notifications.Add(notification);
+        }
+
         await context.SaveChangesAsync();
 
         return postLike;
