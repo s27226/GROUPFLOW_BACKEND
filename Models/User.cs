@@ -8,6 +8,7 @@ public class User
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;
     public string? ProfilePic { get; set; }
+    public string? BannerPic { get; set; }
     public DateTime? DateOfBirth { get; set; }
     public DateTime Joined { get; set; } = DateTime.UtcNow;
 

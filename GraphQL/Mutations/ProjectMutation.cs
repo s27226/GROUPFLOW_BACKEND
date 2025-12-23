@@ -290,4 +290,69 @@ public class ProjectMutation
         
         return true;
     }
+
+    public bool RemoveProjectMember(
+        AppDbContext context,
+        IHttpContextAccessor httpContextAccessor,
+        int projectId,
+        int userId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (userIdClaim == null)
+        {
+            throw new GraphQLException("User not authenticated");
+        }
+        
+        int currentUserId = int.Parse(userIdClaim);
+
+        var project = context.Projects
+            .Include(p => p.Collaborators)
+            .Include(p => p.Chat)
+            .FirstOrDefault(p => p.Id == projectId);
+        
+        if (project == null)
+        {
+            throw new GraphQLException("Project not found");
+        }
+
+        // Check if current user is the owner
+        if (project.OwnerId != currentUserId)
+        {
+            throw new GraphQLException("You don't have permission to remove members from this project");
+        }
+
+        // Prevent owner from removing themselves
+        if (userId == project.OwnerId)
+        {
+            throw new GraphQLException("Cannot remove the project owner");
+        }
+
+        // Find the collaborator
+        var collaborator = project.Collaborators.FirstOrDefault(c => c.UserId == userId);
+        if (collaborator == null)
+        {
+            throw new GraphQLException("User is not a member of this project");
+        }
+
+        // Remove the collaborator from the project
+        context.UserProjects.Remove(collaborator);
+
+        // Remove the user from the project chat
+        if (project.Chat != null)
+        {
+            var userChat = context.UserChats.FirstOrDefault(uc => 
+                uc.UserId == userId && uc.ChatId == project.Chat.Id);
+            
+            if (userChat != null)
+            {
+                context.UserChats.Remove(userChat);
+            }
+        }
+
+        context.SaveChanges();
+        
+        return true;
+    }
 }

@@ -71,8 +71,9 @@ public class ProjectQuery
         [Service] AppDbContext context,
         int userId)
     {
+        // Return all projects the user is part of (either as owner or as member)
         return context.Projects.Where(p => 
-            p.OwnerId == userId && p.IsPublic);
+            p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)));
     }
 
     [GraphQLName("projectposts")]
