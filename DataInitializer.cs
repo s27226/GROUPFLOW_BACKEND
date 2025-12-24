@@ -96,8 +96,6 @@ public class DataInitializer
                         OwnerId = 1, // Jan
                         ImageUrl = "https://picsum.photos/600/400?random=1",
                         IsPublic = true,
-                        ViewCount = 125,
-                        LikeCount = 23,
                         Created = DateTime.UtcNow.AddDays(-15),
                         LastUpdated = DateTime.UtcNow.AddDays(-2)
                     },
@@ -108,8 +106,6 @@ public class DataInitializer
                         OwnerId = 2, // Anna
                         ImageUrl = "https://picsum.photos/600/400?random=2",
                         IsPublic = true,
-                        ViewCount = 89,
-                        LikeCount = 34,
                         Created = DateTime.UtcNow.AddDays(-10),
                         LastUpdated = DateTime.UtcNow.AddDays(-1)
                     },
@@ -120,8 +116,6 @@ public class DataInitializer
                         OwnerId = 3, // Kamil
                         ImageUrl = "https://picsum.photos/600/400?random=3",
                         IsPublic = true,
-                        ViewCount = 256,
-                        LikeCount = 67,
                         Created = DateTime.UtcNow.AddDays(-8),
                         LastUpdated = DateTime.UtcNow.AddHours(-6)
                     },
@@ -132,8 +126,6 @@ public class DataInitializer
                         OwnerId = 1, // Jan
                         ImageUrl = "https://picsum.photos/600/400?random=4",
                         IsPublic = false, // Private project
-                        ViewCount = 12,
-                        LikeCount = 3,
                         Created = DateTime.UtcNow.AddDays(-5),
                         LastUpdated = DateTime.UtcNow.AddHours(-12)
                     },
@@ -144,8 +136,6 @@ public class DataInitializer
                         OwnerId = 2, // Anna
                         ImageUrl = "https://picsum.photos/600/400?random=5",
                         IsPublic = true,
-                        ViewCount = 342,
-                        LikeCount = 89,
                         Created = DateTime.UtcNow.AddDays(-20),
                         LastUpdated = DateTime.UtcNow.AddHours(-3)
                     },
@@ -156,8 +146,6 @@ public class DataInitializer
                         OwnerId = 3, // Kamil
                         ImageUrl = "https://picsum.photos/600/400?random=6",
                         IsPublic = true,
-                        ViewCount = 178,
-                        LikeCount = 45,
                         Created = DateTime.UtcNow.AddDays(-12),
                         LastUpdated = DateTime.UtcNow.AddDays(-1)
                     }

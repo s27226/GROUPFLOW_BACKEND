@@ -31,9 +31,7 @@ public class ProjectMutation
             IsPublic = input.IsPublic,
             OwnerId = userId,
             Created = DateTime.UtcNow,
-            LastUpdated = DateTime.UtcNow,
-            ViewCount = 0,
-            LikeCount = 0
+            LastUpdated = DateTime.UtcNow
         };
 
         context.Projects.Add(project);
@@ -143,9 +141,7 @@ public class ProjectMutation
             IsPublic = input.IsPublic,
             OwnerId = userId,
             Created = DateTime.UtcNow,
-            LastUpdated = DateTime.UtcNow,
-            ViewCount = 0,
-            LikeCount = 0
+            LastUpdated = DateTime.UtcNow
         };
 
         context.Projects.Add(project);
@@ -353,6 +349,131 @@ public class ProjectMutation
 
         context.SaveChanges();
         
+        return true;
+    }
+
+    [GraphQLName("likeproject")]
+    public async Task<bool> LikeProject(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int projectId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            throw new GraphQLException("User not authenticated");
+        }
+        int userId = int.Parse(userIdClaim);
+
+        // Check if project exists
+        var project = await context.Projects.FindAsync(projectId);
+        if (project == null)
+        {
+            throw new GraphQLException("Project not found");
+        }
+
+        // Check if already liked
+        var existingLike = await context.ProjectLikes
+            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId);
+
+        if (existingLike != null)
+        {
+            return false; // Already liked
+        }
+
+        // Create new like
+        var like = new ProjectLike
+        {
+            ProjectId = projectId,
+            UserId = userId,
+            Created = DateTime.UtcNow
+        };
+
+        context.ProjectLikes.Add(like);
+
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    [GraphQLName("unlikeproject")]
+    public async Task<bool> UnlikeProject(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int projectId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            throw new GraphQLException("User not authenticated");
+        }
+        int userId = int.Parse(userIdClaim);
+
+        // Find the like
+        var like = await context.ProjectLikes
+            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId);
+
+        if (like == null)
+        {
+            return false; // Not liked
+        }
+
+        context.ProjectLikes.Remove(like);
+
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    [GraphQLName("recordprojectview")]
+    public async Task<bool> RecordProjectView(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int projectId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            throw new GraphQLException("User not authenticated");
+        }
+        int userId = int.Parse(userIdClaim);
+
+        // Check if project exists
+        var project = await context.Projects.FindAsync(projectId);
+        if (project == null)
+        {
+            throw new GraphQLException("Project not found");
+        }
+
+        var today = DateTime.UtcNow.Date;
+
+        // Check if user already viewed today
+        var existingView = await context.ProjectViews
+            .FirstOrDefaultAsync(pv => pv.ProjectId == projectId && 
+                                      pv.UserId == userId && 
+                                      pv.ViewDate == today);
+
+        if (existingView != null)
+        {
+            return false; // Already viewed today
+        }
+
+        // Create new view record
+        var view = new ProjectView
+        {
+            ProjectId = projectId,
+            UserId = userId,
+            ViewDate = today,
+            Created = DateTime.UtcNow
+        };
+
+        context.ProjectViews.Add(view);
+
+        await context.SaveChangesAsync();
+
         return true;
     }
 }

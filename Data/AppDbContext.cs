@@ -35,6 +35,8 @@ public class AppDbContext : DbContext
     public DbSet<PostComment> PostComments => Set<PostComment>();
     public DbSet<PostCommentLike> PostCommentLikes => Set<PostCommentLike>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<ProjectLike> ProjectLikes => Set<ProjectLike>();
+    public DbSet<ProjectView> ProjectViews => Set<ProjectView>();
     
     
 
@@ -213,5 +215,41 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.PostId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure ProjectLike relationships
+        modelBuilder.Entity<ProjectLike>()
+            .HasOne(pl => pl.User)
+            .WithMany()
+            .HasForeignKey(pl => pl.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProjectLike>()
+            .HasOne(pl => pl.Project)
+            .WithMany(p => p.Likes)
+            .HasForeignKey(pl => pl.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure unique constraint: one like per user per project
+        modelBuilder.Entity<ProjectLike>()
+            .HasIndex(pl => new { pl.UserId, pl.ProjectId })
+            .IsUnique();
+
+        // Configure ProjectView relationships
+        modelBuilder.Entity<ProjectView>()
+            .HasOne(pv => pv.User)
+            .WithMany()
+            .HasForeignKey(pv => pv.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProjectView>()
+            .HasOne(pv => pv.Project)
+            .WithMany(p => p.Views)
+            .HasForeignKey(pv => pv.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure unique constraint: one view per user per project per day
+        modelBuilder.Entity<ProjectView>()
+            .HasIndex(pv => new { pv.UserId, pv.ProjectId, pv.ViewDate })
+            .IsUnique();
     }
 }

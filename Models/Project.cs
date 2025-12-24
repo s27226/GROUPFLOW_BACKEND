@@ -9,8 +9,6 @@ namespace NAME_WIP_BACKEND.Models
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
         public bool IsPublic { get; set; } = true;
-        public int ViewCount { get; set; } = 0;
-        public int LikeCount { get; set; } = 0;
         
         // Foreign keys
         public int OwnerId { get; set; }
@@ -20,6 +18,8 @@ namespace NAME_WIP_BACKEND.Models
         public ICollection<UserProject> Collaborators { get; set; } = new List<UserProject>();
         public ICollection<ProjectEvent> Events { get; set; } = new List<ProjectEvent>();
         public ICollection<Post> Posts { get; set; } = new List<Post>();
+        public ICollection<ProjectLike> Likes { get; set; } = new List<ProjectLike>();
+        public ICollection<ProjectView> Views { get; set; } = new List<ProjectView>();
         public Chat? Chat { get; set; }
     }
 }
