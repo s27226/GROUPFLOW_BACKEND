@@ -142,16 +142,30 @@ public class ProjectQuery
     [UseSorting]
     public IQueryable<Post> GetProjectPosts(
         [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
         int projectId)
     {
-        var project = context.Projects.FirstOrDefault(p => p.Id == projectId);
+        var currentUser = httpContextAccessor.HttpContext?.User;
+        var userIdClaim = currentUser?.FindFirstValue(ClaimTypes.NameIdentifier);
+        int? userId = userIdClaim != null ? int.Parse(userIdClaim) : null;
+        
+        var project = context.Projects
+            .Include(p => p.Collaborators)
+            .FirstOrDefault(p => p.Id == projectId);
+            
         if (project == null)
         {
             return Enumerable.Empty<Post>().AsQueryable();
         }
         
+        // Check if user is a member (owner or collaborator)
+        bool isMember = userId.HasValue && 
+            (project.OwnerId == userId.Value || 
+             project.Collaborators.Any(c => c.UserId == userId.Value));
+        
         return context.Posts
-            .Where(p => p.ProjectId == projectId)
+            .Where(p => p.ProjectId == projectId && 
+                (p.Public || isMember)) // Show public posts OR all posts if user is a member
             .OrderByDescending(p => p.Created);
     }
 

@@ -2,11 +2,77 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.GraphQL.Inputs;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class PostMutation
 {
+    [GraphQLName("createPost")]
+    public async Task<Post> CreatePost(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        PostInput input)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // If projectId is provided, verify the user is a member (collaborator) or owner of that project
+        if (input.ProjectId.HasValue)
+        {
+            var project = await context.Projects
+                .Include(p => p.Collaborators)
+                .FirstOrDefaultAsync(p => p.Id == input.ProjectId.Value);
+
+            if (project == null)
+            {
+                throw new GraphQLException("Project not found");
+            }
+
+            // Check if user is owner OR a collaborator
+            var isOwner = project.OwnerId == userId;
+            var isCollaborator = project.Collaborators.Any(c => c.UserId == userId);
+
+            if (!isOwner && !isCollaborator)
+            {
+                throw new GraphQLException("You are not a member of this project");
+            }
+        }
+
+        // If sharedPostId is provided, verify the post exists
+        if (input.SharedPostId.HasValue)
+        {
+            var sharedPost = await context.Posts.FindAsync(input.SharedPostId.Value);
+            if (sharedPost == null)
+            {
+                throw new GraphQLException("Shared post not found");
+            }
+        }
+
+        var post = new Post
+        {
+            UserId = userId,
+            ProjectId = input.ProjectId,
+            Title = input.Title ?? "Post",
+            Description = input.Description ?? "",
+            Content = input.Content,
+            ImageUrl = input.ImageUrl,
+            SharedPostId = input.SharedPostId,
+            Public = input.IsPublic,
+            Created = DateTime.UtcNow
+        };
+
+        context.Posts.Add(post);
+        await context.SaveChangesAsync();
+
+        // Reload the post with User navigation property
+        await context.Entry(post)
+            .Reference(p => p.User)
+            .LoadAsync();
+
+        return post;
+    }
+
     [GraphQLName("likePost")]
     public async Task<PostLike> LikePost(
         [Service] AppDbContext context,
