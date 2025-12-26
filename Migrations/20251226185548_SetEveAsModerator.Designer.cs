@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NAME_WIP_BACKEND.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NAME_WIP_BACKEND.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251226185548_SetEveAsModerator")]
+    partial class SetEveAsModerator
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -787,15 +790,6 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("BanExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("BanReason")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("BannedByUserId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("BannerPic")
                         .HasColumnType("text");
 
@@ -805,9 +799,6 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsBanned")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsModerator")
                         .HasColumnType("boolean");
@@ -834,15 +825,10 @@ namespace NAME_WIP_BACKEND.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("SuspendedUntil")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("UserRoleId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BannedByUserId");
 
                     b.HasIndex("UserRoleId");
 
@@ -1419,16 +1405,9 @@ namespace NAME_WIP_BACKEND.Migrations
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "BannedBy")
-                        .WithMany()
-                        .HasForeignKey("BannedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("NAME_WIP_BACKEND.Models.UserRole", "UserRole")
                         .WithMany("Users")
                         .HasForeignKey("UserRoleId");
-
-                    b.Navigation("BannedBy");
 
                     b.Navigation("UserRole");
                 });

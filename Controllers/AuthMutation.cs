@@ -37,7 +37,7 @@ public class AuthMutation
         var token = GenerateJwt(user);
         var refreshToken = await GenerateRefreshToken(db, user.Id);
         
-        return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken);
+        return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken, user.IsModerator);
     }
 
     public async Task<AuthPayload> LoginUser(
@@ -52,14 +52,59 @@ public class AuthMutation
                 throw new GraphQLException(new Error("Invalid email or password", "INVALID_LOGIN"));
             }
 
+            // Check if user is banned
+            if (user.IsBanned)
+            {
+                if (user.BanExpiresAt == null || user.BanExpiresAt > DateTime.UtcNow)
+                {
+                    var banMessage = user.BanReason != null 
+                        ? $"Your account has been banned. Reason: {user.BanReason}" 
+                        : "Your account has been banned.";
+                    
+                    if (user.BanExpiresAt != null)
+                    {
+                        banMessage += $" Ban expires: {user.BanExpiresAt:yyyy-MM-dd HH:mm}";
+                    }
+                    
+                    throw new GraphQLException(new Error(banMessage, "ACCOUNT_BANNED"));
+                }
+                else
+                {
+                    // Ban has expired, unban the user
+                    user.IsBanned = false;
+                    user.BanReason = null;
+                    user.BanExpiresAt = null;
+                    user.BannedByUserId = null;
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            // Check if user is suspended
+            if (user.SuspendedUntil != null && user.SuspendedUntil > DateTime.UtcNow)
+            {
+                throw new GraphQLException(new Error(
+                    $"Your account is suspended until {user.SuspendedUntil:yyyy-MM-dd HH:mm}", 
+                    "ACCOUNT_SUSPENDED"));
+            }
+            else if (user.SuspendedUntil != null)
+            {
+                // Suspension has expired, clear it
+                user.SuspendedUntil = null;
+                await db.SaveChangesAsync();
+            }
+
             var token = GenerateJwt(user);
             var refreshToken = await GenerateRefreshToken(db, user.Id);
             
-            return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken);
+            return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken, user.IsModerator);
         }
-        catch (Exception ex)
+        catch (GraphQLException)
         {
-            throw new GraphQLException(ex.ToString());
+            throw; // Re-throw GraphQL exceptions as-is
+        }
+        catch (Exception)
+        {
+            throw new GraphQLException(new Error("An error occurred during login", "LOGIN_ERROR"));
         }
     }
 
@@ -90,7 +135,8 @@ public class AuthMutation
             storedToken.User.Name, 
             storedToken.User.Email, 
             newAccessToken, 
-            newRefreshToken);
+            newRefreshToken,
+            storedToken.User.IsModerator);
     }
 
     public async Task<bool> RevokeRefreshToken(

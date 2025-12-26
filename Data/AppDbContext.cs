@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectSkill> ProjectSkills => Set<ProjectSkill>();
     public DbSet<ProjectInterest> ProjectInterests => Set<ProjectInterest>();
     public DbSet<BlockedUser> BlockedUsers => Set<BlockedUser>();
+    public DbSet<PostReport> PostReports => Set<PostReport>();
     
     
 
@@ -68,6 +69,13 @@ public class AppDbContext : DbContext
             .HasOne(f => f.Friend)
             .WithMany(u => u.ReceivedFriendships)
             .HasForeignKey(f => f.FriendId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure User BannedBy relationship
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.BannedBy)
+            .WithMany()
+            .HasForeignKey(u => u.BannedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure UserProject relationships
@@ -272,5 +280,18 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<BlockedUser>()
             .HasIndex(bu => new { bu.UserId, bu.BlockedUserId })
             .IsUnique();
+
+        // Configure PostReport relationships
+        modelBuilder.Entity<PostReport>()
+            .HasOne(pr => pr.Post)
+            .WithMany()
+            .HasForeignKey(pr => pr.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PostReport>()
+            .HasOne(pr => pr.ReportedByUser)
+            .WithMany()
+            .HasForeignKey(pr => pr.ReportedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

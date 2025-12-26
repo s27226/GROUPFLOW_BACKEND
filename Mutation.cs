@@ -23,4 +23,5 @@ public class Mutation
     public PostMutation Post => new();
     public NotificationMutation Notification => new();
     public BlockedUserMutation BlockedUser => new();
+    public ModerationMutation Moderation => new();
 }

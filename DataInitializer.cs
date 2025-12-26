@@ -35,7 +35,7 @@ public class DataInitializer
                     new() { Name = "Alice", Surname = "Smith", Nickname = "Alice", Email = "alice@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=4", Joined = DateTime.UtcNow.AddDays(-15), UserRoleId = 1 },
                     new() { Name = "Bob", Surname = "Johnson", Nickname = "Bob", Email = "bob@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=5", Joined = DateTime.UtcNow.AddDays(-12), UserRoleId = 1 },
                     new() { Name = "Charlie", Surname = "Brown", Nickname = "Charlie", Email = "charlie@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=6", Joined = DateTime.UtcNow.AddDays(-8), UserRoleId = 1 },
-                    new() { Name = "Eve", Surname = "Williams", Nickname = "Eve", Email = "eve@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=7", Joined = DateTime.UtcNow.AddDays(-6), UserRoleId = 1 }
+                    new() { Name = "Eve", Surname = "Williams", Nickname = "Eve", Email = "eve@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=7", Joined = DateTime.UtcNow.AddDays(-6), UserRoleId = 1, IsModerator = true } // Eve is a moderator
                 };
                 db.Users.AddRange(users);
                 db.SaveChanges();

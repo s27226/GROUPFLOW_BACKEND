@@ -5,5 +5,6 @@ public record AuthPayload(
     string Name,
     string Email,
     string Token,
-    string RefreshToken
+    string RefreshToken,
+    bool IsModerator
     );

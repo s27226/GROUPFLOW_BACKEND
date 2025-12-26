@@ -11,6 +11,15 @@ public class User
     public string? BannerPic { get; set; }
     public DateTime? DateOfBirth { get; set; }
     public DateTime Joined { get; set; } = DateTime.UtcNow;
+    public bool IsModerator { get; set; } = false;
+
+    // Moderation fields
+    public bool IsBanned { get; set; } = false;
+    public string? BanReason { get; set; }
+    public DateTime? BanExpiresAt { get; set; }
+    public DateTime? SuspendedUntil { get; set; }
+    public int? BannedByUserId { get; set; }
+    public User? BannedBy { get; set; }
 
     public int? UserRoleId { get; set; }
     public UserRole? UserRole { get; set; }

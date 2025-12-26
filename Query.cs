@@ -25,6 +25,8 @@ public class Query
     public UserTagQuery UserTag => new();
     public NotificationQuery Notification => new();
     public BlockedUserQuery BlockedUser => new();
+    public AdminQuery Admin => new();
+    public ModerationQuery Moderation => new();
 
 
 

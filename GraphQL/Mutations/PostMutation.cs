@@ -330,4 +330,122 @@ public class PostMutation
 
         return sharedPost;
     }
+
+    [GraphQLName("reportPost")]
+    public async Task<PostReport> ReportPost(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        ReportPostInput input)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Check if post exists
+        var post = await context.Posts.FindAsync(input.PostId);
+        if (post == null)
+        {
+            throw new GraphQLException("Post not found");
+        }
+
+        // Check if user already reported this post
+        var existingReport = await context.PostReports
+            .FirstOrDefaultAsync(pr => pr.PostId == input.PostId && pr.ReportedBy == userId && !pr.IsResolved);
+
+        if (existingReport != null)
+        {
+            throw new GraphQLException("You have already reported this post");
+        }
+
+        var report = new PostReport
+        {
+            PostId = input.PostId,
+            ReportedBy = userId,
+            Reason = input.Reason,
+            CreatedAt = DateTime.UtcNow,
+            IsResolved = false
+        };
+
+        context.PostReports.Add(report);
+        await context.SaveChangesAsync();
+
+        // Reload with navigation properties
+        await context.Entry(report)
+            .Reference(r => r.Post)
+            .LoadAsync();
+        await context.Entry(report)
+            .Reference(r => r.ReportedByUser)
+            .LoadAsync();
+
+        return report;
+    }
+
+    [GraphQLName("deleteReportedPost")]
+    public async Task<bool> DeleteReportedPost(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int postId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Check if user is moderator
+        var user = await context.Users.FindAsync(userId);
+        if (user == null || !user.IsModerator)
+        {
+            throw new GraphQLException("You are not authorized to delete reported posts");
+        }
+
+        // Check if post exists
+        var post = await context.Posts.FindAsync(postId);
+        if (post == null)
+        {
+            throw new GraphQLException("Post not found");
+        }
+
+        // Mark all reports for this post as resolved
+        var reports = await context.PostReports
+            .Where(pr => pr.PostId == postId && !pr.IsResolved)
+            .ToListAsync();
+
+        foreach (var report in reports)
+        {
+            report.IsResolved = true;
+        }
+
+        // Delete the post (cascade will handle related data)
+        context.Posts.Remove(post);
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    [GraphQLName("discardReport")]
+    public async Task<bool> DiscardReport(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int reportId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Check if user is moderator
+        var user = await context.Users.FindAsync(userId);
+        if (user == null || !user.IsModerator)
+        {
+            throw new GraphQLException("You are not authorized to discard reports");
+        }
+
+        // Find the report
+        var report = await context.PostReports.FindAsync(reportId);
+        if (report == null)
+        {
+            throw new GraphQLException("Report not found");
+        }
+
+        // Mark as resolved without deleting the post
+        report.IsResolved = true;
+        await context.SaveChangesAsync();
+
+        return true;
+    }
 }

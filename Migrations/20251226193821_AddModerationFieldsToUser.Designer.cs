@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NAME_WIP_BACKEND.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NAME_WIP_BACKEND.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251226193821_AddModerationFieldsToUser")]
+    partial class AddModerationFieldsToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -842,8 +845,6 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BannedByUserId");
-
                     b.HasIndex("UserRoleId");
 
                     b.ToTable("Users");
@@ -1419,16 +1420,9 @@ namespace NAME_WIP_BACKEND.Migrations
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "BannedBy")
-                        .WithMany()
-                        .HasForeignKey("BannedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("NAME_WIP_BACKEND.Models.UserRole", "UserRole")
                         .WithMany("Users")
                         .HasForeignKey("UserRoleId");
-
-                    b.Navigation("BannedBy");
 
                     b.Navigation("UserRole");
                 });
