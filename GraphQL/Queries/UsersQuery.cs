@@ -45,10 +45,16 @@ public class UsersQuery
             return new List<UserWithRequestStatus>();
         }
 
+        // Get IDs of users that the current user has blocked or has been blocked by
+        var blockedUserIds = await context.BlockedUsers
+            .Where(bu => bu.UserId == currentUserId || bu.BlockedUserId == currentUserId)
+            .Select(bu => bu.UserId == currentUserId ? bu.BlockedUserId : bu.UserId)
+            .ToListAsync();
+
         var query = context.Users
             .Include(u => u.Skills)
             .Include(u => u.Interests)
-            .Where(u => u.Id != currentUserId)
+            .Where(u => u.Id != currentUserId && !blockedUserIds.Contains(u.Id))
             .AsQueryable();
 
         // Text search by name/nickname
@@ -138,10 +144,18 @@ public class UsersQuery
             .Select(f => f.UserId == currentUserId ? f.FriendId : f.UserId)
             .ToListAsync();
 
+        // Get IDs of users that the current user has blocked or has been blocked by
+        var blockedUserIds = await context.BlockedUsers
+            .Where(bu => bu.UserId == currentUserId || bu.BlockedUserId == currentUserId)
+            .Select(bu => bu.UserId == currentUserId ? bu.BlockedUserId : bu.UserId)
+            .ToListAsync();
+
         var allUsers = await context.Users
             .Include(u => u.Skills)
             .Include(u => u.Interests)
-            .Where(u => u.Id != currentUserId && !existingFriendIds.Contains(u.Id))
+            .Where(u => u.Id != currentUserId && 
+                       !existingFriendIds.Contains(u.Id) && 
+                       !blockedUserIds.Contains(u.Id))
             .ToListAsync();
 
         // Calculate match scores

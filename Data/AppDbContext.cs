@@ -39,6 +39,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectView> ProjectViews => Set<ProjectView>();
     public DbSet<ProjectSkill> ProjectSkills => Set<ProjectSkill>();
     public DbSet<ProjectInterest> ProjectInterests => Set<ProjectInterest>();
+    public DbSet<BlockedUser> BlockedUsers => Set<BlockedUser>();
     
     
 
@@ -252,6 +253,24 @@ public class AppDbContext : DbContext
         // Configure unique constraint: one view per user per project per day
         modelBuilder.Entity<ProjectView>()
             .HasIndex(pv => new { pv.UserId, pv.ProjectId, pv.ViewDate })
+            .IsUnique();
+
+        // Configure BlockedUser relationships
+        modelBuilder.Entity<BlockedUser>()
+            .HasOne(bu => bu.User)
+            .WithMany()
+            .HasForeignKey(bu => bu.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BlockedUser>()
+            .HasOne(bu => bu.Blocked)
+            .WithMany()
+            .HasForeignKey(bu => bu.BlockedUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure unique constraint: one block per user pair
+        modelBuilder.Entity<BlockedUser>()
+            .HasIndex(bu => new { bu.UserId, bu.BlockedUserId })
             .IsUnique();
     }
 }

@@ -24,6 +24,7 @@ public class Query
     public SavedPostQuery SavedPost => new();
     public UserTagQuery UserTag => new();
     public NotificationQuery Notification => new();
+    public BlockedUserQuery BlockedUser => new();
 
 
 

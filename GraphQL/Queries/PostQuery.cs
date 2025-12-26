@@ -24,12 +24,19 @@ public class PostQuery
             .Select(p => p.Id)
             .ToList();
         
+        // Get IDs of users that the current user has blocked or has been blocked by
+        var blockedUserIds = context.BlockedUsers
+            .Where(bu => bu.UserId == userId || bu.BlockedUserId == userId)
+            .Select(bu => bu.UserId == userId ? bu.BlockedUserId : bu.UserId)
+            .ToList();
+        
         return context.Posts
             .Include(p => p.Likes)
             .Where(p => 
-                p.Public || // Public posts
+                !blockedUserIds.Contains(p.UserId) && // Exclude posts from blocked users
+                (p.Public || // Public posts
                 p.UserId == userId || // User's own posts
-                (p.ProjectId.HasValue && userProjectIds.Contains(p.ProjectId.Value))); // Private posts in projects user is a member of
+                (p.ProjectId.HasValue && userProjectIds.Contains(p.ProjectId.Value)))); // Private posts in projects user is a member of
     }
 
     [GraphQLName("allpostsbyid")]
