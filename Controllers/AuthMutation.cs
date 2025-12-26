@@ -37,7 +37,7 @@ public class AuthMutation
         var token = GenerateJwt(user);
         var refreshToken = await GenerateRefreshToken(db, user.Id);
         
-        return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken, user.IsModerator);
+        return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
     }
 
     public async Task<AuthPayload> LoginUser(
@@ -96,7 +96,7 @@ public class AuthMutation
             var token = GenerateJwt(user);
             var refreshToken = await GenerateRefreshToken(db, user.Id);
             
-            return new AuthPayload(user.Id, user.Name, user.Email, token, refreshToken, user.IsModerator);
+            return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
         }
         catch (GraphQLException)
         {
@@ -133,7 +133,10 @@ public class AuthMutation
         return new AuthPayload(
             storedToken.User.Id, 
             storedToken.User.Name, 
+            storedToken.User.Surname, 
+            storedToken.User.Nickname, 
             storedToken.User.Email, 
+            storedToken.User.ProfilePic, 
             newAccessToken, 
             newRefreshToken,
             storedToken.User.IsModerator);
