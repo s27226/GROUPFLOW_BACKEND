@@ -158,6 +158,67 @@ public class UsersQuery
                        !blockedUserIds.Contains(u.Id))
             .ToListAsync();
 
+        // Get projects the current user is part of (as owner or collaborator)
+        var currentUserProjectIds = await context.UserProjects
+            .Where(up => up.UserId == currentUserId)
+            .Select(up => up.ProjectId)
+            .Union(
+                context.Projects
+                    .Where(p => p.OwnerId == currentUserId)
+                    .Select(p => p.Id)
+            )
+            .ToListAsync();
+
+        // Get users on the same projects
+        var usersOnSameProjectsAsCollaborators = await context.UserProjects
+            .Where(up => currentUserProjectIds.Contains(up.ProjectId) && up.UserId != currentUserId)
+            .Select(up => new { up.UserId, up.ProjectId })
+            .ToListAsync();
+
+        var usersOnSameProjectsAsOwners = await context.Projects
+            .Where(p => currentUserProjectIds.Contains(p.Id) && p.OwnerId != currentUserId)
+            .Select(p => new { UserId = p.OwnerId, ProjectId = p.Id })
+            .ToListAsync();
+
+        var userProjectCounts = usersOnSameProjectsAsCollaborators
+            .Concat(usersOnSameProjectsAsOwners)
+            .GroupBy(up => up.UserId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        // Get recent comment interactions (last 30 days)
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        
+        // Get posts by current user
+        var currentUserPostIds = await context.Posts
+            .Where(p => p.UserId == currentUserId)
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        // Get users who commented on current user's posts
+        var usersWhoCommentedOnMyPosts = await context.PostComments
+            .Where(pc => currentUserPostIds.Contains(pc.PostId) && 
+                        pc.UserId != currentUserId &&
+                        pc.CreatedAt >= thirtyDaysAgo)
+            .GroupBy(pc => pc.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.UserId, x => x.Count);
+
+        // Get posts where current user commented
+        var postsWhereICommented = await context.PostComments
+            .Where(pc => pc.UserId == currentUserId && pc.CreatedAt >= thirtyDaysAgo)
+            .Select(pc => pc.PostId)
+            .Distinct()
+            .ToListAsync();
+
+        // Get other users who also commented on those posts
+        var usersWhoCommentedOnSamePosts = await context.PostComments
+            .Where(pc => postsWhereICommented.Contains(pc.PostId) && 
+                        pc.UserId != currentUserId &&
+                        pc.CreatedAt >= thirtyDaysAgo)
+            .GroupBy(pc => pc.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.UserId, x => x.Count);
+
         // Calculate match scores
         var userScores = allUsers.Select(user =>
         {
@@ -173,15 +234,36 @@ public class UsersQuery
             var totalInterests = currentUserInterests.Union(userInterests).Count();
             var interestSimilarity = totalInterests > 0 ? (double)commonInterests / totalInterests : 0;
 
-            // Weighted score: interests slightly more important than skills for friend matching
-            var matchScore = (skillSimilarity * 0.4 + interestSimilarity * 0.6) * 100;
+            // Common projects score
+            var commonProjects = userProjectCounts.GetValueOrDefault(user.Id, 0);
+            var projectScore = Math.Min(commonProjects * 0.2, 1.0); // Cap at 1.0, each project adds 20%
+
+            // Comment interaction score
+            var commentsOnMyPosts = usersWhoCommentedOnMyPosts.GetValueOrDefault(user.Id, 0);
+            var commentsOnSamePosts = usersWhoCommentedOnSamePosts.GetValueOrDefault(user.Id, 0);
+            var totalInteractions = commentsOnMyPosts + commentsOnSamePosts;
+            var interactionScore = Math.Min(totalInteractions * 0.1, 1.0); // Cap at 1.0, each interaction adds 10%
+
+            // Weighted score calculation
+            // - Skills: 25%
+            // - Interests: 25%
+            // - Common projects: 30% (strong indicator of collaboration potential)
+            // - Recent interactions: 20% (shows active engagement)
+            var matchScore = (
+                skillSimilarity * 25 + 
+                interestSimilarity * 25 + 
+                projectScore * 30 + 
+                interactionScore * 20
+            );
 
             return new UserMatchScore
             {
                 User = user,
                 MatchScore = matchScore,
                 CommonSkills = commonSkills,
-                CommonInterests = commonInterests
+                CommonInterests = commonInterests,
+                CommonProjects = commonProjects,
+                RecentInteractions = totalInteractions
             };
         })
         .Where(s => s.MatchScore > 0) // Only users with at least some match
@@ -203,6 +285,8 @@ public class UsersQuery
             MatchScore = s.MatchScore,
             CommonSkills = s.CommonSkills,
             CommonInterests = s.CommonInterests,
+            CommonProjects = s.CommonProjects,
+            RecentInteractions = s.RecentInteractions,
             HasPendingRequest = pendingRequests.Any(fr => 
                 (fr.RequesterId == currentUserId && fr.RequesteeId == s.User.Id) ||
                 (fr.RequesteeId == currentUserId && fr.RequesterId == s.User.Id))
@@ -216,6 +300,8 @@ public class UserMatchScore
     public double MatchScore { get; set; }
     public int CommonSkills { get; set; }
     public int CommonInterests { get; set; }
+    public int CommonProjects { get; set; }
+    public int RecentInteractions { get; set; }
 }
 
 public class UserMatchScoreWithStatus
@@ -224,6 +310,8 @@ public class UserMatchScoreWithStatus
     public double MatchScore { get; set; }
     public int CommonSkills { get; set; }
     public int CommonInterests { get; set; }
+    public int CommonProjects { get; set; }
+    public int RecentInteractions { get; set; }
     public bool HasPendingRequest { get; set; }
 }
 
