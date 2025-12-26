@@ -20,6 +20,8 @@ namespace NAME_WIP_BACKEND.Models
         public ICollection<Post> Posts { get; set; } = new List<Post>();
         public ICollection<ProjectLike> Likes { get; set; } = new List<ProjectLike>();
         public ICollection<ProjectView> Views { get; set; } = new List<ProjectView>();
+        public ICollection<ProjectSkill> Skills { get; set; } = new List<ProjectSkill>();
+        public ICollection<ProjectInterest> Interests { get; set; } = new List<ProjectInterest>();
         public Chat? Chat { get; set; }
     }
 }

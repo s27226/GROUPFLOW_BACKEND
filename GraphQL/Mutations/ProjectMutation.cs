@@ -37,6 +37,36 @@ public class ProjectMutation
         context.Projects.Add(project);
         context.SaveChanges();
         
+        // Add skills if provided
+        if (input.Skills != null && input.Skills.Any())
+        {
+            foreach (var skillName in input.Skills)
+            {
+                var skill = new ProjectSkill
+                {
+                    ProjectId = project.Id,
+                    SkillName = skillName,
+                    AddedAt = DateTime.UtcNow
+                };
+                context.ProjectSkills.Add(skill);
+            }
+        }
+
+        // Add interests if provided
+        if (input.Interests != null && input.Interests.Any())
+        {
+            foreach (var interestName in input.Interests)
+            {
+                var interest = new ProjectInterest
+                {
+                    ProjectId = project.Id,
+                    InterestName = interestName,
+                    AddedAt = DateTime.UtcNow
+                };
+                context.ProjectInterests.Add(interest);
+            }
+        }
+        
         // Create a chat for the project
         var chat = new Chat
         {
@@ -54,8 +84,10 @@ public class ProjectMutation
         
         context.SaveChanges();
         
-        // Load the owner to return complete object
+        // Load the owner and related data to return complete object
         context.Entry(project).Reference(p => p.Owner).Load();
+        context.Entry(project).Collection(p => p.Skills).Load();
+        context.Entry(project).Collection(p => p.Interests).Load();
         
         return project;
     }
@@ -147,6 +179,36 @@ public class ProjectMutation
         context.Projects.Add(project);
         context.SaveChanges();
 
+        // Add skills if provided
+        if (input.Skills != null && input.Skills.Any())
+        {
+            foreach (var skillName in input.Skills)
+            {
+                var skill = new ProjectSkill
+                {
+                    ProjectId = project.Id,
+                    SkillName = skillName,
+                    AddedAt = DateTime.UtcNow
+                };
+                context.ProjectSkills.Add(skill);
+            }
+        }
+
+        // Add interests if provided
+        if (input.Interests != null && input.Interests.Any())
+        {
+            foreach (var interestName in input.Interests)
+            {
+                var interest = new ProjectInterest
+                {
+                    ProjectId = project.Id,
+                    InterestName = interestName,
+                    AddedAt = DateTime.UtcNow
+                };
+                context.ProjectInterests.Add(interest);
+            }
+        }
+
         // Create a chat for the project
         var chat = new Chat
         {
@@ -188,6 +250,8 @@ public class ProjectMutation
             .Include(p => p.Owner)
             .Include(p => p.Collaborators)
                 .ThenInclude(up => up.User)
+            .Include(p => p.Skills)
+            .Include(p => p.Interests)
             .FirstOrDefault(p => p.Id == project.Id);
         
         return completeProject;

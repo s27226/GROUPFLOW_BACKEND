@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.GraphQL.Inputs;
 
 namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
@@ -28,6 +30,8 @@ public class ProjectQuery
             .Include(p => p.Owner)
             .Include(p => p.Collaborators)
                 .ThenInclude(c => c.User)
+            .Include(p => p.Skills)
+            .Include(p => p.Interests)
             .FirstOrDefaultAsync(p => p.Id == id && 
                 (p.IsPublic || (userId.HasValue && (p.OwnerId == userId.Value || 
                  p.Collaborators.Any(c => c.UserId == userId.Value)))));
@@ -187,5 +191,52 @@ public class ProjectQuery
 
         return await context.ProjectLikes
             .AnyAsync(pl => pl.ProjectId == projectId && pl.UserId == userId);
+    }
+
+    [Authorize]
+    [GraphQLName("searchprojects")]
+    [UseProjection]
+    public async Task<List<Project>> SearchProjects(
+        AppDbContext context,
+        ClaimsPrincipal claimsPrincipal,
+        SearchProjectsInput? input = null)
+    {
+        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var currentUserId))
+        {
+            return new List<Project>();
+        }
+
+        var query = context.Projects
+            .Include(p => p.Skills)
+            .Include(p => p.Interests)
+            .Include(p => p.Owner)
+            .Where(p => p.IsPublic)
+            .AsQueryable();
+
+        // Text search by name/description
+        if (!string.IsNullOrWhiteSpace(input?.SearchTerm))
+        {
+            var searchTerm = input.SearchTerm.ToLower();
+            query = query.Where(p => 
+                p.Name.ToLower().Contains(searchTerm) ||
+                p.Description.ToLower().Contains(searchTerm));
+        }
+
+        // Filter by skills
+        if (input?.Skills != null && input.Skills.Any())
+        {
+            query = query.Where(p => p.Skills.Any(s => 
+                input.Skills.Contains(s.SkillName)));
+        }
+
+        // Filter by interests
+        if (input?.Interests != null && input.Interests.Any())
+        {
+            query = query.Where(p => p.Interests.Any(i => 
+                input.Interests.Contains(i.InterestName)));
+        }
+
+        return await query.ToListAsync();
     }
 }

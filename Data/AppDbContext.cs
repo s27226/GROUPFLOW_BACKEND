@@ -37,6 +37,8 @@ public class AppDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<ProjectLike> ProjectLikes => Set<ProjectLike>();
     public DbSet<ProjectView> ProjectViews => Set<ProjectView>();
+    public DbSet<ProjectSkill> ProjectSkills => Set<ProjectSkill>();
+    public DbSet<ProjectInterest> ProjectInterests => Set<ProjectInterest>();
     
     
 
