@@ -287,17 +287,13 @@ public class DatabaseIntegrationTests
         {
             Name = "Original Name",
             Description = "Original Description",
-            OwnerId = user.Id,
-            ViewCount = 0,
-            LikeCount = 0
+            OwnerId = user.Id
         };
         context.Projects.Add(project);
         await context.SaveChangesAsync();
 
         // Act
         project.Name = "Updated Name";
-        project.ViewCount = 10;
-        project.LikeCount = 5;
         await context.SaveChangesAsync();
 
         var updatedProject = await context.Projects.FindAsync(project.Id);
@@ -305,8 +301,8 @@ public class DatabaseIntegrationTests
         // Assert
         Assert.NotNull(updatedProject);
         Assert.Equal("Updated Name", updatedProject.Name);
-        Assert.Equal(10, updatedProject.ViewCount);
-        Assert.Equal(5, updatedProject.LikeCount);
+        Assert.NotNull(updatedProject.Likes);
+        Assert.NotNull(updatedProject.Views);
     }
 
     [Fact]

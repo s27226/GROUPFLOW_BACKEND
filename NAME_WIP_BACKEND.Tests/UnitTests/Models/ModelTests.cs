@@ -90,9 +90,7 @@ public class ProjectModelTests
             Name = "Test Project",
             Description = "Test Description",
             OwnerId = 1,
-            IsPublic = true,
-            ViewCount = 0,
-            LikeCount = 0
+            IsPublic = true
         };
 
         // Assert
@@ -101,8 +99,8 @@ public class ProjectModelTests
         Assert.Equal("Test Description", project.Description);
         Assert.Equal(1, project.OwnerId);
         Assert.True(project.IsPublic);
-        Assert.Equal(0, project.ViewCount);
-        Assert.Equal(0, project.LikeCount);
+        Assert.NotNull(project.Likes);
+        Assert.NotNull(project.Views);
     }
 
     [Fact]
