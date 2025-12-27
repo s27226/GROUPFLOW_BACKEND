@@ -94,7 +94,7 @@ public class DataInitializer
                         Name = "Task Management System",
                         Description = "A comprehensive task management application with real-time collaboration",
                         OwnerId = 1, // Jan
-                        ImageUrl = "https://picsum.photos/600/400?random=1",
+                        Image = "https://picsum.photos/600/400?random=1",
                         IsPublic = true,
                         Created = DateTime.UtcNow.AddDays(-15),
                         LastUpdated = DateTime.UtcNow.AddDays(-2)
@@ -104,7 +104,7 @@ public class DataInitializer
                         Name = "Weather Dashboard",
                         Description = "Beautiful weather dashboard with forecasts and analytics",
                         OwnerId = 2, // Anna
-                        ImageUrl = "https://picsum.photos/600/400?random=2",
+                        Image = "https://picsum.photos/600/400?random=2",
                         IsPublic = true,
                         Created = DateTime.UtcNow.AddDays(-10),
                         LastUpdated = DateTime.UtcNow.AddDays(-1)
@@ -114,7 +114,7 @@ public class DataInitializer
                         Name = "Social Media Analytics",
                         Description = "Advanced analytics platform for social media insights",
                         OwnerId = 3, // Kamil
-                        ImageUrl = "https://picsum.photos/600/400?random=3",
+                        Image = "https://picsum.photos/600/400?random=3",
                         IsPublic = true,
                         Created = DateTime.UtcNow.AddDays(-8),
                         LastUpdated = DateTime.UtcNow.AddHours(-6)
@@ -124,7 +124,7 @@ public class DataInitializer
                         Name = "Private Finance Tracker",
                         Description = "Personal finance management tool with budgeting features",
                         OwnerId = 1, // Jan
-                        ImageUrl = "https://picsum.photos/600/400?random=4",
+                        Image = "https://picsum.photos/600/400?random=4",
                         IsPublic = false, // Private project
                         Created = DateTime.UtcNow.AddDays(-5),
                         LastUpdated = DateTime.UtcNow.AddHours(-12)
@@ -134,7 +134,7 @@ public class DataInitializer
                         Name = "E-commerce Platform",
                         Description = "Modern e-commerce solution with inventory management",
                         OwnerId = 2, // Anna
-                        ImageUrl = "https://picsum.photos/600/400?random=5",
+                        Image = "https://picsum.photos/600/400?random=5",
                         IsPublic = true,
                         Created = DateTime.UtcNow.AddDays(-20),
                         LastUpdated = DateTime.UtcNow.AddHours(-3)
@@ -144,7 +144,7 @@ public class DataInitializer
                         Name = "Fitness Tracker App",
                         Description = "Track your workouts and nutrition goals",
                         OwnerId = 3, // Kamil
-                        ImageUrl = "https://picsum.photos/600/400?random=6",
+                        Image = "https://picsum.photos/600/400?random=6",
                         IsPublic = true,
                         Created = DateTime.UtcNow.AddDays(-12),
                         LastUpdated = DateTime.UtcNow.AddDays(-1)

@@ -41,6 +41,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectInterest> ProjectInterests => Set<ProjectInterest>();
     public DbSet<BlockedUser> BlockedUsers => Set<BlockedUser>();
     public DbSet<PostReport> PostReports => Set<PostReport>();
+    public DbSet<BlobFile> BlobFiles => Set<BlobFile>();
     
     
 
@@ -293,5 +294,57 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(pr => pr.ReportedBy)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure BlobFile relationships
+        modelBuilder.Entity<BlobFile>()
+            .HasOne(bf => bf.UploadedBy)
+            .WithMany()
+            .HasForeignKey(bf => bf.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<BlobFile>()
+            .HasOne(bf => bf.Project)
+            .WithMany()
+            .HasForeignKey(bf => bf.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BlobFile>()
+            .HasOne(bf => bf.Post)
+            .WithMany()
+            .HasForeignKey(bf => bf.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure User blob references
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.ProfilePicBlob)
+            .WithMany()
+            .HasForeignKey(u => u.ProfilePicBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.BannerPicBlob)
+            .WithMany()
+            .HasForeignKey(u => u.BannerPicBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Project blob references
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.ImageBlob)
+            .WithMany()
+            .HasForeignKey(p => p.ImageBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.BannerBlob)
+            .WithMany()
+            .HasForeignKey(p => p.BannerBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Post blob reference
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.ImageBlob)
+            .WithMany()
+            .HasForeignKey(p => p.ImageBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

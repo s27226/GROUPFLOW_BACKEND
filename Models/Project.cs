@@ -5,7 +5,15 @@ namespace NAME_WIP_BACKEND.Models
         public int Id { get; set; }
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
-        public string? ImageUrl { get; set; }
+        public string? Image { get; set; }
+        public string? Banner { get; set; }
+        
+        // Blob storage references
+        public int? ImageBlobId { get; set; }
+        public BlobFile? ImageBlob { get; set; }
+        public int? BannerBlobId { get; set; }
+        public BlobFile? BannerBlob { get; set; }
+        
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
         public bool IsPublic { get; set; } = true;

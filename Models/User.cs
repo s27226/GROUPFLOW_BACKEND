@@ -9,6 +9,13 @@ public class User
     public string Password { get; set; } = null!;
     public string? ProfilePic { get; set; }
     public string? BannerPic { get; set; }
+    
+    // Blob storage references
+    public int? ProfilePicBlobId { get; set; }
+    public BlobFile? ProfilePicBlob { get; set; }
+    public int? BannerPicBlobId { get; set; }
+    public BlobFile? BannerPicBlob { get; set; }
+    
     public DateTime? DateOfBirth { get; set; }
     public DateTime Joined { get; set; } = DateTime.UtcNow;
     public bool IsModerator { get; set; } = false;

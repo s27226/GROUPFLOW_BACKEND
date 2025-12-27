@@ -27,7 +27,7 @@ public class ProjectMutation
         {
             Name = input.Name,
             Description = input.Description,
-            ImageUrl = input.ImageUrl,
+            Image = input.ImageUrl,
             IsPublic = input.IsPublic,
             OwnerId = userId,
             Created = DateTime.UtcNow,
@@ -136,7 +136,7 @@ public class ProjectMutation
         
         if (input.ImageUrl != null)
         {
-            project.ImageUrl = input.ImageUrl;
+            project.Image = input.ImageUrl;
         }
         
         if (input.IsPublic.HasValue)
@@ -169,7 +169,7 @@ public class ProjectMutation
         {
             Name = input.Name,
             Description = input.Description,
-            ImageUrl = input.ImageUrl,
+            Image = input.ImageUrl,
             IsPublic = input.IsPublic,
             OwnerId = userId,
             Created = DateTime.UtcNow,

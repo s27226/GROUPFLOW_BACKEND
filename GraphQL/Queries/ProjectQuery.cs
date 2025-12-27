@@ -28,6 +28,8 @@ public class ProjectQuery
         
         var project = await context.Projects
             .Include(p => p.Owner)
+            .Include(p => p.ImageBlob)
+            .Include(p => p.BannerBlob)
             .Include(p => p.Collaborators)
                 .ThenInclude(c => c.User)
             .Include(p => p.Skills)
@@ -128,16 +130,16 @@ public class ProjectQuery
     }
 
     [GraphQLName("userprojects")]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
     public IQueryable<Project> GetUserProjects(
         [Service] AppDbContext context,
         int userId)
     {
         // Return all projects the user is part of (either as owner or as member)
-        return context.Projects.Where(p => 
-            p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)));
+        return context.Projects
+            .Include(p => p.ImageBlob)
+            .Include(p => p.BannerBlob)
+            .Where(p => 
+                p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)));
     }
 
     [GraphQLName("projectposts")]

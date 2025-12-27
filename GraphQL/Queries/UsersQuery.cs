@@ -14,12 +14,14 @@ public class UsersQuery
     public IQueryable<User> GetUsers([Service] AppDbContext context) => context.Users;
     
     [GraphQLName("getuserbyid")]
-    [UseProjection]
-    public User? GetUserById(AppDbContext context, int id) => context.Users.FirstOrDefault(g => g.Id == id);
+    public User? GetUserById(AppDbContext context, int id) => 
+        context.Users
+            .Include(u => u.ProfilePicBlob)
+            .Include(u => u.BannerPicBlob)
+            .FirstOrDefault(g => g.Id == id);
     
     [Authorize]
     [GraphQLName("me")]
-    [UseProjection]
     public User? GetCurrentUser(AppDbContext context, ClaimsPrincipal claimsPrincipal)
     {
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
@@ -28,7 +30,10 @@ public class UsersQuery
             return null;
         }
         
-        return context.Users.FirstOrDefault(u => u.Id == userId);
+        return context.Users
+            .Include(u => u.ProfilePicBlob)
+            .Include(u => u.BannerPicBlob)
+            .FirstOrDefault(u => u.Id == userId);
     }
     
     [Authorize]
