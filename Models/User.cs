@@ -8,8 +8,25 @@ public class User
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;
     public string? ProfilePic { get; set; }
+    public string? BannerPic { get; set; }
+    
+    // Blob storage references
+    public int? ProfilePicBlobId { get; set; }
+    public BlobFile? ProfilePicBlob { get; set; }
+    public int? BannerPicBlobId { get; set; }
+    public BlobFile? BannerPicBlob { get; set; }
+    
     public DateTime? DateOfBirth { get; set; }
     public DateTime Joined { get; set; } = DateTime.UtcNow;
+    public bool IsModerator { get; set; } = false;
+
+    // Moderation fields
+    public bool IsBanned { get; set; } = false;
+    public string? BanReason { get; set; }
+    public DateTime? BanExpiresAt { get; set; }
+    public DateTime? SuspendedUntil { get; set; }
+    public int? BannedByUserId { get; set; }
+    public User? BannedBy { get; set; }
 
     public int? UserRoleId { get; set; }
     public UserRole? UserRole { get; set; }

@@ -13,6 +13,10 @@ namespace NAME_WIP_BACKEND.Models
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string? ImageUrl { get; set; }
+        
+        // Blob storage reference
+        public int? ImageBlobId { get; set; }
+        public BlobFile? ImageBlob { get; set; }
 
         public string Content { get; set; } = null!;
 

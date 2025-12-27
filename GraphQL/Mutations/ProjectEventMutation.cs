@@ -1,6 +1,9 @@
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using HotChocolate;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
@@ -37,10 +40,35 @@ public class ProjectEventMutation
         return projectEvent;
     }
 
-    public bool DeleteProjectEvent(AppDbContext context, int id)
+    public bool DeleteProjectEvent(
+        AppDbContext context,
+        IHttpContextAccessor httpContextAccessor,
+        int id)
     {
-        var projectEvent = context.ProjectEvents.Find(id);
-        if (projectEvent == null) return false;
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (userIdClaim == null)
+        {
+            throw new GraphQLException("User not authenticated");
+        }
+        
+        int userId = int.Parse(userIdClaim);
+
+        var projectEvent = context.ProjectEvents
+            .Include(pe => pe.Project)
+            .FirstOrDefault(pe => pe.Id == id);
+            
+        if (projectEvent == null)
+        {
+            throw new GraphQLException("Event not found");
+        }
+        
+        // Check if user is the event creator or project owner
+        if (projectEvent.CreatedById != userId && projectEvent.Project.OwnerId != userId)
+        {
+            throw new GraphQLException("You don't have permission to delete this event");
+        }
         
         context.ProjectEvents.Remove(projectEvent);
         context.SaveChanges();

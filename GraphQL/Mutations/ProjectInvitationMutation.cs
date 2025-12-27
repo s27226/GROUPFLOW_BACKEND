@@ -11,17 +11,62 @@ public class ProjectInvitationMutation
 {
     public ProjectInvitation CreateProjectInvitation(AppDbContext context, ProjectInvitationInput input)
     {
+        Console.WriteLine($"[CreateProjectInvitation] ProjectId={input.ProjectId}, InvitingId={input.InvitingId}, InvitedId={input.InvitedId}");
+        
+        // Validate that the invited user is not already a member of the project
+        var existingMembership = context.UserProjects
+            .Any(up => up.ProjectId == input.ProjectId && up.UserId == input.InvitedId);
+        
+        Console.WriteLine($"[CreateProjectInvitation] existingMembership={existingMembership}");
+        
+        if (existingMembership)
+        {
+            throw new GraphQLException("User is already a member of this project.");
+        }
+
+        // Validate that the inviting user and invited user are friends
+        var areFriends = context.Friendships
+            .Any(f => f.IsAccepted && 
+                     ((f.UserId == input.InvitingId && f.FriendId == input.InvitedId) ||
+                      (f.UserId == input.InvitedId && f.FriendId == input.InvitingId)));
+        
+        Console.WriteLine($"[CreateProjectInvitation] areFriends={areFriends}");
+        
+        if (!areFriends)
+        {
+            throw new GraphQLException("You can only invite friends to your projects.");
+        }
+
+        // Check if invitation already exists
+        var existingInvite = context.ProjectInvitations
+            .Any(pi => pi.ProjectId == input.ProjectId && pi.InvitedId == input.InvitedId);
+        
+        Console.WriteLine($"[CreateProjectInvitation] existingInvite={existingInvite}");
+        
+        if (existingInvite)
+        {
+            throw new GraphQLException("An invitation to this project already exists for this user.");
+        }
+
         var invite = new ProjectInvitation
         {
             ProjectId = input.ProjectId,
             InvitingId = input.InvitingId,
             InvitedId = input.InvitedId,
             Sent = DateTime.UtcNow,
-            Expiring = DateTime.Now.AddHours(3)
+            Expiring = DateTime.UtcNow.AddHours(3)
         };
         context.ProjectInvitations.Add(invite);
         context.SaveChanges();
-        return invite;
+        
+        Console.WriteLine($"[CreateProjectInvitation] Invitation created successfully with ID={invite.Id}");
+        
+        // Reload with navigation properties to avoid null reference issues
+        return context.ProjectInvitations
+            .Include(pi => pi.Project)
+            .Include(pi => pi.Inviting)
+            .Include(pi => pi.Invited)
+            .First(pi => pi.Id == invite.Id);
     }
 
     public ProjectInvitation? UpdateProjectInvitation(AppDbContext context, UpdateProjectInvitationInput input)

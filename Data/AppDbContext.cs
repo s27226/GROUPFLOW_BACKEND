@@ -34,6 +34,14 @@ public class AppDbContext : DbContext
     public DbSet<PostLike> PostLikes => Set<PostLike>();
     public DbSet<PostComment> PostComments => Set<PostComment>();
     public DbSet<PostCommentLike> PostCommentLikes => Set<PostCommentLike>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<ProjectLike> ProjectLikes => Set<ProjectLike>();
+    public DbSet<ProjectView> ProjectViews => Set<ProjectView>();
+    public DbSet<ProjectSkill> ProjectSkills => Set<ProjectSkill>();
+    public DbSet<ProjectInterest> ProjectInterests => Set<ProjectInterest>();
+    public DbSet<BlockedUser> BlockedUsers => Set<BlockedUser>();
+    public DbSet<PostReport> PostReports => Set<PostReport>();
+    public DbSet<BlobFile> BlobFiles => Set<BlobFile>();
     
     
 
@@ -62,6 +70,13 @@ public class AppDbContext : DbContext
             .HasOne(f => f.Friend)
             .WithMany(u => u.ReceivedFriendships)
             .HasForeignKey(f => f.FriendId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure User BannedBy relationship
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.BannedBy)
+            .WithMany()
+            .HasForeignKey(u => u.BannedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure UserProject relationships
@@ -193,5 +208,143 @@ public class AppDbContext : DbContext
             .WithMany(pc => pc.Likes)
             .HasForeignKey(pcl => pcl.PostCommentId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Notification relationships
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.ActorUser)
+            .WithMany()
+            .HasForeignKey(n => n.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Post)
+            .WithMany()
+            .HasForeignKey(n => n.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure ProjectLike relationships
+        modelBuilder.Entity<ProjectLike>()
+            .HasOne(pl => pl.User)
+            .WithMany()
+            .HasForeignKey(pl => pl.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProjectLike>()
+            .HasOne(pl => pl.Project)
+            .WithMany(p => p.Likes)
+            .HasForeignKey(pl => pl.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure unique constraint: one like per user per project
+        modelBuilder.Entity<ProjectLike>()
+            .HasIndex(pl => new { pl.UserId, pl.ProjectId })
+            .IsUnique();
+
+        // Configure ProjectView relationships
+        modelBuilder.Entity<ProjectView>()
+            .HasOne(pv => pv.User)
+            .WithMany()
+            .HasForeignKey(pv => pv.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProjectView>()
+            .HasOne(pv => pv.Project)
+            .WithMany(p => p.Views)
+            .HasForeignKey(pv => pv.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure unique constraint: one view per user per project per day
+        modelBuilder.Entity<ProjectView>()
+            .HasIndex(pv => new { pv.UserId, pv.ProjectId, pv.ViewDate })
+            .IsUnique();
+
+        // Configure BlockedUser relationships
+        modelBuilder.Entity<BlockedUser>()
+            .HasOne(bu => bu.User)
+            .WithMany()
+            .HasForeignKey(bu => bu.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BlockedUser>()
+            .HasOne(bu => bu.Blocked)
+            .WithMany()
+            .HasForeignKey(bu => bu.BlockedUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure unique constraint: one block per user pair
+        modelBuilder.Entity<BlockedUser>()
+            .HasIndex(bu => new { bu.UserId, bu.BlockedUserId })
+            .IsUnique();
+
+        // Configure PostReport relationships
+        modelBuilder.Entity<PostReport>()
+            .HasOne(pr => pr.Post)
+            .WithMany()
+            .HasForeignKey(pr => pr.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PostReport>()
+            .HasOne(pr => pr.ReportedByUser)
+            .WithMany()
+            .HasForeignKey(pr => pr.ReportedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure BlobFile relationships
+        modelBuilder.Entity<BlobFile>()
+            .HasOne(bf => bf.UploadedBy)
+            .WithMany()
+            .HasForeignKey(bf => bf.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<BlobFile>()
+            .HasOne(bf => bf.Project)
+            .WithMany()
+            .HasForeignKey(bf => bf.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BlobFile>()
+            .HasOne(bf => bf.Post)
+            .WithMany()
+            .HasForeignKey(bf => bf.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure User blob references
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.ProfilePicBlob)
+            .WithMany()
+            .HasForeignKey(u => u.ProfilePicBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.BannerPicBlob)
+            .WithMany()
+            .HasForeignKey(u => u.BannerPicBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Project blob references
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.ImageBlob)
+            .WithMany()
+            .HasForeignKey(p => p.ImageBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.BannerBlob)
+            .WithMany()
+            .HasForeignKey(p => p.BannerBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Post blob reference
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.ImageBlob)
+            .WithMany()
+            .HasForeignKey(p => p.ImageBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
