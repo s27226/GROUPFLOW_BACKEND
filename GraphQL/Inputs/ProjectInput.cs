@@ -4,7 +4,9 @@ public record ProjectInput(
     string Name,
     string Description,
     string? ImageUrl,
-    bool IsPublic
+    bool IsPublic,
+    string[]? Skills,
+    string[]? Interests
 );
 
 public record CreateProjectWithMembersInput(
@@ -12,7 +14,9 @@ public record CreateProjectWithMembersInput(
     string Description,
     string? ImageUrl,
     bool IsPublic,
-    int[] MemberUserIds
+    int[] MemberUserIds,
+    string[]? Skills,
+    string[]? Interests
 );
 
 public record UpdateProjectInput(
@@ -21,4 +25,10 @@ public record UpdateProjectInput(
     string? Description,
     string? ImageUrl,
     bool? IsPublic
+);
+
+public record SearchProjectsInput(
+    string? SearchTerm,
+    string[]? Skills,
+    string[]? Interests
 );

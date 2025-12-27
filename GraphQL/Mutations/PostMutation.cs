@@ -2,11 +2,77 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.GraphQL.Inputs;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class PostMutation
 {
+    [GraphQLName("createPost")]
+    public async Task<Post> CreatePost(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        PostInput input)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // If projectId is provided, verify the user is a member (collaborator) or owner of that project
+        if (input.ProjectId.HasValue)
+        {
+            var project = await context.Projects
+                .Include(p => p.Collaborators)
+                .FirstOrDefaultAsync(p => p.Id == input.ProjectId.Value);
+
+            if (project == null)
+            {
+                throw new GraphQLException("Project not found");
+            }
+
+            // Check if user is owner OR a collaborator
+            var isOwner = project.OwnerId == userId;
+            var isCollaborator = project.Collaborators.Any(c => c.UserId == userId);
+
+            if (!isOwner && !isCollaborator)
+            {
+                throw new GraphQLException("You are not a member of this project");
+            }
+        }
+
+        // If sharedPostId is provided, verify the post exists
+        if (input.SharedPostId.HasValue)
+        {
+            var sharedPost = await context.Posts.FindAsync(input.SharedPostId.Value);
+            if (sharedPost == null)
+            {
+                throw new GraphQLException("Shared post not found");
+            }
+        }
+
+        var post = new Post
+        {
+            UserId = userId,
+            ProjectId = input.ProjectId,
+            Title = input.Title ?? "Post",
+            Description = input.Description ?? "",
+            Content = input.Content,
+            ImageUrl = input.ImageUrl,
+            SharedPostId = input.SharedPostId,
+            Public = input.IsPublic,
+            Created = DateTime.UtcNow
+        };
+
+        context.Posts.Add(post);
+        await context.SaveChangesAsync();
+
+        // Reload the post with User navigation property
+        await context.Entry(post)
+            .Reference(p => p.User)
+            .LoadAsync();
+
+        return post;
+    }
+
     [GraphQLName("likePost")]
     public async Task<PostLike> LikePost(
         [Service] AppDbContext context,
@@ -17,7 +83,10 @@ public class PostMutation
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
 
         // Check if post exists
-        var post = await context.Posts.FindAsync(postId);
+        var post = await context.Posts
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == postId);
+        
         if (post == null)
         {
             throw new GraphQLException("Post not found");
@@ -40,6 +109,24 @@ public class PostMutation
         };
 
         context.PostLikes.Add(postLike);
+
+        // Create notification for the post owner (but not if they liked their own post)
+        if (post.UserId != userId)
+        {
+            var liker = await context.Users.FindAsync(userId);
+            var notification = new Notification
+            {
+                UserId = post.UserId,
+                Type = "POST_LIKE",
+                Message = $"{liker?.Nickname ?? liker?.Name} liked your post",
+                ActorUserId = userId,
+                PostId = postId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Notifications.Add(notification);
+        }
+
         await context.SaveChangesAsync();
 
         return postLike;
@@ -242,5 +329,123 @@ public class PostMutation
         await context.SaveChangesAsync();
 
         return sharedPost;
+    }
+
+    [GraphQLName("reportPost")]
+    public async Task<PostReport> ReportPost(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        ReportPostInput input)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Check if post exists
+        var post = await context.Posts.FindAsync(input.PostId);
+        if (post == null)
+        {
+            throw new GraphQLException("Post not found");
+        }
+
+        // Check if user already reported this post
+        var existingReport = await context.PostReports
+            .FirstOrDefaultAsync(pr => pr.PostId == input.PostId && pr.ReportedBy == userId && !pr.IsResolved);
+
+        if (existingReport != null)
+        {
+            throw new GraphQLException("You have already reported this post");
+        }
+
+        var report = new PostReport
+        {
+            PostId = input.PostId,
+            ReportedBy = userId,
+            Reason = input.Reason,
+            CreatedAt = DateTime.UtcNow,
+            IsResolved = false
+        };
+
+        context.PostReports.Add(report);
+        await context.SaveChangesAsync();
+
+        // Reload with navigation properties
+        await context.Entry(report)
+            .Reference(r => r.Post)
+            .LoadAsync();
+        await context.Entry(report)
+            .Reference(r => r.ReportedByUser)
+            .LoadAsync();
+
+        return report;
+    }
+
+    [GraphQLName("deleteReportedPost")]
+    public async Task<bool> DeleteReportedPost(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int postId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Check if user is moderator
+        var user = await context.Users.FindAsync(userId);
+        if (user == null || !user.IsModerator)
+        {
+            throw new GraphQLException("You are not authorized to delete reported posts");
+        }
+
+        // Check if post exists
+        var post = await context.Posts.FindAsync(postId);
+        if (post == null)
+        {
+            throw new GraphQLException("Post not found");
+        }
+
+        // Mark all reports for this post as resolved
+        var reports = await context.PostReports
+            .Where(pr => pr.PostId == postId && !pr.IsResolved)
+            .ToListAsync();
+
+        foreach (var report in reports)
+        {
+            report.IsResolved = true;
+        }
+
+        // Delete the post (cascade will handle related data)
+        context.Posts.Remove(post);
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    [GraphQLName("discardReport")]
+    public async Task<bool> DiscardReport(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int reportId)
+    {
+        var currentUser = httpContextAccessor.HttpContext!.User;
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Check if user is moderator
+        var user = await context.Users.FindAsync(userId);
+        if (user == null || !user.IsModerator)
+        {
+            throw new GraphQLException("You are not authorized to discard reports");
+        }
+
+        // Find the report
+        var report = await context.PostReports.FindAsync(reportId);
+        if (report == null)
+        {
+            throw new GraphQLException("Report not found");
+        }
+
+        // Mark as resolved without deleting the post
+        report.IsResolved = true;
+        await context.SaveChangesAsync();
+
+        return true;
     }
 }

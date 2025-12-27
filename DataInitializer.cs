@@ -35,7 +35,7 @@ public class DataInitializer
                     new() { Name = "Alice", Surname = "Smith", Nickname = "Alice", Email = "alice@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=4", Joined = DateTime.UtcNow.AddDays(-15), UserRoleId = 1 },
                     new() { Name = "Bob", Surname = "Johnson", Nickname = "Bob", Email = "bob@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=5", Joined = DateTime.UtcNow.AddDays(-12), UserRoleId = 1 },
                     new() { Name = "Charlie", Surname = "Brown", Nickname = "Charlie", Email = "charlie@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=6", Joined = DateTime.UtcNow.AddDays(-8), UserRoleId = 1 },
-                    new() { Name = "Eve", Surname = "Williams", Nickname = "Eve", Email = "eve@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=7", Joined = DateTime.UtcNow.AddDays(-6), UserRoleId = 1 }
+                    new() { Name = "Eve", Surname = "Williams", Nickname = "Eve", Email = "eve@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=7", Joined = DateTime.UtcNow.AddDays(-6), UserRoleId = 1, IsModerator = true } // Eve is a moderator
                 };
                 db.Users.AddRange(users);
                 db.SaveChanges();
@@ -94,10 +94,8 @@ public class DataInitializer
                         Name = "Task Management System",
                         Description = "A comprehensive task management application with real-time collaboration",
                         OwnerId = 1, // Jan
-                        ImageUrl = "https://picsum.photos/600/400?random=1",
+                        Image = "https://picsum.photos/600/400?random=1",
                         IsPublic = true,
-                        ViewCount = 125,
-                        LikeCount = 23,
                         Created = DateTime.UtcNow.AddDays(-15),
                         LastUpdated = DateTime.UtcNow.AddDays(-2)
                     },
@@ -106,10 +104,8 @@ public class DataInitializer
                         Name = "Weather Dashboard",
                         Description = "Beautiful weather dashboard with forecasts and analytics",
                         OwnerId = 2, // Anna
-                        ImageUrl = "https://picsum.photos/600/400?random=2",
+                        Image = "https://picsum.photos/600/400?random=2",
                         IsPublic = true,
-                        ViewCount = 89,
-                        LikeCount = 34,
                         Created = DateTime.UtcNow.AddDays(-10),
                         LastUpdated = DateTime.UtcNow.AddDays(-1)
                     },
@@ -118,10 +114,8 @@ public class DataInitializer
                         Name = "Social Media Analytics",
                         Description = "Advanced analytics platform for social media insights",
                         OwnerId = 3, // Kamil
-                        ImageUrl = "https://picsum.photos/600/400?random=3",
+                        Image = "https://picsum.photos/600/400?random=3",
                         IsPublic = true,
-                        ViewCount = 256,
-                        LikeCount = 67,
                         Created = DateTime.UtcNow.AddDays(-8),
                         LastUpdated = DateTime.UtcNow.AddHours(-6)
                     },
@@ -130,10 +124,8 @@ public class DataInitializer
                         Name = "Private Finance Tracker",
                         Description = "Personal finance management tool with budgeting features",
                         OwnerId = 1, // Jan
-                        ImageUrl = "https://picsum.photos/600/400?random=4",
+                        Image = "https://picsum.photos/600/400?random=4",
                         IsPublic = false, // Private project
-                        ViewCount = 12,
-                        LikeCount = 3,
                         Created = DateTime.UtcNow.AddDays(-5),
                         LastUpdated = DateTime.UtcNow.AddHours(-12)
                     },
@@ -142,10 +134,8 @@ public class DataInitializer
                         Name = "E-commerce Platform",
                         Description = "Modern e-commerce solution with inventory management",
                         OwnerId = 2, // Anna
-                        ImageUrl = "https://picsum.photos/600/400?random=5",
+                        Image = "https://picsum.photos/600/400?random=5",
                         IsPublic = true,
-                        ViewCount = 342,
-                        LikeCount = 89,
                         Created = DateTime.UtcNow.AddDays(-20),
                         LastUpdated = DateTime.UtcNow.AddHours(-3)
                     },
@@ -154,10 +144,8 @@ public class DataInitializer
                         Name = "Fitness Tracker App",
                         Description = "Track your workouts and nutrition goals",
                         OwnerId = 3, // Kamil
-                        ImageUrl = "https://picsum.photos/600/400?random=6",
+                        Image = "https://picsum.photos/600/400?random=6",
                         IsPublic = true,
-                        ViewCount = 178,
-                        LikeCount = 45,
                         Created = DateTime.UtcNow.AddDays(-12),
                         LastUpdated = DateTime.UtcNow.AddDays(-1)
                     }

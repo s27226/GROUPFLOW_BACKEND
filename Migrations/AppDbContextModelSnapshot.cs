@@ -22,6 +22,88 @@ namespace NAME_WIP_BACKEND.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.BlobFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlobPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UploadedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("BlobFiles");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.BlockedUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("BlockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("BlockedUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockedUserId");
+
+                    b.HasIndex("UserId", "BlockedUserId")
+                        .IsUnique();
+
+                    b.ToTable("BlockedUsers");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
                 {
                     b.Property<int>("Id")
@@ -203,6 +285,48 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Friendships");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ActorUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Post", b =>
                 {
                     b.Property<int>("Id")
@@ -221,6 +345,9 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("ImageBlobId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
@@ -242,6 +369,8 @@ namespace NAME_WIP_BACKEND.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ImageBlobId");
 
                     b.HasIndex("ProjectId");
 
@@ -339,6 +468,39 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("PostLikes");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.PostReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReportedBy")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("ReportedBy");
+
+                    b.ToTable("PostReports");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
                 {
                     b.Property<int>("Id")
@@ -347,6 +509,12 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Banner")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("BannerBlobId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -354,17 +522,17 @@ namespace NAME_WIP_BACKEND.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("Image")
                         .HasColumnType("text");
+
+                    b.Property<int?>("ImageBlobId")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("LikeCount")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -373,10 +541,11 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ViewCount")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("BannerBlobId");
+
+                    b.HasIndex("ImageBlobId");
 
                     b.HasIndex("OwnerId");
 
@@ -422,6 +591,31 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ProjectEvents");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectInterest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InterestName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectInterests");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectInvitation", b =>
                 {
                     b.Property<int>("Id")
@@ -456,6 +650,33 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ProjectInvitations");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectLike", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UserId", "ProjectId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectLikes");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectRecommendation", b =>
                 {
                     b.Property<int>("Id")
@@ -480,6 +701,61 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ProjectRecommendations");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectSkill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SkillName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectSkills");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectView", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ViewDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UserId", "ProjectId", "ViewDate")
+                        .IsUnique();
+
+                    b.ToTable("ProjectViews");
                 });
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.ReadBy", b =>
@@ -584,12 +860,33 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("BanExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BanReason")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("BannedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BannerPic")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("BannerPicBlobId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsBanned")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsModerator")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("Joined")
                         .HasColumnType("timestamp with time zone");
@@ -609,14 +906,26 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Property<string>("ProfilePic")
                         .HasColumnType("text");
 
+                    b.Property<int?>("ProfilePicBlobId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Surname")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("SuspendedUntil")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("UserRoleId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BannedByUserId");
+
+                    b.HasIndex("BannerPicBlobId");
+
+                    b.HasIndex("ProfilePicBlobId");
 
                     b.HasIndex("UserRoleId");
 
@@ -735,6 +1044,50 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserSkills");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.BlobFile", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "UploadedBy")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("UploadedBy");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.BlockedUser", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Blocked")
+                        .WithMany()
+                        .HasForeignKey("BlockedUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Blocked");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
                 {
                     b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
@@ -843,8 +1196,38 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Notification", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Post", b =>
                 {
+                    b.HasOne("NAME_WIP_BACKEND.Models.BlobFile", "ImageBlob")
+                        .WithMany()
+                        .HasForeignKey("ImageBlobId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
                         .WithMany("Posts")
                         .HasForeignKey("ProjectId")
@@ -860,6 +1243,8 @@ namespace NAME_WIP_BACKEND.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("ImageBlob");
 
                     b.Navigation("Project");
 
@@ -932,13 +1317,46 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.PostReport", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "ReportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReportedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("ReportedByUser");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
                 {
+                    b.HasOne("NAME_WIP_BACKEND.Models.BlobFile", "BannerBlob")
+                        .WithMany()
+                        .HasForeignKey("BannerBlobId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.BlobFile", "ImageBlob")
+                        .WithMany()
+                        .HasForeignKey("ImageBlobId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("NAME_WIP_BACKEND.Models.User", "Owner")
                         .WithMany("OwnedProjects")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("BannerBlob");
+
+                    b.Navigation("ImageBlob");
 
                     b.Navigation("Owner");
                 });
@@ -958,6 +1376,17 @@ namespace NAME_WIP_BACKEND.Migrations
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectInterest", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                        .WithMany("Interests")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Project");
                 });
@@ -989,6 +1418,25 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectLike", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                        .WithMany("Likes")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectRecommendation", b =>
                 {
                     b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
@@ -1001,6 +1449,36 @@ namespace NAME_WIP_BACKEND.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectSkill", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                        .WithMany("Skills")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectView", b =>
+                {
+                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                        .WithMany("Views")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Project");
@@ -1070,9 +1548,30 @@ namespace NAME_WIP_BACKEND.Migrations
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
                 {
+                    b.HasOne("NAME_WIP_BACKEND.Models.User", "BannedBy")
+                        .WithMany()
+                        .HasForeignKey("BannedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.BlobFile", "BannerPicBlob")
+                        .WithMany()
+                        .HasForeignKey("BannerPicBlobId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NAME_WIP_BACKEND.Models.BlobFile", "ProfilePicBlob")
+                        .WithMany()
+                        .HasForeignKey("ProfilePicBlobId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("NAME_WIP_BACKEND.Models.UserRole", "UserRole")
                         .WithMany("Users")
                         .HasForeignKey("UserRoleId");
+
+                    b.Navigation("BannedBy");
+
+                    b.Navigation("BannerPicBlob");
+
+                    b.Navigation("ProfilePicBlob");
 
                     b.Navigation("UserRole");
                 });
@@ -1182,7 +1681,15 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.Navigation("Events");
 
+                    b.Navigation("Interests");
+
+                    b.Navigation("Likes");
+
                     b.Navigation("Posts");
+
+                    b.Navigation("Skills");
+
+                    b.Navigation("Views");
                 });
 
             modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>

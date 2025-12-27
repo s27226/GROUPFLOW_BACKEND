@@ -21,4 +21,7 @@ public class Mutation
     public SavedPostMutation SavedPost => new();
     public UserTagMutation UserTag => new();
     public PostMutation Post => new();
+    public NotificationMutation Notification => new();
+    public BlockedUserMutation BlockedUser => new();
+    public ModerationMutation Moderation => new();
 }
