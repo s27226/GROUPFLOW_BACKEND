@@ -35,18 +35,26 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        region: 'eu-north-1'
+        aws-region: 'eu-north-1'
 
-    - name: Upload the application to Elastic Beanstalk
+    - name: Upload the application to S3
       run: |
+        aws s3 cp ./app.zip s3://elasticbeanstalk-eu-north-1-338593158495/app.zip
+
+    - name: Create the application version in Elastic Beanstalk
+      id: create_version
+      run: |
+        VERSION_LABEL=$(date +%Y%m%d%H%M%S)
         aws elasticbeanstalk create-application-version \
           --application-name groupflow-be \
-          --version-label $(date +%Y%m%d%H%M%S) \
+          --version-label $VERSION_LABEL \
           --source-bundle S3Bucket="elasticbeanstalk-eu-north-1-338593158495",S3Key="app.zip"
+        echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
 
     - name: Deploy to Elastic Beanstalk
       run: |
+        VERSION_LABEL=$VERSION_LABEL
         aws elasticbeanstalk update-environment \
           --application-name groupflow-be \
           --environment-name Groupflow-be-env \
-          --version-label $(date +%Y%m%d%H%M%S)
+          --version-label $VERSION_LABEL
