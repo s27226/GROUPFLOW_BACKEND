@@ -37,7 +37,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: 'eu-north-1'
 
-    - name: Upload the application to Elastic Beanstalk
+    - name: Upload the application to S3
+      run: |
+        aws s3 cp ./app.zip s3://elasticbeanstalk-eu-north-1-338593158495/app.zip
+
+    - name: Create the application version in Elastic Beanstalk
       run: |
         aws elasticbeanstalk create-application-version \
           --application-name groupflow-be \
