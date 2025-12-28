@@ -99,13 +99,31 @@ app.MapControllers();
 
 
 
- using var scope = app.Services.CreateScope();
- var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-DataInitializer.Seed(db);
- //db.Database.Migrate();
-foreach (var user in db.Users)
+using (var scope = app.Services.CreateScope())
 {
-    Console.WriteLine($"{user.Id}: {user.Name}, {user.Surname}, {user.Nickname}, {user.Email}, {user.Password}");
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    
+    try
+    {
+        // Ensure database is created and all migrations are applied
+        Console.WriteLine("Applying database migrations...");
+        db.Database.Migrate();
+        Console.WriteLine("Migrations applied successfully.");
+        
+        // Seed initial data
+        DataInitializer.Seed(db);
+        
+        foreach (var user in db.Users)
+        {
+            Console.WriteLine($"{user.Id}: {user.Name}, {user.Surname}, {user.Nickname}, {user.Email}, {user.Password}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during database initialization: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        throw;
+    }
 }
 
 
