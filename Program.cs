@@ -79,15 +79,15 @@ builder.Services.AddCors(options =>
     {
         var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? "http://localhost:3000";
         policy.WithOrigins(allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+              .WithHeaders("Authorization", "Content-Type")
+              .WithMethods("GET", "POST", "OPTIONS");
     });
 });
 
 using var app = builder.Build();
 
-app.UseCors();
 app.UseRouting();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
