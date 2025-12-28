@@ -30,17 +30,21 @@ jobs:
         cd ./publish
         zip -r ../app.zip .
 
-    - name: Upload to AWS Elastic Beanstalk
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         region: 'eu-north-1'
-        application-name: 'groupflow-be'
-        environment-name: 'Groupflow-be-env'
-        zip-file: './app.zip'
 
-    - name: Deploy the application to Beanstalk
+    - name: Upload the application to Elastic Beanstalk
+      run: |
+        aws elasticbeanstalk create-application-version \
+          --application-name groupflow-be \
+          --version-label $(date +%Y%m%d%H%M%S) \
+          --source-bundle S3Bucket="elasticbeanstalk-eu-north-1-338593158495",S3Key="app.zip"
+
+    - name: Deploy to Elastic Beanstalk
       run: |
         aws elasticbeanstalk update-environment \
           --application-name groupflow-be \
