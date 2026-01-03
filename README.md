@@ -29,3 +29,6 @@ Backend aplikacji **GroupFlow** zrealizowany w technologii **ASP.NET Core** z wy
 
 Aplikacja korzysta z połączenia z bazą danych PostgreSQL poprzez zmienną środowiskową env.
 
+## 
+
+Dodano indeksy na kluczach obcych oraz polach często filtrowanych i wyszukiwanych, co poprawia wydajność zapytań.

@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(UserId), nameof(BlockedUserId), IsUnique = true)]
     public class BlockedUser
     {
         public int Id { get; set; }

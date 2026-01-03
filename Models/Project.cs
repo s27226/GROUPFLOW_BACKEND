@@ -1,5 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(OwnerId))]
+    [Index(nameof(Name))]
     public class Project
     {
         public int Id { get; set; }

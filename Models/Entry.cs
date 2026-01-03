@@ -1,5 +1,8 @@
-﻿namespace NAME_WIP_BACKEND.Models;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace NAME_WIP_BACKEND.Models;
+
+[Index(nameof(UserChatId))]
 public class Entry
 {
     public int Id { get; set; }

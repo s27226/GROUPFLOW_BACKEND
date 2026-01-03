@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(ProjectId), nameof(UserId), IsUnique = true)]
     public class ProjectLike
     {
         public int Id { get; set; }

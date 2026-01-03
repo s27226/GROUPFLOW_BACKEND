@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models
 {
     public enum BlobType
@@ -10,6 +12,9 @@ namespace NAME_WIP_BACKEND.Models
         PostImage
     }
 
+    [Index(nameof(UploadedByUserId))]
+    [Index(nameof(ProjectId))]
+    [Index(nameof(PostId))]
     public class BlobFile
     {
         public int Id { get; set; }

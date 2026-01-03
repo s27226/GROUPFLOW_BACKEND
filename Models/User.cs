@@ -1,5 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models;
 
+[Index(nameof(Email), IsUnique = true)]
+[Index(nameof(Nickname), IsUnique = true)]
+[Index(nameof(Name), IsUnique = true)]
 public class User
 {public int Id { get; set; }
     public string Name { get; set; } = null!;

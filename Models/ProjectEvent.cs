@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models;
 
+[Index(nameof(ProjectId))]
 public class ProjectEvent
 {
     public int Id { get; set; }

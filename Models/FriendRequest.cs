@@ -1,5 +1,8 @@
-﻿namespace NAME_WIP_BACKEND.Models;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace NAME_WIP_BACKEND.Models;
+
+[Index(nameof(RequesterId), nameof(RequesteeId), IsUnique = true)]
 public class FriendRequest
 {
     public int Id { get; set; }

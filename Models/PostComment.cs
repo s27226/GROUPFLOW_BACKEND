@@ -1,5 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models;
 
+[Index(nameof(PostId))]
+[Index(nameof(UserId))]
 public class PostComment
 {
     public int Id { get; set; }

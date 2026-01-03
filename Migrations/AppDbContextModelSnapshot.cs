@@ -68,7 +68,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PostId");
+                    b.HasIndex("PostId")
+                        .IsUnique();
 
                     b.HasIndex("ProjectId");
 
@@ -220,9 +221,10 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RecommendedForId");
-
                     b.HasIndex("RecommendedWhoId");
+
+                    b.HasIndex("RecommendedForId", "RecommendedWhoId")
+                        .IsUnique();
 
                     b.ToTable("FriendRecommendations");
                 });
@@ -251,7 +253,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("RequesteeId");
 
-                    b.HasIndex("RequesterId");
+                    b.HasIndex("RequesterId", "RequesteeId")
+                        .IsUnique();
 
                     b.ToTable("FriendRequests");
                 });
@@ -280,7 +283,7 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("FriendId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "FriendId");
 
                     b.ToTable("Friendships");
                 });
@@ -370,6 +373,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Created");
+
                     b.HasIndex("ImageBlobId");
 
                     b.HasIndex("ProjectId");
@@ -435,9 +440,10 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PostCommentId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("PostCommentId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("PostCommentLikes");
                 });
@@ -546,6 +552,8 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasIndex("BannerBlobId");
 
                     b.HasIndex("ImageBlobId");
+
+                    b.HasIndex("Name");
 
                     b.HasIndex("OwnerId");
 
@@ -669,7 +677,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("ProjectId", "UserId")
+                        .IsUnique();
 
                     b.HasIndex("UserId", "ProjectId")
                         .IsUnique();
@@ -924,6 +933,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasIndex("BannedByUserId");
 
                     b.HasIndex("BannerPicBlobId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("Nickname")
+                        .IsUnique();
 
                     b.HasIndex("ProfilePicBlobId");
 

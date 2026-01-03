@@ -1,5 +1,9 @@
-﻿namespace NAME_WIP_BACKEND.Models;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace NAME_WIP_BACKEND.Models;
+
+
+[Index(nameof(RecommendedForId), nameof(RecommendedWhoId), IsUnique = true)]
 public class FriendRecommendation
 {
     public int Id { get; set; }

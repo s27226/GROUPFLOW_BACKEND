@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(UserId), nameof(FriendId))]
     public class Friendship
     {
         public int Id { get; set; }

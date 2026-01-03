@@ -1,5 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models;
 
+
+[Index(nameof(UserId))]
+[Index(nameof(PostId))]
 public class Notification
 {
     public int Id { get; set; }

@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models;
 
+[Index(nameof(PostCommentId), nameof(UserId), IsUnique = true)]
 public class PostCommentLike
 {
     public int Id { get; set; }

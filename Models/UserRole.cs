@@ -1,4 +1,6 @@
-﻿namespace NAME_WIP_BACKEND.Models;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace NAME_WIP_BACKEND.Models;
 
 public class UserRole
 {

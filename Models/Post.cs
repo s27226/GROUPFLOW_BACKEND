@@ -1,5 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(UserId))]
+    [Index(nameof(ProjectId))]
+    [Index(nameof(Created))]
     public class Post
     {
         public int Id { get; set; }
