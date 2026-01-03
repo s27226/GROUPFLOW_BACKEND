@@ -11,9 +11,17 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 
+// Sprawdzenie środowiska
+var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+// Wybór connection stringa w zależności od środowiska
+string connectionString = env == "Development"
+    ? Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_DEV")!
+    : Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_PROD")!;
+
 builder.Services.AddDbContextPool<AppDbContext>(options =>
     options.UseNpgsql(
-        Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING"),
+        connectionString,
         npgsqlOptions =>
         {
             npgsqlOptions.EnableRetryOnFailure();
@@ -62,6 +70,18 @@ builder.Services.AddCors(options =>
 });
 
 using var app = builder.Build();
+
+
+// Middleware zależne od środowiska
+if (env == "Development")
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
 
 app.UseCors();
 app.UseRouting();
