@@ -1,11 +1,21 @@
+using System.ComponentModel.DataAnnotations;
 namespace NAME_WIP_BACKEND.GraphQL.Inputs;
 
-public record UserSkillInput(string SkillName);
+public record UserSkillInput(
+    [property: Required]
+    [property: StringLength(50)]
+    string SkillName
+);
 
-public record UserInterestInput(string InterestName);
+public record UserInterestInput(
+    [property: Required]
+    [property: StringLength(50)]
+    string InterestName
+);
 
 public record SearchUsersInput
 {
+    [StringLength(100)]
     public string? SearchTerm { get; init; }
     public List<string>? Skills { get; init; }
     public List<string>? Interests { get; init; }

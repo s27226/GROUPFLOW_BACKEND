@@ -1,4 +1,20 @@
-﻿namespace NAME_WIP_BACKEND.GraphQL.Inputs;
+﻿using System.ComponentModel.DataAnnotations;
+namespace NAME_WIP_BACKEND.GraphQL.Inputs;
 
-public record FriendRequestInput(int RequesterId, int RequesteeId);
-public record UpdateFriendRequestInput(int Id, int? RequesterId, int? RequesteeId);
+public record FriendRequestInput(
+    [property: Range(1, int.MaxValue)]
+    int RequesterId,
+
+    [property: Range(1, int.MaxValue)]
+    int RequesteeId
+);
+public record UpdateFriendRequestInput(
+    [property: Range(1, int.MaxValue)]
+    int Id,
+
+    [property: Range(1, int.MaxValue)]
+    int? RequesterId,
+
+    [property: Range(1, int.MaxValue)]
+    int? RequesteeId
+);
