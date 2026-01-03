@@ -11,7 +11,13 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING")));
+builder.Services.AddDbContextPool<AppDbContext>(options =>
+    options.UseNpgsql(
+        Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure();
+        }));
 
 
 builder.Services
