@@ -61,12 +61,22 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("DevCors",policy =>
     {
         policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
+    
+    options.AddPolicy("ProdCors",policy =>
+    {
+        policy.WithOrigins("https://groupflows.netlify.app")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+    
 });
 
 using var app = builder.Build();
@@ -83,7 +93,7 @@ else
     app.UseHsts();
 }
 
-app.UseCors();
+app.UseCors(app.Environment.IsDevelopment() ? "DevCors" : "ProdCors");
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
