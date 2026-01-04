@@ -197,7 +197,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("EntryId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "EmoteId", "EntryId")
+                        .IsUnique();
 
                     b.ToTable("EntryReactions");
                 });
@@ -469,7 +470,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "PostId")
+                        .IsUnique();
 
                     b.ToTable("PostLikes");
                 });
@@ -653,7 +655,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("InvitingId");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("ProjectId", "InvitingId", "InvitedId")
+                        .IsUnique();
 
                     b.ToTable("ProjectInvitations");
                 });
@@ -707,7 +710,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "ProjectId")
+                        .IsUnique();
 
                     b.ToTable("ProjectRecommendations");
                 });
@@ -761,6 +765,9 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("ProjectId");
 
+                    b.HasIndex("UserId", "ProjectId")
+                        .IsUnique();
+
                     b.HasIndex("UserId", "ProjectId", "ViewDate")
                         .IsUnique();
 
@@ -785,7 +792,8 @@ namespace NAME_WIP_BACKEND.Migrations
 
                     b.HasIndex("EntryId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "EntryId")
+                        .IsUnique();
 
                     b.ToTable("ReadBys");
                 });
@@ -835,6 +843,9 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasKey("UserId", "PostId");
 
                     b.HasIndex("PostId");
+
+                    b.HasIndex("UserId", "PostId")
+                        .IsUnique();
 
                     b.ToTable("SavedPosts");
                 });
@@ -1016,6 +1027,9 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.HasKey("UserId", "ProjectId");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("UserId", "ProjectId")
+                        .IsUnique();
 
                     b.ToTable("UserProjects");
                 });

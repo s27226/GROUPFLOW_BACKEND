@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(UserId), nameof(PostId), IsUnique = true)]
     public class SavedPost
     {
         public int UserId { get; set; }

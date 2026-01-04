@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NAME_WIP_BACKEND.Models
 {
+    [Index(nameof(UserId), nameof(ProjectId), IsUnique = true)]
     public class ProjectView
     {
         public int Id { get; set; }

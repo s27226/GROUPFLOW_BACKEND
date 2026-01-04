@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 namespace NAME_WIP_BACKEND.Models;
-
+[Index(nameof(UserId), nameof(EntryId), IsUnique = true)]
 public class ReadBy
 {
     public int Id { get; set; }

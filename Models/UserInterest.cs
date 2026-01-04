@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 namespace NAME_WIP_BACKEND.Models;
-
+[Index(nameof(UserId))]
 public class UserInterest
 {
     public int Id { get; set; }

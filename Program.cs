@@ -7,17 +7,19 @@ using NAME_WIP_BACKEND;
 using NAME_WIP_BACKEND.Controllers;
 
 
-DotNetEnv.Env.Load();
-var builder = WebApplication.CreateBuilder(args);
 
+var builder = WebApplication.CreateBuilder(args);
+DotNetEnv.Env.Load();
 
 // Sprawdzenie środowiska
-var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+var env = builder.Environment;
 
 // Wybór connection stringa w zależności od środowiska
-string connectionString = env == "Development"
-    ? Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_DEV")!
-    : Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_PROD")!;
+string connectionString = env.IsDevelopment()
+    ? Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_DEV")
+      ?? throw new InvalidOperationException("POSTGRES_CONN_STRING_DEV not set")
+    : Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_PROD")
+      ?? throw new InvalidOperationException("POSTGRES_CONN_STRING_PROD not set");
 
 builder.Services.AddDbContextPool<AppDbContext>(options =>
     options.UseNpgsql(
@@ -37,7 +39,7 @@ builder.Services
     .AddProjections()
     .AddFiltering()
     .AddSorting()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = env.IsDevelopment())
     .DisableIntrospection(false);
 
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
@@ -82,7 +84,7 @@ builder.Services.AddCors(options =>
 using var app = builder.Build();
 
 // Middleware zależne od środowiska
-if (env == "Development")
+if (env.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
@@ -90,9 +92,10 @@ else
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseCors(app.Environment.IsDevelopment() ? "DevCors" : "ProdCors");
+app.UseCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -108,7 +111,11 @@ app.MapControllers();
 
  using var scope = app.Services.CreateScope();
  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-DataInitializer.Seed(db);
+ if (env.IsDevelopment())
+ {
+     DataInitializer.Seed(db);
+ }
+
  //db.Database.Migrate();
 
 

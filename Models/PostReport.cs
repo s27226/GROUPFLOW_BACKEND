@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 namespace NAME_WIP_BACKEND.Models;
-
+[Index(nameof(PostId))]
 public class PostReport
 {
     public int Id { get; set; }

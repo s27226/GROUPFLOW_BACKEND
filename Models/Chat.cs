@@ -2,6 +2,7 @@
 
 namespace NAME_WIP_BACKEND.Models;
 
+[Index(nameof(ProjectId))]
 public class Chat
 {
     public int Id { get; set; }
