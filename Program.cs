@@ -81,7 +81,6 @@ builder.Services.AddCors(options =>
 
 using var app = builder.Build();
 
-
 // Middleware zależne od środowiska
 if (env == "Development")
 {
