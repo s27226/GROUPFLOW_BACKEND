@@ -1,10 +1,10 @@
 using FluentAssertions;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
 using Xunit;
 
-namespace NAME_WIP_BACKEND.Tests.UnitTests.Queries;
+namespace GroupFlow_BACKEND.Tests.UnitTests.Queries;
 
 /// <summary>
 /// Unit tests for Users GraphQL queries

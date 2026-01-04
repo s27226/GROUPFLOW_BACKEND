@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace NAME_WIP_BACKEND.Migrations
+namespace GroupFlow_BACKEND.Migrations
 {
     /// <inheritdoc />
     public partial class RemoveViewCountAndLikeCountFromProject : Migration

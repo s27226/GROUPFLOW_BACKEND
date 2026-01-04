@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NAME_WIP_BACKEND.Data;
+using GroupFlow_BACKEND.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NAME_WIP_BACKEND.Migrations
+namespace GroupFlow_BACKEND.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20251208225121_AddSavedPosts")]
@@ -25,7 +25,7 @@ namespace NAME_WIP_BACKEND.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Chat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,7 +44,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Chats");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Emote", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Emote", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -61,7 +61,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Emotes");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Entry", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Entry", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -94,7 +94,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Entries");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.EntryReaction", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.EntryReaction", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -122,7 +122,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("EntryReactions");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.FriendRecommendation", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.FriendRecommendation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -148,7 +148,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("FriendRecommendations");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.FriendRequest", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.FriendRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -177,7 +177,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("FriendRequests");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Friendship", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Friendship", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -206,7 +206,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Friendships");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Post", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Post", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -250,7 +250,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Project", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -294,7 +294,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectEvent", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ProjectEvent", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -333,7 +333,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ProjectEvents");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectInvitation", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ProjectInvitation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -367,7 +367,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ProjectInvitations");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectRecommendation", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ProjectRecommendation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -393,7 +393,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ProjectRecommendations");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ReadBy", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ReadBy", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -416,7 +416,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("ReadBys");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.SavedPost", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.SavedPost", b =>
                 {
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -434,7 +434,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("SavedPosts");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.SharedFile", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.SharedFile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -456,7 +456,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("SharedFiles");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -503,7 +503,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserChat", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserChat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -526,7 +526,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserChats");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserProject", b =>
                 {
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -548,7 +548,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserProjects");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserRole", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserRole", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -565,24 +565,24 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Chat", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                    b.HasOne("GroupFlow_BACKEND.Models.Project", "Project")
                         .WithOne("Chat")
-                        .HasForeignKey("NAME_WIP_BACKEND.Models.Chat", "ProjectId")
+                        .HasForeignKey("GroupFlow_BACKEND.Models.Chat", "ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Entry", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Entry", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Chat", null)
+                    b.HasOne("GroupFlow_BACKEND.Models.Chat", null)
                         .WithMany("Entries")
                         .HasForeignKey("ChatId");
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.UserChat", "UserChat")
+                    b.HasOne("GroupFlow_BACKEND.Models.UserChat", "UserChat")
                         .WithMany("Entries")
                         .HasForeignKey("UserChatId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -591,21 +591,21 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("UserChat");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.EntryReaction", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.EntryReaction", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Emote", "Emote")
+                    b.HasOne("GroupFlow_BACKEND.Models.Emote", "Emote")
                         .WithMany("Reactions")
                         .HasForeignKey("EmoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.Entry", "Entry")
+                    b.HasOne("GroupFlow_BACKEND.Models.Entry", "Entry")
                         .WithMany("Reactions")
                         .HasForeignKey("EntryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("EntryReactions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -618,15 +618,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.FriendRecommendation", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.FriendRecommendation", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "RecommendedFor")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "RecommendedFor")
                         .WithMany()
                         .HasForeignKey("RecommendedForId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "RecommendedWho")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "RecommendedWho")
                         .WithMany()
                         .HasForeignKey("RecommendedWhoId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -637,15 +637,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("RecommendedWho");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.FriendRequest", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.FriendRequest", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Requestee")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "Requestee")
                         .WithMany()
                         .HasForeignKey("RequesteeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Requester")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "Requester")
                         .WithMany()
                         .HasForeignKey("RequesterId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -656,15 +656,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Requester");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Friendship", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Friendship", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Friend")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "Friend")
                         .WithMany("ReceivedFriendships")
                         .HasForeignKey("FriendId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("InitiatedFriendships")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -675,14 +675,14 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Post", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Post", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                    b.HasOne("GroupFlow_BACKEND.Models.Project", "Project")
                         .WithMany("Posts")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -693,9 +693,9 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Project", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Owner")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "Owner")
                         .WithMany("OwnedProjects")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -704,15 +704,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectEvent", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ProjectEvent", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "CreatedBy")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "CreatedBy")
                         .WithMany("CreatedEvents")
                         .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                    b.HasOne("GroupFlow_BACKEND.Models.Project", "Project")
                         .WithMany("Events")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -723,21 +723,21 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectInvitation", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ProjectInvitation", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Invited")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "Invited")
                         .WithMany()
                         .HasForeignKey("InvitedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "Inviting")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "Inviting")
                         .WithMany()
                         .HasForeignKey("InvitingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                    b.HasOne("GroupFlow_BACKEND.Models.Project", "Project")
                         .WithMany()
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -750,15 +750,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ProjectRecommendation", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ProjectRecommendation", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                    b.HasOne("GroupFlow_BACKEND.Models.Project", "Project")
                         .WithMany()
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -769,15 +769,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.ReadBy", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.ReadBy", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Entry", "Entry")
+                    b.HasOne("GroupFlow_BACKEND.Models.Entry", "Entry")
                         .WithMany("ReadBys")
                         .HasForeignKey("EntryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("ReadBys")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -788,15 +788,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.SavedPost", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.SavedPost", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Post", "Post")
+                    b.HasOne("GroupFlow_BACKEND.Models.Post", "Post")
                         .WithMany("SavedBy")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("SavedPosts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -807,9 +807,9 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.SharedFile", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.SharedFile", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Chat", "Chat")
+                    b.HasOne("GroupFlow_BACKEND.Models.Chat", "Chat")
                         .WithMany("SharedFiles")
                         .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -818,24 +818,24 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Chat");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.User", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.UserRole", "UserRole")
+                    b.HasOne("GroupFlow_BACKEND.Models.UserRole", "UserRole")
                         .WithMany("Users")
                         .HasForeignKey("UserRoleId");
 
                     b.Navigation("UserRole");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserChat", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserChat", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Chat", "Chat")
+                    b.HasOne("GroupFlow_BACKEND.Models.Chat", "Chat")
                         .WithMany("UserChats")
                         .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("UserChats")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -846,15 +846,15 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserProject", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserProject", b =>
                 {
-                    b.HasOne("NAME_WIP_BACKEND.Models.Project", "Project")
+                    b.HasOne("GroupFlow_BACKEND.Models.Project", "Project")
                         .WithMany("Collaborators")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NAME_WIP_BACKEND.Models.User", "User")
+                    b.HasOne("GroupFlow_BACKEND.Models.User", "User")
                         .WithMany("ProjectCollaborations")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -865,7 +865,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Chat", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Chat", b =>
                 {
                     b.Navigation("Entries");
 
@@ -874,24 +874,24 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("UserChats");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Emote", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Emote", b =>
                 {
                     b.Navigation("Reactions");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Entry", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Entry", b =>
                 {
                     b.Navigation("Reactions");
 
                     b.Navigation("ReadBys");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Post", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Post", b =>
                 {
                     b.Navigation("SavedBy");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.Project", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.Project", b =>
                 {
                     b.Navigation("Chat");
 
@@ -902,7 +902,7 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("Posts");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.User", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.User", b =>
                 {
                     b.Navigation("CreatedEvents");
 
@@ -925,12 +925,12 @@ namespace NAME_WIP_BACKEND.Migrations
                     b.Navigation("UserChats");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserChat", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserChat", b =>
                 {
                     b.Navigation("Entries");
                 });
 
-            modelBuilder.Entity("NAME_WIP_BACKEND.Models.UserRole", b =>
+            modelBuilder.Entity("GroupFlow_BACKEND.Models.UserRole", b =>
                 {
                     b.Navigation("Users");
                 });

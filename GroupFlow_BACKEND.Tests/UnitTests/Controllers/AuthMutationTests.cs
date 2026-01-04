@@ -1,11 +1,11 @@
 using FluentAssertions;
+using GroupFlow_BACKEND.Controllers;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Controllers;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
 using Xunit;
 
-namespace NAME_WIP_BACKEND.Tests.UnitTests.Controllers;
+namespace GroupFlow_BACKEND.Tests.UnitTests.Controllers;
 
 /// <summary>
 /// Unit tests for authentication mutations (register and login)

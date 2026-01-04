@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace NAME_WIP_BACKEND.Models;
+namespace GroupFlow_BACKEND.Models;
 
 public class ProjectInterest
 {

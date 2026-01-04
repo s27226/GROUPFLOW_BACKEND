@@ -1,9 +1,9 @@
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GroupFlow_BACKEND.Models;
 using System.Security.Claims;
+using GroupFlow_BACKEND.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations;
+namespace GroupFlow_BACKEND.GraphQL.Mutations;
 
 public class FriendshipMutation
 {

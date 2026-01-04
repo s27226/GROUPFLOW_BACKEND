@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NAME_WIP_BACKEND.csproj" />
+    <ProjectReference Include="..\GroupFlow_BACKEND.csproj" />
   </ItemGroup>
 
 </Project>

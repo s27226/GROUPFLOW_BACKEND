@@ -1,9 +1,9 @@
 using System.Security.Claims;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations;
+namespace GroupFlow_BACKEND.GraphQL.Mutations;
 
 public class SavedPostMutation
 {

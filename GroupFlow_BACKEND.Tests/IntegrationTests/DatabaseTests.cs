@@ -1,10 +1,10 @@
 using FluentAssertions;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
 using Xunit;
 
-namespace NAME_WIP_BACKEND.Tests.IntegrationTests;
+namespace GroupFlow_BACKEND.Tests.IntegrationTests;
 
 /// <summary>
 /// Integration tests for database operations and Entity Framework relationships

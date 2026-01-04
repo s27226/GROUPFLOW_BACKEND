@@ -1,7 +1,7 @@
-﻿using NAME_WIP_BACKEND.Controllers;
-using NAME_WIP_BACKEND.GraphQL.Mutations;
+﻿using GroupFlow_BACKEND.Controllers;
+using GroupFlow_BACKEND.GraphQL.Mutations;
 
-namespace NAME_WIP_BACKEND;
+namespace GroupFlow_BACKEND;
 
 public class Mutation
 {

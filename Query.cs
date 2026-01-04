@@ -1,7 +1,7 @@
-﻿using NAME_WIP_BACKEND.GraphQL.Queries;
-using NAME_WIP_BACKEND.Models;
+﻿using GroupFlow_BACKEND.GraphQL.Queries;
+using GroupFlow_BACKEND.Models;
 
-namespace NAME_WIP_BACKEND;
+namespace GroupFlow_BACKEND;
 
 public class Query
 {

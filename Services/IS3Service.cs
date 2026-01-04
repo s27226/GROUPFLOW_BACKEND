@@ -1,4 +1,4 @@
-namespace NAME_WIP_BACKEND.Services
+namespace GroupFlow_BACKEND.Services
 {
     public interface IS3Service
     {

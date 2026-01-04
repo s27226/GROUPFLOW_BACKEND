@@ -1,7 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 
-namespace NAME_WIP_BACKEND.Services
+namespace GroupFlow_BACKEND.Services
 {
     public class S3Service : IS3Service
     {

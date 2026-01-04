@@ -1,7 +1,7 @@
+using GroupFlow_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Models;
 
-namespace NAME_WIP_BACKEND.Data;
+namespace GroupFlow_BACKEND.Data;
 
 public class AppDbContext : DbContext
 {

@@ -1,4 +1,7 @@
-﻿namespace NAME_WIP_BACKEND.Controllers;
+﻿using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
+
+namespace GroupFlow_BACKEND.Controllers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -8,8 +11,8 @@ using HotChocolate;
 using HotChocolate.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 
 public class AuthMutation
 {

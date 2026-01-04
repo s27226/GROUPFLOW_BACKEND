@@ -1,10 +1,10 @@
-﻿using NAME_WIP_BACKEND.Data;
+﻿using GroupFlow_BACKEND.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using HotChocolate;
 using HotChocolate.AspNetCore;
-using NAME_WIP_BACKEND;
-using NAME_WIP_BACKEND.Controllers;
+using GroupFlow_BACKEND;
+using GroupFlow_BACKEND.Controllers;
 
 
 DotNetEnv.Env.Load();

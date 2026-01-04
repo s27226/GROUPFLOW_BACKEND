@@ -1,6 +1,6 @@
-using NAME_WIP_BACKEND.Models;
+using GroupFlow_BACKEND.Models;
 
-namespace NAME_WIP_BACKEND.Services
+namespace GroupFlow_BACKEND.Services
 {
     /// <summary>
     /// Helper class for organizing blob storage paths

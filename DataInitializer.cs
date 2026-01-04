@@ -1,8 +1,8 @@
-﻿using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+﻿using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace NAME_WIP_BACKEND;
+namespace GroupFlow_BACKEND;
 
 public class DataInitializer
 {

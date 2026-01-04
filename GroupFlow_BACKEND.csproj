@@ -8,10 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="NAME_WIP_BACKEND.Tests/**" />
-    <Content Remove="NAME_WIP_BACKEND.Tests/**" />
-    <EmbeddedResource Remove="NAME_WIP_BACKEND.Tests/**" />
-    <None Remove="NAME_WIP_BACKEND.Tests/**" />
+    <Compile Remove="GroupFlow_BACKEND.Tests/**" />
+    <Content Remove="GroupFlow_BACKEND.Tests/**" />
+    <EmbeddedResource Remove="GroupFlow_BACKEND.Tests/**" />
+    <None Remove="GroupFlow_BACKEND.Tests/**" />
   </ItemGroup>
 
   <ItemGroup>

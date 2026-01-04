@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace NAME_WIP_BACKEND.Models;
+namespace GroupFlow_BACKEND.Models;
 
 public record UserRegisterInput(
     [property: Required]

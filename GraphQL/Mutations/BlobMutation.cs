@@ -1,13 +1,13 @@
 using HotChocolate;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
-using NAME_WIP_BACKEND.Services;
 using System.Security.Claims;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.GraphQL.Inputs;
+using GroupFlow_BACKEND.Models;
+using GroupFlow_BACKEND.Services;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations
+namespace GroupFlow_BACKEND.GraphQL.Mutations
 {
     [ExtendObjectType(typeof(Mutation))]
     public class BlobMutation

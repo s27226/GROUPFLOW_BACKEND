@@ -1,7 +1,7 @@
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GroupFlow_BACKEND.Data;
+using GroupFlow_BACKEND.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Queries;
+namespace GroupFlow_BACKEND.GraphQL.Queries;
 
 public class ProjectEventQuery
 {
