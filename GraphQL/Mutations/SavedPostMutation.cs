@@ -2,69 +2,38 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.Services;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class SavedPostMutation
 {
+    private readonly SavedPostService _service;
+
+    public SavedPostMutation(SavedPostService service)
+    {
+        _service = service;
+    }
+
     [GraphQLName("savePost")]
-    public async Task<SavedPost> SavePost(
-        [Service] AppDbContext context,
+    public Task<SavedPost> SavePost(
         [Service] IHttpContextAccessor httpContextAccessor,
         int postId)
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
 
-        // Check if post exists
-        var post = await context.Posts.FindAsync(postId);
-        if (post == null)
-        {
-            throw new GraphQLException("Post not found");
-        }
-
-        // Check if already saved
-        var existingSave = await context.SavedPosts
-            .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
-
-        if (existingSave != null)
-        {
-            throw new GraphQLException("Post is already saved");
-        }
-
-        var savedPost = new SavedPost
-        {
-            UserId = userId,
-            PostId = postId,
-            SavedAt = DateTime.UtcNow
-        };
-
-        context.SavedPosts.Add(savedPost);
-        await context.SaveChangesAsync();
-
-        return savedPost;
+        return _service.SavePost(userId, postId);
     }
 
     [GraphQLName("unsavePost")]
-    public async Task<bool> UnsavePost(
-        [Service] AppDbContext context,
+    public Task<bool> UnsavePost(
         [Service] IHttpContextAccessor httpContextAccessor,
         int postId)
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
 
-        var savedPost = await context.SavedPosts
-            .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
-
-        if (savedPost == null)
-        {
-            throw new GraphQLException("Post is not saved");
-        }
-
-        context.SavedPosts.Remove(savedPost);
-        await context.SaveChangesAsync();
-
-        return true;
+        return _service.UnsavePost(userId, postId);
     }
 }

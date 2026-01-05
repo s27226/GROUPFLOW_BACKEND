@@ -1,10 +1,13 @@
-﻿using NAME_WIP_BACKEND.Data;
+﻿using System.Reflection;
+using NAME_WIP_BACKEND.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using HotChocolate;
 using HotChocolate.AspNetCore;
 using NAME_WIP_BACKEND;
 using NAME_WIP_BACKEND.Controllers;
+using Microsoft.Extensions.DependencyInjection;
+using Scrutor;
 
 
 
@@ -29,7 +32,34 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
             npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
         }));
 
+var assembly = Assembly.GetExecutingAssembly();
 
+// Rejestracja wszystkich serwisów kończących się na "Service"
+builder.Services.Scan(scan => scan
+    .FromAssemblies(assembly)
+    .AddClasses(classes => classes
+        .Where(type => 
+            type.Name.EndsWith("Service") &&
+            type.Name != "S3Service" &&
+            type.Name != "IS3Service"
+            ))
+    .AsSelf()
+    .WithScopedLifetime()
+);
+
+
+// Rejestracja wszystkich mutacji kończących się na "Mutation"
+builder.Services.Scan(scan => scan
+    .FromAssemblies(assembly)
+    .AddClasses(classes => classes
+        .Where(t =>
+            t.Name.EndsWith("Mutation") &&
+            t.Namespace == "NAME_WIP_BACKEND.GraphQL.Mutations"))
+    .AsSelf()
+    .WithScopedLifetime()
+);
+
+builder.Services.AddScoped<Mutation>();
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<Query>()
@@ -65,10 +95,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors",policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        
+        
+        // policy.WithOrigins("http://localhost:3000")
+        //       .AllowAnyHeader()
+        //       .AllowAnyMethod()
+        //       ;
     });
     
     options.AddPolicy("ProdCors",policy =>
@@ -76,7 +111,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("https://groupflows.netlify.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            ;
     });
     
 });
@@ -100,8 +135,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGraphQL("/api");
-app.MapControllers();
+app.MapGraphQL("/api").RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");;
+app.MapControllers().RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
 // app.Run();
 
 //

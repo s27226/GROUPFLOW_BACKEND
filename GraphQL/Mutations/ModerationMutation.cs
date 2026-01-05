@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.Services;
 using BCrypt.Net;
 using System.Security.Claims;
 
@@ -9,225 +10,48 @@ namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class ModerationMutation
 {
-    public async Task<User> BanUser(BanUserInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
+    
+    private readonly ModerationService _service;
+
+    public ModerationMutation(ModerationService service)
     {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can ban users.");
-        }
-
-        var user = await context.Users.FindAsync(input.UserId);
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
-
-        user.IsBanned = true;
-        user.BanReason = input.Reason;
-        user.BanExpiresAt = input.ExpiresAt;
-        user.BannedByUserId = moderatorId;
-
-        await context.SaveChangesAsync();
-        return user;
+        _service = service;
     }
+    
+    private static int GetUserId(ClaimsPrincipal user)
+        => int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? throw new UnauthorizedException("Not authenticated"));
 
-    public async Task<User> UnbanUser(int userId, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can unban users.");
-        }
+    public Task<User> BanUser(
+        BanUserInput input,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+        => _service.BanUserAsync(GetUserId(user), input.UserId, input.Reason, input.ExpiresAt, ct);
 
-        var user = await context.Users.FindAsync(userId);
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
+    public Task<User> UnbanUser(int userId, ClaimsPrincipal user, CancellationToken ct)
+        => _service.UnbanUserAsync(GetUserId(user), userId, ct);
 
-        user.IsBanned = false;
-        user.BanReason = null;
-        user.BanExpiresAt = null;
-        user.BannedByUserId = null;
+    public Task<User> SuspendUser(SuspendUserInput input, ClaimsPrincipal user, CancellationToken ct)
+        => _service.SuspendUserAsync(GetUserId(user), input.UserId, input.SuspendedUntil, ct);
 
-        await context.SaveChangesAsync();
-        return user;
-    }
+    public Task<User> UnsuspendUser(int userId, ClaimsPrincipal user, CancellationToken ct)
+        => _service.UnsuspendUserAsync(GetUserId(user), userId, ct);
 
-    public async Task<User> SuspendUser(SuspendUserInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can suspend users.");
-        }
+    public Task<bool> DeletePost(int postId, ClaimsPrincipal user, CancellationToken ct)
+        => _service.DeletePostAsync(GetUserId(user), postId, ct);
 
-        var user = await context.Users.FindAsync(input.UserId);
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
+    public Task<bool> DeleteComment(int commentId, ClaimsPrincipal user, CancellationToken ct)
+        => _service.DeleteCommentAsync(GetUserId(user), commentId, ct);
 
-        user.SuspendedUntil = input.SuspendedUntil;
+    public Task<bool> DeleteProject(int projectId, ClaimsPrincipal user, CancellationToken ct)
+        => _service.DeleteProjectAsync(GetUserId(user), projectId, ct);
 
-        await context.SaveChangesAsync();
-        return user;
-    }
+    public Task<bool> DeleteChat(int chatId, ClaimsPrincipal user, CancellationToken ct)
+        => _service.DeleteChatAsync(GetUserId(user), chatId, ct);
 
-    public async Task<User> UnsuspendUser(int userId, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can unsuspend users.");
-        }
+    public Task<User> ResetPassword(ResetPasswordInput input, ClaimsPrincipal user, CancellationToken ct)
+        => _service.ResetPasswordAsync(GetUserId(user), input.UserId, input.NewPassword, ct);
 
-        var user = await context.Users.FindAsync(userId);
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
-
-        user.SuspendedUntil = null;
-
-        await context.SaveChangesAsync();
-        return user;
-    }
-
-    public async Task<bool> DeletePost(int postId, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can delete posts.");
-        }
-
-        var post = await context.Posts.FindAsync(postId);
-        if (post == null)
-        {
-            throw new Exception("Post not found.");
-        }
-
-        context.Posts.Remove(post);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> DeleteComment(int commentId, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can delete comments.");
-        }
-
-        var comment = await context.PostComments.FindAsync(commentId);
-        if (comment == null)
-        {
-            throw new Exception("Comment not found.");
-        }
-
-        context.PostComments.Remove(comment);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> DeleteProject(int projectId, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can delete projects.");
-        }
-
-        var project = await context.Projects.FindAsync(projectId);
-        if (project == null)
-        {
-            throw new Exception("Project not found.");
-        }
-
-        context.Projects.Remove(project);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> DeleteChat(int chatId, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can delete chats.");
-        }
-
-        var chat = await context.Chats.FindAsync(chatId);
-        if (chat == null)
-        {
-            throw new Exception("Chat not found.");
-        }
-
-        context.Chats.Remove(chat);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<User> ResetPassword(ResetPasswordInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can reset passwords.");
-        }
-
-        var user = await context.Users.FindAsync(input.UserId);
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
-
-        user.Password = BCrypt.Net.BCrypt.HashPassword(input.NewPassword);
-
-        await context.SaveChangesAsync();
-        return user;
-    }
-
-    public async Task<User> ManageUserRole(ManageUserRoleInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
-    {
-        var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        var moderator = await context.Users.FindAsync(moderatorId);
-        
-        if (moderator == null || !moderator.IsModerator)
-        {
-            throw new UnauthorizedAccessException("Only moderators can manage user roles.");
-        }
-
-        var user = await context.Users.FindAsync(input.UserId);
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
-
-        user.IsModerator = input.IsModerator;
-
-        await context.SaveChangesAsync();
-        return user;
-    }
+    public Task<User> ManageUserRole(ManageUserRoleInput input, ClaimsPrincipal user, CancellationToken ct)
+        => _service.ManageUserRoleAsync(GetUserId(user), input.UserId, input.IsModerator, ct);
 }

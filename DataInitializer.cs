@@ -6,7 +6,7 @@ namespace NAME_WIP_BACKEND;
 
 public class DataInitializer
 {
-    public static void Seed(AppDbContext db)
+    public static async void Seed(AppDbContext db)
         {
             Console.WriteLine("=== STARTING DATA SEEDING ===");
             
@@ -21,7 +21,7 @@ public class DataInitializer
                     new() { RoleName = "Admin" }
                 };
                 db.UserRoles.AddRange(roles);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
             
             // === USERS ===
@@ -38,7 +38,7 @@ public class DataInitializer
                     new() { Name = "Eve", Surname = "Williams", Nickname = "Eve", Email = "eve@example.com", Password = BCrypt.Net.BCrypt.HashPassword("123"), ProfilePic = "https://picsum.photos/200/200?random=7", Joined = DateTime.UtcNow.AddDays(-6), UserRoleId = 1, IsModerator = true } // Eve is a moderator
                 };
                 db.Users.AddRange(users);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             
@@ -61,7 +61,7 @@ public class DataInitializer
                     new() { Name = "Eh"}
                 };
                 db.Emotes.AddRange(emotes);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === FRIEND REQUESTS ===
@@ -73,14 +73,14 @@ public class DataInitializer
                     new() { RequesterId = 2, RequesteeId = 3, Sent = DateTime.UtcNow.AddDays(-3), Expiring = DateTime.UtcNow.AddDays(2) }
                 };
                 db.FriendRequests.AddRange(requests);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === FRIEND RECOMMENDATIONS ===
             if (!db.FriendRecommendations.Any())
             {
                 db.FriendRecommendations.Add(new FriendRecommendation { RecommendedWhoId = 1, RecommendedForId = 3, RecValue = 1 });
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === PROJECTS ===
@@ -151,7 +151,7 @@ public class DataInitializer
                     }
                 };
                 db.Projects.AddRange(projects);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
                 
                 // === CHATS (linked to projects) ===
                 Console.WriteLine("Seeding Chats for Projects...");
@@ -160,7 +160,7 @@ public class DataInitializer
                     var chat = new Chat { ProjectId = project.Id };
                     db.Chats.Add(chat);
                 }
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === USER PROJECTS (Collaborations) ===
@@ -173,7 +173,7 @@ public class DataInitializer
                     new() { UserId = 1, ProjectId = 3, Role = "Viewer" } // Jan can view Kamil's analytics platform
                 };
                 db.UserProjects.AddRange(userProjects);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === PROJECT INVITATIONS ===
@@ -184,7 +184,7 @@ public class DataInitializer
                     new() { ProjectId = 1, InvitingId = 1, InvitedId = 3, Sent = DateTime.UtcNow.AddDays(-1), Expiring = DateTime.UtcNow.AddDays(2) }
                 };
                 db.ProjectInvitations.AddRange(invitations);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === POSTS ===
@@ -290,7 +290,7 @@ public class DataInitializer
 
                 // Save all posts first so they get IDs
                 db.Posts.AddRange(posts);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 // Now create Eve's post that shares Alice's post (after posts have IDs)
                 if (eve != null && projects.Any())
@@ -313,7 +313,7 @@ public class DataInitializer
                     };
                     
                     db.Posts.Add(evePost);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
 
@@ -321,7 +321,7 @@ public class DataInitializer
             if (!db.ProjectRecommendations.Any())
             {
                 db.ProjectRecommendations.Add(new ProjectRecommendation { UserId = 2, ProjectId = 2, RecValue = 2 });
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === USERCHATS (linking users to project chats) ===
@@ -365,7 +365,7 @@ public class DataInitializer
                 
                 Console.WriteLine($"Total UserChats to add: {userChats.Count}");
                 db.UserChats.AddRange(userChats);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
                 Console.WriteLine("UserChats seeding completed");
             }
 
@@ -402,7 +402,7 @@ public class DataInitializer
                     }
                 }
                 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === SHARED FILES (must come after Chats) ===
@@ -424,7 +424,7 @@ public class DataInitializer
                     }
                     
                     db.SharedFiles.AddRange(files);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
 
@@ -441,7 +441,7 @@ public class DataInitializer
                         new() { EntryId = entries[2].Id, UserId = 1, EmoteId = 1 }
                     };
                     db.EntryReactions.AddRange(reactions);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
 
@@ -459,7 +459,7 @@ public class DataInitializer
                         new() { UserId = 1, EntryId = entries[2].Id }
                     };
                     db.ReadBys.AddRange(readBys);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
 
@@ -473,7 +473,7 @@ public class DataInitializer
                     new() { UserId = 1, FriendId = 3, IsAccepted = false, CreatedAt = DateTime.UtcNow.AddDays(-2) } // Jan sent friend request to Kamil (pending)
                 };
                 db.Friendships.AddRange(friendships);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === PROJECT EVENTS ===
@@ -500,7 +500,7 @@ public class DataInitializer
                     new() { ProjectId = 3, CreatedById = 3, Title = "Testing Phase", Description = "End-to-end testing", EventDate = DateTime.UtcNow.AddDays(10), Time = "13:00", CreatedAt = DateTime.UtcNow.AddHours(-12) }
                 };
                 db.ProjectEvents.AddRange(projectEvents);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             // === SAVED POSTS ===
@@ -542,7 +542,7 @@ public class DataInitializer
                     }
                     
                     db.SavedPosts.AddRange(savedPosts);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                     Console.WriteLine($"Seeded {savedPosts.Count} saved posts");
                 }
             }
@@ -578,7 +578,7 @@ public class DataInitializer
                 };
 
                 db.UserSkills.AddRange(skills);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
             
             // === USER INTERESTS ===
@@ -612,7 +612,7 @@ public class DataInitializer
                 };
 
                 db.UserInterests.AddRange(interests);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
             
             // === POST LIKES ===
@@ -660,7 +660,7 @@ public class DataInitializer
                     };
 
                     db.PostLikes.AddRange(likes);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
             
@@ -690,7 +690,7 @@ public class DataInitializer
                     };
 
                     db.PostComments.AddRange(comment1, comment2);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
 
                     // Reply
                     var reply = new PostComment
@@ -703,7 +703,7 @@ public class DataInitializer
                     };
 
                     db.PostComments.Add(reply);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
             
@@ -746,7 +746,7 @@ public class DataInitializer
                     };
 
                     db.PostCommentLikes.AddRange(likes);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
             

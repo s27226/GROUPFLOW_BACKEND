@@ -2,27 +2,43 @@
 using NAME_WIP_BACKEND.GraphQL.Inputs;
 using NAME_WIP_BACKEND.Models;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class FriendRequestMutation
 {
-    public FriendRequest? SendFriendRequest(
-        AppDbContext context, 
-        ClaimsPrincipal claimsPrincipal,
-        int requesteeId)
+    private const int FriendRequestExpirationHours = 72;
+    
+    private static int GetUserId(ClaimsPrincipal claimsPrincipal)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int requesterId))
+        var claim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null || !int.TryParse(claim.Value, out var userId))
         {
             throw new GraphQLException("User not authenticated");
         }
+        return userId;
+    }
+    
+    
+    public async Task<FriendRequest> SendFriendRequest(
+        AppDbContext context,
+        ClaimsPrincipal claimsPrincipal,
+        int requesteeId,
+        CancellationToken cancellationToken)
+    {
+        var requesterId = GetUserId(claimsPrincipal);
 
-        // Check if request already exists
-        var existingRequest = context.FriendRequests
-            .FirstOrDefault(fr => fr.RequesterId == requesterId && fr.RequesteeId == requesteeId);
-        
-        if (existingRequest != null)
+        if (requesterId == requesteeId)
+        {
+            throw new GraphQLException("You cannot send a friend request to yourself");
+        }
+
+        var exists = await context.FriendRequests.AnyAsync(
+            fr => fr.RequesterId == requesterId && fr.RequesteeId == requesteeId,
+            cancellationToken);
+
+        if (exists)
         {
             throw new GraphQLException("Friend request already sent");
         }
@@ -32,11 +48,11 @@ public class FriendRequestMutation
             RequesterId = requesterId,
             RequesteeId = requesteeId,
             Sent = DateTime.UtcNow,
-            Expiring = DateTime.UtcNow.AddHours(72)
+            Expiring = DateTime.UtcNow.AddHours(FriendRequestExpirationHours)
         };
-        
+
         context.FriendRequests.Add(request);
-        context.SaveChanges();
+        await context.SaveChangesAsync(cancellationToken);
         
         // Load navigation properties
         context.Entry(request).Reference(r => r.Requester).Load();
@@ -45,115 +61,144 @@ public class FriendRequestMutation
         return request;
     }
 
-    public bool AcceptFriendRequest(
+    public async Task<bool> AcceptFriendRequest(
         AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        int friendRequestId)
+        int friendRequestId,
+        CancellationToken cancellationToken)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            throw new GraphQLException("User not authenticated");
-        }
+        var userId = GetUserId(claimsPrincipal);
 
-        var request = context.FriendRequests.Find(friendRequestId);
+        var request = await context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.Id == friendRequestId, cancellationToken);
+
         if (request == null)
-        {
             throw new GraphQLException("Friend request not found");
-        }
 
-        // Verify that the current user is the requestee
         if (request.RequesteeId != userId)
-        {
-            throw new GraphQLException("You can only accept friend requests sent to you");
-        }
+            throw new GraphQLException("Not authorized");
 
-        // Create friendship (bidirectional)
-        var friendship1 = new Friendship
-        {
-            UserId = request.RequesterId,
-            FriendId = request.RequesteeId,
-            IsAccepted = true,
-            CreatedAt = DateTime.UtcNow
-        };
+        using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
-        var friendship2 = new Friendship
-        {
-            UserId = request.RequesteeId,
-            FriendId = request.RequesterId,
-            IsAccepted = true,
-            CreatedAt = DateTime.UtcNow
-        };
+        context.Friendships.AddRange(
+            new Friendship
+            {
+                UserId = request.RequesterId,
+                FriendId = request.RequesteeId,
+                IsAccepted = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Friendship
+            {
+                UserId = request.RequesteeId,
+                FriendId = request.RequesterId,
+                IsAccepted = true,
+                CreatedAt = DateTime.UtcNow
+            });
 
-        context.Friendships.AddRange(friendship1, friendship2);
-        
-        // Remove the friend request
         context.FriendRequests.Remove(request);
-        context.SaveChanges();
+
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return true;
     }
 
-    public bool RejectFriendRequest(
+    
+    public async Task<bool> RejectFriendRequest(
         AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        int friendRequestId)
+        int friendRequestId,
+        CancellationToken cancellationToken)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            throw new GraphQLException("User not authenticated");
-        }
+        var userId = GetUserId(claimsPrincipal);
 
-        var request = context.FriendRequests.Find(friendRequestId);
+        var request = await context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.Id == friendRequestId, cancellationToken);
+
         if (request == null)
-        {
             throw new GraphQLException("Friend request not found");
-        }
 
-        // Verify that the current user is the requestee
         if (request.RequesteeId != userId)
-        {
             throw new GraphQLException("You can only reject friend requests sent to you");
-        }
 
-        // Simply remove the friend request
         context.FriendRequests.Remove(request);
-        context.SaveChanges();
+        await context.SaveChangesAsync(cancellationToken);
 
         return true;
     }
-
-    public FriendRequest CreateFriendRequest(AppDbContext context, FriendRequestInput input)
+    public async Task<FriendRequest> CreateFriendRequest(
+        AppDbContext context,
+        ClaimsPrincipal claimsPrincipal,
+        FriendRequestInput input,
+        CancellationToken cancellationToken)
     {
+        var requesterId = GetUserId(claimsPrincipal);
+    
+        if (requesterId == input.RequesteeId)
+            throw new GraphQLException("You cannot send a friend request to yourself.");
+    
+        var exists = await context.FriendRequests.AnyAsync(
+            fr => fr.RequesterId == requesterId && fr.RequesteeId == input.RequesteeId,
+            cancellationToken);
+    
+        if (exists)
+            throw new GraphQLException("Friend request already exists");
+    
         var request = new FriendRequest
         {
-            RequesterId = input.RequesterId,
+            RequesterId = requesterId,
             RequesteeId = input.RequesteeId,
             Sent = DateTime.UtcNow,
-            Expiring = DateTime.Now.AddHours(3)
+            Expiring = DateTime.UtcNow.AddHours(FriendRequestExpirationHours)
         };
+    
         context.FriendRequests.Add(request);
-        context.SaveChanges();
+        await context.SaveChangesAsync(cancellationToken);
+    
         return request;
     }
 
-    public FriendRequest? UpdateFriendRequest(AppDbContext context, UpdateFriendRequestInput input)
+    
+    
+    
+    
+
+    
+
+
+
+    public async Task<FriendRequest?> UpdateFriendRequest(
+        AppDbContext context,
+        UpdateFriendRequestInput input,
+        CancellationToken cancellationToken)
     {
-        var request = context.FriendRequests.Find(input.Id);
-        if (request == null) return null;
+        var request = await context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.Id == input.Id, cancellationToken);
+
+        if (request == null)
+            return null;
         if (input.RequesterId.HasValue) request.RequesterId = input.RequesterId.Value;
         if (input.RequesteeId.HasValue) request.RequesteeId = input.RequesteeId.Value;
-        context.SaveChanges();
+        await context.SaveChangesAsync(cancellationToken);
         return request;
     }
 
-    public bool DeleteFriendRequest(AppDbContext context, int id)
+    public async Task<bool> DeleteFriendRequest(
+        AppDbContext context,
+        int id,
+        CancellationToken cancellationToken)
     {
-        var request = context.FriendRequests.Find(id);
-        if (request == null) return false;
+        var request = await context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.Id == id, cancellationToken);
+
+        if (request == null)
+            return false;
+
         context.FriendRequests.Remove(request);
-        context.SaveChanges();
+        await context.SaveChangesAsync(cancellationToken);
+
         return true;
     }
+
 }

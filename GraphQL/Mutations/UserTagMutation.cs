@@ -4,126 +4,56 @@ using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.Services;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class UserTagMutation
 {
+    private readonly UserTagService _service;
+
+    public UserTagMutation(UserTagService service)
+    {
+        _service = service;
+    }
+
     [Authorize]
     [GraphQLName("addskill")]
-    public async Task<UserSkill?> AddSkill(
-        AppDbContext context,
+    public Task<UserSkill?> AddSkill(
         ClaimsPrincipal claimsPrincipal,
         UserSkillInput input)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return null;
-        }
-
-        var existingSkill = await context.UserSkills
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.SkillName == input.SkillName);
-
-        if (existingSkill != null)
-        {
-            return existingSkill;
-        }
-
-        var skill = new UserSkill
-        {
-            UserId = userId,
-            SkillName = input.SkillName,
-            AddedAt = DateTime.UtcNow
-        };
-
-        context.UserSkills.Add(skill);
-        await context.SaveChangesAsync();
-        return skill;
+        int userId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return _service.AddSkill(userId, input.SkillName);
     }
 
     [Authorize]
     [GraphQLName("removeskill")]
-    public async Task<bool> RemoveSkill(
-        AppDbContext context,
+    public Task<bool> RemoveSkill(
         ClaimsPrincipal claimsPrincipal,
         int skillId)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return false;
-        }
-
-        var skill = await context.UserSkills
-            .FirstOrDefaultAsync(s => s.Id == skillId && s.UserId == userId);
-
-        if (skill == null)
-        {
-            return false;
-        }
-
-        context.UserSkills.Remove(skill);
-        await context.SaveChangesAsync();
-        return true;
+        int userId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return _service.RemoveSkill(userId, skillId);
     }
 
     [Authorize]
     [GraphQLName("addinterest")]
-    public async Task<UserInterest?> AddInterest(
-        AppDbContext context,
+    public Task<UserInterest?> AddInterest(
         ClaimsPrincipal claimsPrincipal,
         UserInterestInput input)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return null;
-        }
-
-        var existingInterest = await context.UserInterests
-            .FirstOrDefaultAsync(i => i.UserId == userId && i.InterestName == input.InterestName);
-
-        if (existingInterest != null)
-        {
-            return existingInterest;
-        }
-
-        var interest = new UserInterest
-        {
-            UserId = userId,
-            InterestName = input.InterestName,
-            AddedAt = DateTime.UtcNow
-        };
-
-        context.UserInterests.Add(interest);
-        await context.SaveChangesAsync();
-        return interest;
+        int userId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return _service.AddInterest(userId, input.InterestName);
     }
 
     [Authorize]
     [GraphQLName("removeinterest")]
-    public async Task<bool> RemoveInterest(
-        AppDbContext context,
+    public Task<bool> RemoveInterest(
         ClaimsPrincipal claimsPrincipal,
         int interestId)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return false;
-        }
-
-        var interest = await context.UserInterests
-            .FirstOrDefaultAsync(i => i.Id == interestId && i.UserId == userId);
-
-        if (interest == null)
-        {
-            return false;
-        }
-
-        context.UserInterests.Remove(interest);
-        await context.SaveChangesAsync();
-        return true;
+        int userId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return _service.RemoveInterest(userId, interestId);
     }
 }
