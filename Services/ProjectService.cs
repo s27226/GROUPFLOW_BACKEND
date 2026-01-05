@@ -23,52 +23,65 @@ public class ProjectService
 
     public async Task<Project> CreateProject(
         ClaimsPrincipal user,
-        ProjectInput input)
+        ProjectInput input,
+        CancellationToken cancellationToken = default)
     {
         int userId = GetUserId(user);
 
-        var project = new Project
+        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        try
         {
-            Name = input.Name,
-            Description = input.Description,
-            Image = input.ImageUrl,
-            IsPublic = input.IsPublic,
-            OwnerId = userId,
-            Created = DateTime.UtcNow,
-            LastUpdated = DateTime.UtcNow
-        };
+            var project = new Project
+            {
+                Name = input.Name,
+                Description = input.Description,
+                Image = input.ImageUrl,
+                IsPublic = input.IsPublic,
+                OwnerId = userId,
+                Created = DateTime.UtcNow,
+                LastUpdated = DateTime.UtcNow
+            };
 
-        _context.Projects.Add(project);
-        await _context.SaveChangesAsync();
+            _context.Projects.Add(project);
+            await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Project {ProjectId} created by user {UserId}", project.Id, userId);
+            _logger.LogInformation("Project {ProjectId} created by user {UserId}", project.Id, userId);
 
-        await AddSkillsAndInterests(project.Id, input.Skills, input.Interests);
+            await AddSkillsAndInterests(project.Id, input.Skills, input.Interests, cancellationToken);
 
-        var chat = new Chat { ProjectId = project.Id };
-        _context.Chats.Add(chat);
-        await _context.SaveChangesAsync();
+            var chat = new Chat { ProjectId = project.Id };
+            _context.Chats.Add(chat);
 
-        _context.UserChats.Add(new UserChat
+            _context.UserChats.Add(new UserChat
+            {
+                UserId = userId,
+                ChatId = chat.Id
+            });
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            return await LoadFullProject(project.Id, cancellationToken);
+        }
+        catch
         {
-            UserId = userId,
-            ChatId = chat.Id
-        });
-
-        await _context.SaveChangesAsync();
-
-        return await LoadFullProject(project.Id);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     public async Task<Project?> UpdateProject(
         ClaimsPrincipal user,
-        UpdateProjectInput input)
+        UpdateProjectInput input,
+        CancellationToken cancellationToken = default)
     {
         int userId = GetUserId(user);
 
         var project = await _context.Projects
             .Include(p => p.Collaborators)
-            .FirstOrDefaultAsync(p => p.Id == input.Id);
+            .FirstOrDefaultAsync(p => p.Id == input.Id, cancellationToken);
 
         if (project == null)
         {
@@ -93,7 +106,7 @@ public class ProjectService
 
         project.LastUpdated = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Project {ProjectId} updated by user {UserId}", project.Id, userId);
         return project;
@@ -101,7 +114,8 @@ public class ProjectService
 
     public async Task<bool> DeleteProject(
         ClaimsPrincipal user,
-        int projectId)
+        int projectId,
+        CancellationToken cancellationToken = default)
     {
         int userId = GetUserId(user);
 
@@ -110,7 +124,7 @@ public class ProjectService
             .Include(p => p.Chat)
             .Include(p => p.Events)
             .Include(p => p.Posts)
-            .FirstOrDefaultAsync(p => p.Id == projectId);
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
 
         if (project == null)
         {
@@ -121,9 +135,9 @@ public class ProjectService
         if (project.OwnerId != userId)
             throw new GraphQLException("You don't have permission to delete this project");
 
-        await RemoveProjectDependencies(project);
+        await RemoveProjectDependencies(project, cancellationToken);
         _context.Projects.Remove(project);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Project {ProjectId} deleted by user {UserId}", projectId, userId);
         return true;
@@ -132,14 +146,15 @@ public class ProjectService
     public async Task<bool> RemoveMember(
         ClaimsPrincipal user,
         int projectId,
-        int memberId)
+        int memberId,
+        CancellationToken cancellationToken = default)
     {
         int ownerId = GetUserId(user);
 
         var project = await _context.Projects
             .Include(p => p.Collaborators)
             .Include(p => p.Chat)
-            .FirstOrDefaultAsync(p => p.Id == projectId);
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
 
         if (project == null)
         {
@@ -166,24 +181,24 @@ public class ProjectService
         {
             var userChat = await _context.UserChats
                 .FirstOrDefaultAsync(uc =>
-                    uc.ChatId == project.Chat.Id && uc.UserId == memberId);
+                    uc.ChatId == project.Chat.Id && uc.UserId == memberId, cancellationToken);
 
             if (userChat != null)
                 _context.UserChats.Remove(userChat);
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("User {MemberId} removed from project {ProjectId} by owner {OwnerId}", memberId, projectId, ownerId);
         return true;
     }
 
-    public async Task<bool> LikeProject(ClaimsPrincipal user, int projectId)
+    public async Task<bool> LikeProject(ClaimsPrincipal user, int projectId, CancellationToken cancellationToken = default)
     {
         int userId = GetUserId(user);
 
         bool exists = await _context.ProjectLikes.AnyAsync(pl =>
-            pl.ProjectId == projectId && pl.UserId == userId);
+            pl.ProjectId == projectId && pl.UserId == userId, cancellationToken);
 
         if (exists)
             return false;
@@ -195,29 +210,29 @@ public class ProjectService
             Created = DateTime.UtcNow
         });
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("User {UserId} liked project {ProjectId}", userId, projectId);
         return true;
     }
 
-    public async Task<bool> UnlikeProject(ClaimsPrincipal user, int projectId)
+    public async Task<bool> UnlikeProject(ClaimsPrincipal user, int projectId, CancellationToken cancellationToken = default)
     {
         int userId = GetUserId(user);
 
         var like = await _context.ProjectLikes
-            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId);
+            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId, cancellationToken);
 
         if (like == null)
             return false;
 
         _context.ProjectLikes.Remove(like);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("User {UserId} unliked project {ProjectId}", userId, projectId);
         return true;
     }
 
-    public async Task<bool> RecordView(ClaimsPrincipal user, int projectId)
+    public async Task<bool> RecordView(ClaimsPrincipal user, int projectId, CancellationToken cancellationToken = default)
     {
         int userId = GetUserId(user);
         var today = DateTime.UtcNow.Date;
@@ -225,7 +240,7 @@ public class ProjectService
         bool viewed = await _context.ProjectViews.AnyAsync(v =>
             v.ProjectId == projectId &&
             v.UserId == userId &&
-            v.ViewDate == today);
+            v.ViewDate == today, cancellationToken);
 
         if (viewed)
             return false;
@@ -238,7 +253,7 @@ public class ProjectService
             Created = DateTime.UtcNow
         });
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("User {UserId} viewed project {ProjectId}", userId, projectId);
         return true;
     }
@@ -248,7 +263,8 @@ public class ProjectService
     private async Task AddSkillsAndInterests(
         int projectId,
         IEnumerable<string>? skills,
-        IEnumerable<string>? interests)
+        IEnumerable<string>? interests,
+        CancellationToken cancellationToken = default)
     {
         if (skills != null)
         {
@@ -272,18 +288,18 @@ public class ProjectService
                 });
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<Project> LoadFullProject(int projectId)
+    private async Task<Project> LoadFullProject(int projectId, CancellationToken cancellationToken = default)
         => await _context.Projects
             .Include(p => p.Owner)
             .Include(p => p.Collaborators).ThenInclude(c => c.User)
             .Include(p => p.Skills)
             .Include(p => p.Interests)
-            .FirstAsync(p => p.Id == projectId);
+            .FirstAsync(p => p.Id == projectId, cancellationToken);
 
-    private async Task RemoveProjectDependencies(Project project)
+    private async Task RemoveProjectDependencies(Project project, CancellationToken cancellationToken = default)
     {
         _context.ProjectInvitations.RemoveRange(
             _context.ProjectInvitations.Where(pi => pi.ProjectId == project.Id));

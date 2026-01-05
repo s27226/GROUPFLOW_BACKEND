@@ -246,6 +246,53 @@ public class AppDbContext : DbContext
             .HasIndex(pl => new { pl.UserId, pl.ProjectId })
             .IsUnique();
 
+        // Add performance indexes for common queries
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => p.UserId);
+
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => p.ProjectId);
+
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => p.Created)
+            .IsDescending();
+
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => new { p.Public, p.Created })
+            .IsDescending();
+
+        modelBuilder.Entity<Project>()
+            .HasIndex(p => p.OwnerId);
+
+        modelBuilder.Entity<Project>()
+            .HasIndex(p => p.IsPublic);
+
+        modelBuilder.Entity<Project>()
+            .HasIndex(p => new { p.IsPublic, p.Created })
+            .IsDescending();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Nickname)
+            .IsUnique();
+
+        modelBuilder.Entity<Friendship>()
+            .HasIndex(f => new { f.UserId, f.FriendId })
+            .IsUnique();
+
+        modelBuilder.Entity<FriendRequest>()
+            .HasIndex(fr => new { fr.RequesterId, fr.RequesteeId })
+            .IsUnique();
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.UserId);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.UserId, n.IsRead });
+
         // Configure ProjectView relationships
         modelBuilder.Entity<ProjectView>()
             .HasOne(pv => pv.User)

@@ -7,6 +7,7 @@ using HotChocolate.AspNetCore;
 using NAME_WIP_BACKEND;
 using NAME_WIP_BACKEND.Controllers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Scrutor;
 
 
@@ -95,15 +96,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors",policy =>
     {
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        // policy.AllowAnyOrigin()
+        //     .AllowAnyHeader()
+        //     .AllowAnyMethod();
         
         
-        // policy.WithOrigins("http://localhost:3000")
-        //       .AllowAnyHeader()
-        //       .AllowAnyMethod()
-        //       ;
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              ;
     });
     
     options.AddPolicy("ProdCors",policy =>
@@ -146,9 +147,10 @@ app.MapControllers().RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
 
  using var scope = app.Services.CreateScope();
  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+ var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataInitializer>>();
  if (env.IsDevelopment())
  {
-     DataInitializer.Seed(db);
+     DataInitializer.Seed(db, logger);
  }
 
  //db.Database.Migrate();

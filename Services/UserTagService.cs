@@ -16,10 +16,10 @@ public class UserTagService
         _logger = logger;
     }
 
-    public async Task<UserSkill?> AddSkill(int userId, string skillName)
+    public async Task<UserSkill?> AddSkill(int userId, string skillName, CancellationToken ct = default)
     {
         var existingSkill = await _context.UserSkills
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.SkillName == skillName);
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.SkillName == skillName, ct);
 
         if (existingSkill != null)
         {
@@ -35,16 +35,16 @@ public class UserTagService
         };
 
         _context.UserSkills.Add(skill);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} added skill '{SkillName}'", userId, skillName);
         return skill;
     }
 
-    public async Task<bool> RemoveSkill(int userId, int skillId)
+    public async Task<bool> RemoveSkill(int userId, int skillId, CancellationToken ct = default)
     {
         var skill = await _context.UserSkills
-            .FirstOrDefaultAsync(s => s.Id == skillId && s.UserId == userId);
+            .FirstOrDefaultAsync(s => s.Id == skillId && s.UserId == userId, ct);
 
         if (skill == null)
         {
@@ -53,16 +53,16 @@ public class UserTagService
         }
 
         _context.UserSkills.Remove(skill);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} removed skill '{SkillName}' (Id {SkillId})", userId, skill.SkillName, skillId);
         return true;
     }
 
-    public async Task<UserInterest?> AddInterest(int userId, string interestName)
+    public async Task<UserInterest?> AddInterest(int userId, string interestName, CancellationToken ct = default)
     {
         var existingInterest = await _context.UserInterests
-            .FirstOrDefaultAsync(i => i.UserId == userId && i.InterestName == interestName);
+            .FirstOrDefaultAsync(i => i.UserId == userId && i.InterestName == interestName, ct);
 
         if (existingInterest != null)
         {
@@ -78,16 +78,16 @@ public class UserTagService
         };
 
         _context.UserInterests.Add(interest);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} added interest '{InterestName}'", userId, interestName);
         return interest;
     }
 
-    public async Task<bool> RemoveInterest(int userId, int interestId)
+    public async Task<bool> RemoveInterest(int userId, int interestId, CancellationToken ct = default)
     {
         var interest = await _context.UserInterests
-            .FirstOrDefaultAsync(i => i.Id == interestId && i.UserId == userId);
+            .FirstOrDefaultAsync(i => i.Id == interestId && i.UserId == userId, ct);
 
         if (interest == null)
         {
@@ -96,7 +96,7 @@ public class UserTagService
         }
 
         _context.UserInterests.Remove(interest);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} removed interest '{InterestName}' (Id {InterestId})", userId, interest.InterestName, interestId);
         return true;

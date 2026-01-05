@@ -1,19 +1,20 @@
 ﻿using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace NAME_WIP_BACKEND;
 
 public class DataInitializer
 {
-    public static async void Seed(AppDbContext db)
+    public static async void Seed(AppDbContext db, ILogger logger)
         {
-            Console.WriteLine("=== STARTING DATA SEEDING ===");
+            logger.LogInformation("=== STARTING DATA SEEDING ===");
             
             // === USER ROLES ===
             if (!db.UserRoles.Any())
             {
-                Console.WriteLine("Seeding User Roles...");
+                logger.LogInformation("Seeding User Roles...");
                 var roles = new List<UserRole>
                 {
                     new() { RoleName = "User" },
@@ -86,7 +87,7 @@ public class DataInitializer
             // === PROJECTS ===
             if (!db.Projects.Any())
             {
-                Console.WriteLine("Seeding Projects...");
+                logger.LogInformation("Seeding Projects...");
                 var projects = new List<Project>
                 {
                     new()
@@ -154,7 +155,7 @@ public class DataInitializer
                 await db.SaveChangesAsync();
                 
                 // === CHATS (linked to projects) ===
-                Console.WriteLine("Seeding Chats for Projects...");
+                logger.LogInformation("Seeding Chats for Projects...");
                 foreach (var project in projects)
                 {
                     var chat = new Chat { ProjectId = project.Id };
@@ -190,7 +191,7 @@ public class DataInitializer
             // === POSTS ===
             if (!db.Posts.Any())
             {
-                Console.WriteLine("Seeding Posts...");
+                logger.LogInformation("Seeding Posts...");
                 var posts = new List<Post>();
                 var users = db.Users.ToList();
                 var projects = db.Projects.ToList();
@@ -327,7 +328,7 @@ public class DataInitializer
             // === USERCHATS (linking users to project chats) ===
             if (!db.UserChats.Any())
             {
-                Console.WriteLine("Seeding UserChats...");
+                logger.LogInformation("Seeding UserChats...");
                 // Get all chats and projects from database
                 var chats = db.Chats.ToList();
                 var projects = db.Projects.ToList();
@@ -341,7 +342,7 @@ public class DataInitializer
                     var project = projects.FirstOrDefault(p => p.Id == chat.ProjectId);
                     if (project != null)
                     {
-                        Console.WriteLine($"Adding owner (UserId={project.OwnerId}) to chat {chat.Id} for project {project.Name}");
+                        logger.LogInformation($"Adding owner (UserId={project.OwnerId}) to chat {chat.Id} for project {project.Name}");
                         // Add owner to chat
                         userChats.Add(new UserChat { UserId = project.OwnerId, ChatId = chat.Id });
                         
@@ -356,23 +357,23 @@ public class DataInitializer
                             // Avoid duplicates if owner is also a collaborator
                             if (collaboratorId != project.OwnerId)
                             {
-                                Console.WriteLine($"Adding collaborator (UserId={collaboratorId}) to chat {chat.Id} for project {project.Name}");
+                                logger.LogInformation($"Adding collaborator (UserId={collaboratorId}) to chat {chat.Id} for project {project.Name}");
                                 userChats.Add(new UserChat { UserId = collaboratorId, ChatId = chat.Id });
                             }
                         }
                     }
                 }
                 
-                Console.WriteLine($"Total UserChats to add: {userChats.Count}");
+                logger.LogInformation($"Total UserChats to add: {userChats.Count}");
                 db.UserChats.AddRange(userChats);
                 await db.SaveChangesAsync();
-                Console.WriteLine("UserChats seeding completed");
+                logger.LogInformation("UserChats seeding completed");
             }
 
             // === ENTRIES (Chat messages - must come after UserChats) ===
             if (!db.Entries.Any())
             {
-                Console.WriteLine("Seeding Entries...");
+                logger.LogInformation("Seeding Entries...");
                 var userChats = db.UserChats.Include(uc => uc.Chat).Include(uc => uc.User).ToList();
                 
                 // Get UserChats for Project 1 (Task Management System)
@@ -408,7 +409,7 @@ public class DataInitializer
             // === SHARED FILES (must come after Chats) ===
             if (!db.SharedFiles.Any())
             {
-                Console.WriteLine("Seeding SharedFiles...");
+                logger.LogInformation("Seeding SharedFiles...");
                 var chats = db.Chats.ToList();
                 if (chats.Any())
                 {
@@ -431,7 +432,7 @@ public class DataInitializer
             // === ENTRY REACTIONS (must come after Entries) ===
             if (!db.EntryReactions.Any())
             {
-                Console.WriteLine("Seeding EntryReactions...");
+                logger.LogInformation("Seeding EntryReactions...");
                 var entries = db.Entries.ToList();
                 if (entries.Count >= 3)
                 {
@@ -448,7 +449,7 @@ public class DataInitializer
             // === READ BY (must come after Entries) ===
             if (!db.ReadBys.Any())
             {
-                Console.WriteLine("Seeding ReadBy...");
+                logger.LogInformation("Seeding ReadBy...");
                 var entries = db.Entries.ToList();
                 if (entries.Count >= 3)
                 {
@@ -506,7 +507,7 @@ public class DataInitializer
             // === SAVED POSTS ===
             if (!db.SavedPosts.Any())
             {
-                Console.WriteLine("Seeding SavedPosts...");
+                logger.LogInformation("Seeding SavedPosts...");
                 var posts = db.Posts.ToList();
                 var users = db.Users.ToList();
                 var jan = users.FirstOrDefault(u => u.Nickname == "janek");
@@ -543,14 +544,14 @@ public class DataInitializer
                     
                     db.SavedPosts.AddRange(savedPosts);
                     await db.SaveChangesAsync();
-                    Console.WriteLine($"Seeded {savedPosts.Count} saved posts");
+                    logger.LogInformation($"Seeded {savedPosts.Count} saved posts");
                 }
             }
 
             // === USER SKILLS ===
             if (!db.UserSkills.Any())
             {
-                Console.WriteLine("Seeding UserSkills...");
+                logger.LogInformation("Seeding UserSkills...");
                 var users = db.Users.ToList();
 
                 var skills = new List<UserSkill>
@@ -584,7 +585,7 @@ public class DataInitializer
             // === USER INTERESTS ===
             if (!db.UserInterests.Any())
             {
-                Console.WriteLine("Seeding UserInterests...");
+                logger.LogInformation("Seeding UserInterests...");
                 var users = db.Users.ToList();
 
                 var interests = new List<UserInterest>
@@ -618,7 +619,7 @@ public class DataInitializer
             // === POST LIKES ===
             if (!db.PostLikes.Any())
             {
-                Console.WriteLine("Seeding PostLikes...");
+                logger.LogInformation("Seeding PostLikes...");
                 var users = db.Users.ToList();
                 var posts = db.Posts.ToList();
 
@@ -667,7 +668,7 @@ public class DataInitializer
             // === POST COMMENTS ===
             if (!db.PostComments.Any())
             {
-                Console.WriteLine("Seeding PostComments...");
+                logger.LogInformation("Seeding PostComments...");
                 var users = db.Users.ToList();
                 var posts = db.Posts.ToList();
 
@@ -710,7 +711,7 @@ public class DataInitializer
             // === POST COMMENT LIKES ===
             if (!db.PostCommentLikes.Any())
             {
-                Console.WriteLine("Seeding PostCommentLikes...");
+                logger.LogInformation("Seeding PostCommentLikes...");
                 var users = db.Users.ToList();
                 var comments = db.PostComments.ToList();
 

@@ -21,7 +21,7 @@ public class PostService
     private static int GetUserId(ClaimsPrincipal user)
         => int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    public async Task<Post> CreatePost(ClaimsPrincipal user, PostInput input)
+    public async Task<Post> CreatePost(ClaimsPrincipal user, PostInput input, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
@@ -29,7 +29,7 @@ public class PostService
         {
             var project = await _context.Projects
                 .Include(p => p.Collaborators)
-                .FirstOrDefaultAsync(p => p.Id == input.ProjectId.Value);
+                .FirstOrDefaultAsync(p => p.Id == input.ProjectId.Value, ct);
 
             if (project == null)
                 throw new GraphQLException("Project not found");
@@ -40,7 +40,7 @@ public class PostService
         }
 
         if (input.SharedPostId.HasValue &&
-            !await _context.Posts.AnyAsync(p => p.Id == input.SharedPostId))
+            !await _context.Posts.AnyAsync(p => p.Id == input.SharedPostId, ct))
             throw new GraphQLException("Shared post not found");
 
         var post = new Post
@@ -57,26 +57,26 @@ public class PostService
         };
 
         _context.Posts.Add(post);
-        await _context.SaveChangesAsync();
-        await _context.Entry(post).Reference(p => p.User).LoadAsync();
+        await _context.SaveChangesAsync(ct);
+        await _context.Entry(post).Reference(p => p.User).LoadAsync(ct);
 
         _logger.LogInformation("User {UserId} created post {PostId}", userId, post.Id);
 
         return post;
     }
 
-    public async Task<PostLike> LikePost(ClaimsPrincipal user, int postId)
+    public async Task<PostLike> LikePost(ClaimsPrincipal user, int postId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
         var post = await _context.Posts
             .Include(p => p.User)
-            .FirstOrDefaultAsync(p => p.Id == postId);
+            .FirstOrDefaultAsync(p => p.Id == postId, ct);
 
         if (post == null)
             throw new GraphQLException("Post not found");
 
-        if (await _context.PostLikes.AnyAsync(l => l.UserId == userId && l.PostId == postId))
+        if (await _context.PostLikes.AnyAsync(l => l.UserId == userId && l.PostId == postId, ct))
             throw new GraphQLException("Post is already liked");
 
         var like = new PostLike
@@ -90,7 +90,7 @@ public class PostService
 
         if (post.UserId != userId)
         {
-            var liker = await _context.Users.FindAsync(userId);
+            var liker = await _context.Users.FindAsync(new object[] { userId }, ct);
             _context.Notifications.Add(new Notification
             {
                 UserId = post.UserId,
@@ -102,7 +102,7 @@ public class PostService
             });
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         _logger.LogInformation("User {UserId} liked post {PostId}", userId, postId);
 
         return like;

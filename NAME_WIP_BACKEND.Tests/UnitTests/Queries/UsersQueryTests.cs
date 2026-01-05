@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.GraphQL.Responses;
 using NAME_WIP_BACKEND.Models;
 using Xunit;
 
@@ -21,7 +22,7 @@ public class UsersQueryTests : IDisposable
             .Options;
 
         _context = new AppDbContext(options);
-        _usersQuery = new UsersQuery();
+        _usersQuery = new UsersQuery(_context);
         
         SeedTestData();
     }
@@ -67,7 +68,7 @@ public class UsersQueryTests : IDisposable
     public void GetUsers_ShouldReturnAllUsers()
     {
         // Act
-        var result = _usersQuery.GetUsers(_context).ToList();
+        var result = _usersQuery.GetUsers().ToList();
 
         // Assert
         result.Should().HaveCount(3);
@@ -80,10 +81,10 @@ public class UsersQueryTests : IDisposable
     public void GetUsers_ShouldReturnQueryable()
     {
         // Act
-        var result = _usersQuery.GetUsers(_context);
+        var result = _usersQuery.GetUsers();
 
         // Assert
-        result.Should().BeAssignableTo<IQueryable<User>>();
+        result.Should().BeAssignableTo<IQueryable<UserResponse>>();
         result.Should().NotBeNull();
     }
 
@@ -91,7 +92,7 @@ public class UsersQueryTests : IDisposable
     public void GetUserById_WithValidId_ShouldReturnUser()
     {
         // Act
-        var result = _usersQuery.GetUserById(_context, 1);
+        var result = _usersQuery.GetUserById(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -105,7 +106,7 @@ public class UsersQueryTests : IDisposable
     public void GetUserById_WithInvalidId_ShouldReturnNull()
     {
         // Act
-        var result = _usersQuery.GetUserById(_context, 999);
+        var result = _usersQuery.GetUserById(999);
 
         // Assert
         result.Should().BeNull();
@@ -115,7 +116,7 @@ public class UsersQueryTests : IDisposable
     public void GetUserById_WithZeroId_ShouldReturnNull()
     {
         // Act
-        var result = _usersQuery.GetUserById(_context, 0);
+        var result = _usersQuery.GetUserById(0);
 
         // Assert
         result.Should().BeNull();
@@ -129,7 +130,7 @@ public class UsersQueryTests : IDisposable
         _context.SaveChanges();
 
         // Act
-        var result = _usersQuery.GetUsers(_context).ToList();
+        var result = _usersQuery.GetUsers().ToList();
 
         // Assert
         result.Should().BeEmpty();
@@ -139,7 +140,8 @@ public class UsersQueryTests : IDisposable
     public void GetUsers_SupportsLinqOperations()
     {
         // Act
-        var result = _usersQuery.GetUsers(_context)
+        var result = _usersQuery.GetUsers()
+            .AsEnumerable()
             .Where(u => u.Name.StartsWith("A"))
             .OrderBy(u => u.Name)
             .ToList();

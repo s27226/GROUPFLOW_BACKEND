@@ -1,10 +1,18 @@
-﻿using NAME_WIP_BACKEND.GraphQL.Queries;
+﻿using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.GraphQL.Queries;
 using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND;
 
 public class Query
 {
+    private readonly AppDbContext _context;
+
+    public Query(AppDbContext context)
+    {
+        _context = context;
+    }
+
     public ChatQuery Chat => new();
     
     public EntryQuery Entry => new();
@@ -16,7 +24,7 @@ public class Query
     
     public UserChatQuery UserChat => new();
     
-    public UsersQuery Users => new();
+    public UsersQuery Users => new(_context);
     public PostQuery Post => new();
     public ProjectQuery Project => new();
     public FriendshipQuery Friendship => new();
@@ -27,7 +35,4 @@ public class Query
     public BlockedUserQuery BlockedUser => new();
     public AdminQuery Admin => new();
     public ModerationQuery Moderation => new();
-
-
-
 }

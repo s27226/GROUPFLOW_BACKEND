@@ -16,10 +16,10 @@ public class SavedPostService
         _logger = logger;
     }
 
-    public async Task<SavedPost> SavePost(int userId, int postId)
+    public async Task<SavedPost> SavePost(int userId, int postId, CancellationToken cancellationToken = default)
     {
         // Sprawdź, czy post istnieje
-        var post = await _context.Posts.FindAsync(postId);
+        var post = await _context.Posts.FindAsync(postId, cancellationToken);
         if (post == null)
         {
             _logger.LogWarning("User {UserId} tried to save non-existent post {PostId}", userId, postId);
@@ -28,7 +28,7 @@ public class SavedPostService
 
         // Sprawdź, czy post nie został już zapisany
         var existingSave = await _context.SavedPosts
-            .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
+            .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId, cancellationToken);
 
         if (existingSave != null)
         {
@@ -44,16 +44,16 @@ public class SavedPostService
         };
 
         _context.SavedPosts.Add(savedPost);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("User {UserId} saved post {PostId}", userId, postId);
         return savedPost;
     }
 
-    public async Task<bool> UnsavePost(int userId, int postId)
+    public async Task<bool> UnsavePost(int userId, int postId, CancellationToken cancellationToken = default)
     {
         var savedPost = await _context.SavedPosts
-            .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
+            .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId, cancellationToken);
 
         if (savedPost == null)
         {
@@ -62,7 +62,7 @@ public class SavedPostService
         }
 
         _context.SavedPosts.Remove(savedPost);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("User {UserId} unsaved post {PostId}", userId, postId);
         return true;

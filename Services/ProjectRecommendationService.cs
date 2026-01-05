@@ -17,7 +17,7 @@ public class ProjectRecommendationService
         _logger = logger;
     }
 
-    public async Task<ProjectRecommendation> CreateRecommendation(ProjectRecommendationInput input)
+    public async Task<ProjectRecommendation> CreateRecommendation(ProjectRecommendationInput input, CancellationToken ct = default)
     {
         var rec = new ProjectRecommendation
         {
@@ -27,7 +27,7 @@ public class ProjectRecommendationService
         };
 
         _context.ProjectRecommendations.Add(rec);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation(
             "Created recommendation {RecommendationId}: User={UserId}, Project={ProjectId}, Value={RecValue}",
@@ -36,9 +36,9 @@ public class ProjectRecommendationService
         return rec;
     }
 
-    public async Task<ProjectRecommendation?> UpdateRecommendation(UpdateProjectRecommendationInput input)
+    public async Task<ProjectRecommendation?> UpdateRecommendation(UpdateProjectRecommendationInput input, CancellationToken ct = default)
     {
-        var rec = await _context.ProjectRecommendations.FindAsync(input.Id);
+        var rec = await _context.ProjectRecommendations.FindAsync(new object[] { input.Id }, ct);
         if (rec == null)
         {
             _logger.LogWarning("Attempted to update non-existent recommendation {RecommendationId}", input.Id);
@@ -49,7 +49,7 @@ public class ProjectRecommendationService
         if (input.ProjectId.HasValue) rec.ProjectId = input.ProjectId.Value;
         if (input.RecValue.HasValue) rec.RecValue = input.RecValue.Value;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation(
             "Updated recommendation {RecommendationId}: User={UserId}, Project={ProjectId}, Value={RecValue}",
@@ -58,9 +58,9 @@ public class ProjectRecommendationService
         return rec;
     }
 
-    public async Task<bool> DeleteRecommendation(int id)
+    public async Task<bool> DeleteRecommendation(int id, CancellationToken ct = default)
     {
-        var rec = await _context.ProjectRecommendations.FindAsync(id);
+        var rec = await _context.ProjectRecommendations.FindAsync(new object[] { id }, ct);
         if (rec == null)
         {
             _logger.LogWarning("Attempted to delete non-existent recommendation {RecommendationId}", id);
@@ -68,7 +68,7 @@ public class ProjectRecommendationService
         }
 
         _context.ProjectRecommendations.Remove(rec);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation(
             "Deleted recommendation {RecommendationId}: User={UserId}, Project={ProjectId}",

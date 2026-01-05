@@ -9,8 +9,9 @@ namespace NAME_WIP_BACKEND.Services
         /// <param name="fileName">Original file name</param>
         /// <param name="contentType">MIME type of the file</param>
         /// <param name="blobPath">Path within the bucket (e.g., "user/123/profile/avatar.jpg")</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The blob path in S3</returns>
-        Task<string> UploadFileAsync(Stream stream, string fileName, string contentType, string blobPath);
+        Task<string> UploadFileAsync(Stream stream, string fileName, string contentType, string blobPath, CancellationToken ct = default);
         
         /// <summary>
         /// Get a presigned URL for accessing a file
@@ -24,18 +25,21 @@ namespace NAME_WIP_BACKEND.Services
         /// Delete a file from S3
         /// </summary>
         /// <param name="blobPath">Path to the blob in S3</param>
-        Task DeleteFileAsync(string blobPath);
+        /// <param name="ct">Cancellation token</param>
+        Task DeleteFileAsync(string blobPath, CancellationToken ct = default);
         
         /// <summary>
         /// Check if a file exists in S3
         /// </summary>
         /// <param name="blobPath">Path to the blob in S3</param>
-        Task<bool> FileExistsAsync(string blobPath);
+        /// <param name="ct">Cancellation token</param>
+        Task<bool> FileExistsAsync(string blobPath, CancellationToken ct = default);
         
         /// <summary>
         /// Get file metadata
         /// </summary>
         /// <param name="blobPath">Path to the blob in S3</param>
-        Task<(long size, string contentType)> GetFileMetadataAsync(string blobPath);
+        /// <param name="ct">Cancellation token</param>
+        Task<(long size, string contentType)> GetFileMetadataAsync(string blobPath, CancellationToken ct = default);
     }
 }

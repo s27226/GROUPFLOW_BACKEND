@@ -16,7 +16,7 @@ namespace NAME_WIP_BACKEND.Services
             _logger = logger;
         }
 
-        public async Task<string> UploadFileAsync(Stream stream, string fileName, string contentType, string blobPath)
+        public async Task<string> UploadFileAsync(Stream stream, string fileName, string contentType, string blobPath, CancellationToken ct = default)
         {
             try
             {
@@ -28,7 +28,7 @@ namespace NAME_WIP_BACKEND.Services
                     ContentType = contentType
                 };
 
-                await _s3Client.PutObjectAsync(request);
+                await _s3Client.PutObjectAsync(request, ct);
                 
                 _logger.LogInformation($"Uploaded file to S3: {blobPath}");
                 return blobPath;
@@ -60,7 +60,7 @@ namespace NAME_WIP_BACKEND.Services
             }
         }
 
-        public async Task DeleteFileAsync(string blobPath)
+        public async Task DeleteFileAsync(string blobPath, CancellationToken ct = default)
         {
             try
             {
@@ -70,7 +70,7 @@ namespace NAME_WIP_BACKEND.Services
                     Key = blobPath
                 };
 
-                await _s3Client.DeleteObjectAsync(request);
+                await _s3Client.DeleteObjectAsync(request, ct);
                 _logger.LogInformation($"Deleted file from S3: {blobPath}");
             }
             catch (Exception ex)
@@ -80,7 +80,7 @@ namespace NAME_WIP_BACKEND.Services
             }
         }
 
-        public async Task<bool> FileExistsAsync(string blobPath)
+        public async Task<bool> FileExistsAsync(string blobPath, CancellationToken ct = default)
         {
             try
             {
@@ -90,7 +90,7 @@ namespace NAME_WIP_BACKEND.Services
                     Key = blobPath
                 };
 
-                await _s3Client.GetObjectMetadataAsync(request);
+                await _s3Client.GetObjectMetadataAsync(request, ct);
                 return true;
             }
             catch
@@ -99,7 +99,7 @@ namespace NAME_WIP_BACKEND.Services
             }
         }
 
-        public async Task<(long size, string contentType)> GetFileMetadataAsync(string blobPath)
+        public async Task<(long size, string contentType)> GetFileMetadataAsync(string blobPath, CancellationToken ct = default)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace NAME_WIP_BACKEND.Services
                     Key = blobPath
                 };
 
-                var response = await _s3Client.GetObjectMetadataAsync(request);
+                var response = await _s3Client.GetObjectMetadataAsync(request, ct);
                 return (response.ContentLength, response.Headers.ContentType);
             }
             catch (Exception ex)
