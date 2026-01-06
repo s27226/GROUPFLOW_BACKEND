@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.GraphQL.Responses;
 
 namespace NAME_WIP_BACKEND.Services;
 
@@ -21,7 +22,7 @@ public class PostService
     private static int GetUserId(ClaimsPrincipal user)
         => int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    public async Task<Post> CreatePost(ClaimsPrincipal user, PostInput input, CancellationToken ct = default)
+    public async Task<PostResponse> CreatePost(ClaimsPrincipal user, PostInput input, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
@@ -62,10 +63,33 @@ public class PostService
 
         _logger.LogInformation("User {UserId} created post {PostId}", userId, post.Id);
 
-        return post;
+        var userResponse = new UserResponse
+        {
+            Id = post.User.Id,
+            Name = post.User.Name,
+            Surname = post.User.Surname,
+            Nickname = post.User.Nickname,
+            Email = post.User.Email,
+            ProfilePic = post.User.ProfilePic,
+            BannerPic = post.User.BannerPic,
+            Joined = post.User.Joined
+        };
+
+        return new PostResponse(
+            post.Id,
+            post.Title,
+            post.Description,
+            post.Content,
+            post.ImageUrl,
+            post.Public,
+            post.Created,
+            userResponse,
+            0, // LikesCount - can be calculated later if needed
+            0  // CommentsCount
+        );
     }
 
-    public async Task<PostLike> LikePost(ClaimsPrincipal user, int postId, CancellationToken ct = default)
+    public async Task<PostLikeResponse> LikePost(ClaimsPrincipal user, int postId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
@@ -105,39 +129,40 @@ public class PostService
         await _context.SaveChangesAsync(ct);
         _logger.LogInformation("User {UserId} liked post {PostId}", userId, postId);
 
-        return like;
+        return new PostLikeResponse(like.Id, like.UserId, like.PostId, like.CreatedAt);
     }
 
-    public async Task<bool> UnlikePost(ClaimsPrincipal user, int postId)
+    public async Task<bool> UnlikePost(ClaimsPrincipal user, int postId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
         var like = await _context.PostLikes
-            .FirstOrDefaultAsync(l => l.UserId == userId && l.PostId == postId);
+            .FirstOrDefaultAsync(l => l.UserId == userId && l.PostId == postId, ct);
 
         if (like == null)
             throw new GraphQLException("Post is not liked");
 
         _context.PostLikes.Remove(like);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} unliked post {PostId}", userId, postId);
         return true;
     }
 
-    public async Task<PostComment> AddComment(
+    public async Task<PostCommentResponse> AddComment(
         ClaimsPrincipal user,
         int postId,
         string content,
-        int? parentCommentId)
+        int? parentCommentId,
+        CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
-        if (!await _context.Posts.AnyAsync(p => p.Id == postId))
+        if (!await _context.Posts.AnyAsync(p => p.Id == postId, ct))
             throw new GraphQLException("Post not found");
 
         if (parentCommentId.HasValue &&
-            !await _context.PostComments.AnyAsync(c => c.Id == parentCommentId))
+            !await _context.PostComments.AnyAsync(c => c.Id == parentCommentId, ct))
             throw new GraphQLException("Parent comment not found");
 
         var comment = new PostComment
@@ -150,19 +175,37 @@ public class PostService
         };
 
         _context.PostComments.Add(comment);
-        await _context.SaveChangesAsync();
-        await _context.Entry(comment).Reference(c => c.User).LoadAsync();
+        await _context.SaveChangesAsync(ct);
+        await _context.Entry(comment).Reference(c => c.User).LoadAsync(ct);
 
         _logger.LogInformation("User {UserId} added comment {CommentId} to post {PostId}", userId, comment.Id, postId);
 
-        return comment;
+        var userResponse = new UserResponse
+        {
+            Id = comment.User.Id,
+            Name = comment.User.Name,
+            Surname = comment.User.Surname,
+            Nickname = comment.User.Nickname,
+            Email = comment.User.Email,
+            ProfilePic = comment.User.ProfilePic,
+            BannerPic = comment.User.BannerPic,
+            Joined = comment.User.Joined
+        };
+
+        return new PostCommentResponse(
+            comment.Id,
+            comment.Content,
+            comment.CreatedAt,
+            userResponse,
+            comment.ParentCommentId
+        );
     }
 
-    public async Task<bool> DeleteComment(ClaimsPrincipal user, int commentId)
+    public async Task<bool> DeleteComment(ClaimsPrincipal user, int commentId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
-        var comment = await _context.PostComments.FindAsync(commentId);
+        var comment = await _context.PostComments.FindAsync(new object[] { commentId }, ct);
         if (comment == null)
             throw new GraphQLException("Comment not found");
 
@@ -170,20 +213,20 @@ public class PostService
             throw new GraphQLException("You are not authorized to delete this comment");
 
         _context.PostComments.Remove(comment);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} deleted comment {CommentId}", userId, commentId);
         return true;
     }
 
-    public async Task<PostCommentLike> LikeComment(ClaimsPrincipal user, int commentId)
+    public async Task<PostCommentLikeResponse> LikeComment(ClaimsPrincipal user, int commentId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
-        if (!await _context.PostComments.AnyAsync(c => c.Id == commentId))
+        if (!await _context.PostComments.AnyAsync(c => c.Id == commentId, ct))
             throw new GraphQLException("Comment not found");
 
-        if (await _context.PostCommentLikes.AnyAsync(l => l.UserId == userId && l.PostCommentId == commentId))
+        if (await _context.PostCommentLikes.AnyAsync(l => l.UserId == userId && l.PostCommentId == commentId, ct))
             throw new GraphQLException("Comment is already liked");
 
         var like = new PostCommentLike
@@ -194,34 +237,34 @@ public class PostService
         };
 
         _context.PostCommentLikes.Add(like);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} liked comment {CommentId}", userId, commentId);
-        return like;
+        return new PostCommentLikeResponse(like.Id, like.UserId, like.PostCommentId, like.CreatedAt);
     }
 
-    public async Task<bool> UnlikeComment(ClaimsPrincipal user, int commentId)
+    public async Task<bool> UnlikeComment(ClaimsPrincipal user, int commentId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
         var like = await _context.PostCommentLikes
-            .FirstOrDefaultAsync(l => l.UserId == userId && l.PostCommentId == commentId);
+            .FirstOrDefaultAsync(l => l.UserId == userId && l.PostCommentId == commentId, ct);
 
         if (like == null)
             throw new GraphQLException("Comment is not liked");
 
         _context.PostCommentLikes.Remove(like);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("User {UserId} unliked comment {CommentId}", userId, commentId);
         return true;
     }
 
-    public async Task<Post> SharePost(ClaimsPrincipal user, int postId, string? content, int? projectId)
+    public async Task<PostResponse> SharePost(ClaimsPrincipal user, int postId, string? content, int? projectId, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
-        var originalPost = await _context.Posts.FindAsync(postId);
+        var originalPost = await _context.Posts.FindAsync(new object[] { postId }, ct);
         if (originalPost == null)
             throw new GraphQLException("Post not found");
 
@@ -238,24 +281,48 @@ public class PostService
         };
 
         _context.Posts.Add(sharedPost);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
+        await _context.Entry(sharedPost).Reference(p => p.User).LoadAsync(ct);
 
         _logger.LogInformation("User {UserId} shared post {PostId} as new post {SharedPostId}", userId, postId, sharedPost.Id);
 
-        return sharedPost;
+        var userResponse = new UserResponse
+        {
+            Id = sharedPost.User.Id,
+            Name = sharedPost.User.Name,
+            Surname = sharedPost.User.Surname,
+            Nickname = sharedPost.User.Nickname,
+            Email = sharedPost.User.Email,
+            ProfilePic = sharedPost.User.ProfilePic,
+            BannerPic = sharedPost.User.BannerPic,
+            Joined = sharedPost.User.Joined
+        };
+
+        return new PostResponse(
+            sharedPost.Id,
+            sharedPost.Title,
+            sharedPost.Description,
+            sharedPost.Content,
+            sharedPost.ImageUrl,
+            sharedPost.Public,
+            sharedPost.Created,
+            userResponse,
+            0,
+            0
+        );
     }
 
-    public async Task<PostReport> ReportPost(ClaimsPrincipal user, ReportPostInput input)
+    public async Task<PostReportResponse> ReportPost(ClaimsPrincipal user, ReportPostInput input, CancellationToken ct = default)
     {
         int userId = GetUserId(user);
 
-        if (!await _context.Posts.AnyAsync(p => p.Id == input.PostId))
+        if (!await _context.Posts.AnyAsync(p => p.Id == input.PostId, ct))
             throw new GraphQLException("Post not found");
 
         if (await _context.PostReports.AnyAsync(r =>
                 r.PostId == input.PostId &&
                 r.ReportedBy == userId &&
-                !r.IsResolved))
+                !r.IsResolved, ct))
             throw new GraphQLException("You have already reported this post");
 
         var report = new PostReport
@@ -268,14 +335,20 @@ public class PostService
         };
 
         _context.PostReports.Add(report);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
-        await _context.Entry(report).Reference(r => r.Post).LoadAsync();
-        await _context.Entry(report).Reference(r => r.ReportedByUser).LoadAsync();
+        await _context.Entry(report).Reference(r => r.Post).LoadAsync(ct);
+        await _context.Entry(report).Reference(r => r.ReportedByUser).LoadAsync(ct);
 
         _logger.LogInformation("User {UserId} reported post {PostId} with report {ReportId}", userId, input.PostId, report.Id);
 
-        return report;
+        return new PostReportResponse(
+            report.Id,
+            report.PostId,
+            report.ReportedBy,
+            report.Reason,
+            report.CreatedAt
+        );
     }
 
     public async Task<bool> DeleteReportedPost(ClaimsPrincipal user, int postId)

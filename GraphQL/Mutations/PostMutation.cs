@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.GraphQL.Responses;
 using NAME_WIP_BACKEND.Models;
 using NAME_WIP_BACKEND.Services;
 
@@ -15,13 +16,13 @@ public class PostMutation
     }
 
     [GraphQLName("createPost")]
-    public Task<Post> CreatePost(
+    public Task<PostResponse> CreatePost(
         PostInput input,
         ClaimsPrincipal user)
         => _service.CreatePost(user, input);
 
     [GraphQLName("likePost")]
-    public Task<PostLike> LikePost(int postId, ClaimsPrincipal user)
+    public Task<PostLikeResponse> LikePost(int postId, ClaimsPrincipal user)
         => _service.LikePost(user, postId);
 
     [GraphQLName("unlikePost")]
@@ -29,7 +30,7 @@ public class PostMutation
         => _service.UnlikePost(user, postId);
 
     [GraphQLName("addComment")]
-    public Task<PostComment> AddComment(
+    public Task<PostCommentResponse> AddComment(
         int postId,
         string content,
         int? parentCommentId,
@@ -41,7 +42,7 @@ public class PostMutation
         => _service.DeleteComment(user, commentId);
 
     [GraphQLName("likeComment")]
-    public Task<PostCommentLike> LikeComment(int commentId, ClaimsPrincipal user)
+    public Task<PostCommentLikeResponse> LikeComment(int commentId, ClaimsPrincipal user)
         => _service.LikeComment(user, commentId);
 
     [GraphQLName("unlikeComment")]
@@ -49,7 +50,7 @@ public class PostMutation
         => _service.UnlikeComment(user, commentId);
     
     [GraphQLName("sharePost")]
-    public Task<Post> SharePost(
+    public Task<PostResponse> SharePost(
         int postId,
         string? content,
         int? projectId,
@@ -57,7 +58,7 @@ public class PostMutation
         => _service.SharePost(user, postId, content, projectId);
 
     [GraphQLName("reportPost")]
-    public Task<PostReport> ReportPost(
+    public Task<PostReportResponse> ReportPost(
         ReportPostInput input,
         ClaimsPrincipal user)
         => _service.ReportPost(user, input);

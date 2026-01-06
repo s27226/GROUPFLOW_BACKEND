@@ -71,7 +71,7 @@ public class BlobService
             .Include(b => b.Project)
             .FirstOrDefaultAsync(b => b.Id == blobId && !b.IsDeleted);
 
-        if (blobFile == null) throw new Exception("Blob file not found");
+        if (blobFile == null) throw new GraphQLException("Blob file not found");
 
         var canDelete = false;
         switch (blobFile.Type)
@@ -120,14 +120,14 @@ public class BlobService
             case BlobType.ProjectBanner:
                 if (!projectId.HasValue) throw new ArgumentException("Project ID is required");
                 var project = await _context.Projects.FindAsync(projectId.Value);
-                if (project == null) throw new Exception("Project not found");
+                if (project == null) throw new GraphQLException("Project not found");
                 if (project.OwnerId != userId)
                     throw new UnauthorizedAccessException("Only project owner can upload this file");
                 break;
             case BlobType.ProjectFile:
                 if (!projectId.HasValue) throw new ArgumentException("Project ID is required");
                 var proj = await _context.Projects.FindAsync(projectId.Value);
-                if (proj == null) throw new Exception("Project not found");
+                if (proj == null) throw new GraphQLException("Project not found");
                 var isOwner = proj.OwnerId == userId;
                 var isCollaborator = await _context.UserProjects
                     .AnyAsync(up => up.ProjectId == projectId.Value && up.UserId == userId);
@@ -137,7 +137,7 @@ public class BlobService
             case BlobType.PostImage:
                 if (!postId.HasValue) throw new ArgumentException("Post ID is required");
                 var post = await _context.Posts.FindAsync(postId.Value);
-                if (post == null) throw new Exception("Post not found");
+                if (post == null) throw new GraphQLException("Post not found");
                 if (post.UserId != userId)
                     throw new UnauthorizedAccessException("Only post creator can upload images");
                 break;
@@ -150,7 +150,7 @@ public class BlobService
             throw new UnauthorizedAccessException("You can only update your own banner");
 
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new GraphQLException("User not found");
 
         user.BannerPicBlobId = input.BannerPicBlobId;
         await _context.SaveChangesAsync();
@@ -161,7 +161,7 @@ public class BlobService
     public async Task<Project> UpdateProjectImage(int userId, UpdateProjectImageInput input)
     {
         var project = await _context.Projects.FindAsync(input.ProjectId);
-        if (project == null) throw new Exception("Project not found");
+        if (project == null) throw new GraphQLException("Project not found");
         if (project.OwnerId != userId)
             throw new UnauthorizedAccessException("Only the project owner can update the project image");
 
@@ -174,7 +174,7 @@ public class BlobService
     public async Task<Project> UpdateProjectBanner(int userId, UpdateProjectBannerInput input)
     {
         var project = await _context.Projects.FindAsync(input.ProjectId);
-        if (project == null) throw new Exception("Project not found");
+        if (project == null) throw new GraphQLException("Project not found");
         if (project.OwnerId != userId)
             throw new UnauthorizedAccessException("Only the project owner can update the project banner");
 

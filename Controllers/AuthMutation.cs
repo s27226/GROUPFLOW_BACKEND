@@ -10,93 +10,68 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.GraphQL.Responses;
 
 public class AuthMutation
 {
-    public async Task<AuthPayload> RegisterUser(
+    public async Task<AuthPayloadResponse> RegisterUser(
         [Service] AppDbContext db,
-        UserRegisterInput input)
+        UserRegisterInput input,
+        CancellationToken ct = default)
     {
-        if (await db.Users.AnyAsync(u => u.Email == input.Email))
+        using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
         {
-            throw new GraphQLException(new Error("Email already exists", "EMAIL_EXISTS"));
+            if (await db.Users.AnyAsync(u => u.Email == input.Email, ct))
+            {
+                throw new GraphQLException(new Error("Email already exists", "EMAIL_EXISTS"));
+            }
+
+            var user = new User
+            {
+                Name = input.Name,
+                Surname = input.Surname,
+                Nickname = input.Nickname,
+                Email = input.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(input.Password)
+            };
+
+            db.Users.Add(user);
+            await db.SaveChangesAsync(ct);
+
+            var token = GenerateJwt(user);
+            var refreshToken = await GenerateRefreshToken(db, user.Id, ct);
+            
+            await transaction.CommitAsync(ct);
+            return new AuthPayloadResponse(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
         }
-
-        var user = new User
+        catch
         {
-            Name = input.Name,
-            Surname = input.Surname,
-            Nickname = input.Nickname,
-            Email = input.Email,
-            Password = BCrypt.Net.BCrypt.HashPassword(input.Password)
-        };
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
-
-        var token = GenerateJwt(user);
-        var refreshToken = await GenerateRefreshToken(db, user.Id);
-        
-        return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
-    public async Task<AuthPayload> LoginUser(
+    public async Task<AuthPayloadResponse> LoginUser(
         [Service] AppDbContext db,
-        UserLoginInput input)
+        UserLoginInput input,
+        CancellationToken ct = default)
     {
         try
         {
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email, ct);
             if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
             {
                 throw new GraphQLException(new Error("Invalid email or password", "INVALID_LOGIN"));
             }
 
-            // Check if user is banned
-            if (user.IsBanned)
-            {
-                if (user.BanExpiresAt == null || user.BanExpiresAt > DateTime.UtcNow)
-                {
-                    var banMessage = user.BanReason != null 
-                        ? $"Your account has been banned. Reason: {user.BanReason}" 
-                        : "Your account has been banned.";
-                    
-                    if (user.BanExpiresAt != null)
-                    {
-                        banMessage += $" Ban expires: {user.BanExpiresAt:yyyy-MM-dd HH:mm}";
-                    }
-                    
-                    throw new GraphQLException(new Error(banMessage, "ACCOUNT_BANNED"));
-                }
-                else
-                {
-                    // Ban has expired, unban the user
-                    user.IsBanned = false;
-                    user.BanReason = null;
-                    user.BanExpiresAt = null;
-                    user.BannedByUserId = null;
-                    await db.SaveChangesAsync();
-                }
-            }
-
-            // Check if user is suspended
-            if (user.SuspendedUntil != null && user.SuspendedUntil > DateTime.UtcNow)
-            {
-                throw new GraphQLException(new Error(
-                    $"Your account is suspended until {user.SuspendedUntil:yyyy-MM-dd HH:mm}", 
-                    "ACCOUNT_SUSPENDED"));
-            }
-            else if (user.SuspendedUntil != null)
-            {
-                // Suspension has expired, clear it
-                user.SuspendedUntil = null;
-                await db.SaveChangesAsync();
-            }
+            await HandleUserBanAsync(db, user, ct);
+            await HandleUserSuspensionAsync(db, user, ct);
 
             var token = GenerateJwt(user);
-            var refreshToken = await GenerateRefreshToken(db, user.Id);
+            var refreshToken = await GenerateRefreshToken(db, user.Id, ct);
             
-            return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
+            return new AuthPayloadResponse(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
         }
         catch (GraphQLException)
         {
@@ -108,46 +83,58 @@ public class AuthMutation
         }
     }
 
-    public async Task<AuthPayload> RefreshToken(
+    public async Task<AuthPayloadResponse> RefreshToken(
         [Service] AppDbContext db,
-        string refreshToken)
+        string refreshToken,
+        CancellationToken ct = default)
     {
-        var storedToken = await db.RefreshTokens
-            .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
-
-        if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiryDate < DateTime.UtcNow)
+        using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
         {
-            throw new GraphQLException(new Error("Invalid or expired refresh token", "INVALID_REFRESH_TOKEN"));
+            var storedToken = await db.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken, ct);
+
+            if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiryDate < DateTime.UtcNow)
+            {
+                throw new GraphQLException(new Error("Invalid or expired refresh token", "INVALID_REFRESH_TOKEN"));
+            }
+
+            // Revoke the old refresh token
+            storedToken.IsRevoked = true;
+            
+            // Generate new tokens
+            var newAccessToken = GenerateJwt(storedToken.User);
+            var newRefreshToken = await GenerateRefreshToken(db, storedToken.UserId, ct);
+
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return new AuthPayloadResponse(
+                storedToken.User.Id, 
+                storedToken.User.Name, 
+                storedToken.User.Surname, 
+                storedToken.User.Nickname, 
+                storedToken.User.Email, 
+                storedToken.User.ProfilePic, 
+                newAccessToken, 
+                newRefreshToken,
+                storedToken.User.IsModerator);
         }
-
-        // Revoke the old refresh token
-        storedToken.IsRevoked = true;
-        
-        // Generate new tokens
-        var newAccessToken = GenerateJwt(storedToken.User);
-        var newRefreshToken = await GenerateRefreshToken(db, storedToken.UserId);
-
-        await db.SaveChangesAsync();
-
-        return new AuthPayload(
-            storedToken.User.Id, 
-            storedToken.User.Name, 
-            storedToken.User.Surname, 
-            storedToken.User.Nickname, 
-            storedToken.User.Email, 
-            storedToken.User.ProfilePic, 
-            newAccessToken, 
-            newRefreshToken,
-            storedToken.User.IsModerator);
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task<bool> RevokeRefreshToken(
         [Service] AppDbContext db,
-        string refreshToken)
+        string refreshToken,
+        CancellationToken ct = default)
     {
         var storedToken = await db.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken, ct);
 
         if (storedToken == null)
         {
@@ -155,7 +142,7 @@ public class AuthMutation
         }
 
         storedToken.IsRevoked = true;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return true;
     }
 
@@ -184,7 +171,7 @@ public class AuthMutation
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private static async Task<string> GenerateRefreshToken(AppDbContext db, int userId)
+    private static async Task<string> GenerateRefreshToken(AppDbContext db, int userId, CancellationToken ct = default)
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
@@ -201,8 +188,54 @@ public class AuthMutation
         };
 
         db.RefreshTokens.Add(refreshToken);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return token;
+    }
+
+    private static async Task HandleUserBanAsync(AppDbContext db, User user, CancellationToken ct)
+    {
+        if (!user.IsBanned) return;
+
+        if (user.BanExpiresAt == null || user.BanExpiresAt > DateTime.UtcNow)
+        {
+            var banMessage = user.BanReason != null 
+                ? $"Your account has been banned. Reason: {user.BanReason}" 
+                : "Your account has been banned.";
+            
+            if (user.BanExpiresAt != null)
+            {
+                banMessage += $" Ban expires: {user.BanExpiresAt:yyyy-MM-dd HH:mm}";
+            }
+            
+            throw new GraphQLException(new Error(banMessage, "ACCOUNT_BANNED"));
+        }
+        else
+        {
+            // Ban has expired, unban the user
+            user.IsBanned = false;
+            user.BanReason = null;
+            user.BanExpiresAt = null;
+            user.BannedByUserId = null;
+            await db.SaveChangesAsync(ct);
+        }
+    }
+
+    private static async Task HandleUserSuspensionAsync(AppDbContext db, User user, CancellationToken ct)
+    {
+        if (user.SuspendedUntil == null) return;
+
+        if (user.SuspendedUntil > DateTime.UtcNow)
+        {
+            throw new GraphQLException(new Error(
+                $"Your account is suspended until {user.SuspendedUntil:yyyy-MM-dd HH:mm}", 
+                "ACCOUNT_SUSPENDED"));
+        }
+        else
+        {
+            // Suspension has expired, clear it
+            user.SuspendedUntil = null;
+            await db.SaveChangesAsync(ct);
+        }
     }
 }
