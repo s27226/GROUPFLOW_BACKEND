@@ -245,7 +245,7 @@ public class AuthMutation
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None, // Changed to None for cross-origin requests
             Expires = DateTimeOffset.UtcNow.AddMinutes(15)
         };
 
@@ -253,7 +253,7 @@ public class AuthMutation
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None, // Changed to None for cross-origin requests
             Expires = DateTimeOffset.UtcNow.AddDays(7)
         };
 
@@ -267,7 +267,7 @@ public class AuthMutation
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict
+            SameSite = SameSiteMode.None // Changed to None for cross-origin requests
         };
 
         context.Response.Cookies.Delete("access_token", cookieOptions);
