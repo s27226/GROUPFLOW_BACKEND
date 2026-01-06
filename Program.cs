@@ -9,11 +9,14 @@ using NAME_WIP_BACKEND.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Scrutor;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.S3;
+using NAME_WIP_BACKEND.Services;
 
-
+DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
-DotNetEnv.Env.Load();
+
 
 // Sprawdzenie środowiska
 var env = builder.Environment;
@@ -33,6 +36,8 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
             npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
         }));
 
+builder.Services.AddAWSService<IAmazonS3>();
+
 var assembly = Assembly.GetExecutingAssembly();
 
 // Rejestracja wszystkich serwisów kończących się na "Service"
@@ -40,14 +45,13 @@ builder.Services.Scan(scan => scan
     .FromAssemblies(assembly)
     .AddClasses(classes => classes
         .Where(type => 
-            type.Name.EndsWith("Service") &&
-            type.Name != "S3Service" &&
-            type.Name != "IS3Service"
+            type.Name.EndsWith("Service")
             ))
     .AsSelf()
     .WithScopedLifetime()
 );
 
+builder.Services.AddScoped<IS3Service, S3Service>();
 
 // Rejestracja wszystkich mutacji kończących się na "Mutation"
 builder.Services.Scan(scan => scan
@@ -59,6 +63,8 @@ builder.Services.Scan(scan => scan
     .AsSelf()
     .WithScopedLifetime()
 );
+
+builder.Services.AddScoped<AuthMutation>();
 
 builder.Services.AddScoped<Mutation>();
 builder.Services
