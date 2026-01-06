@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using NAME_WIP_BACKEND.Controllers;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
@@ -23,6 +24,7 @@ public class AuthMutationTests : IDisposable
         // Setup in-memory database for testing
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _context = new AppDbContext(options);
