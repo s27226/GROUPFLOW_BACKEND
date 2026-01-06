@@ -7,7 +7,5 @@ public record AuthPayload(
     string Nickname,
     string Email,
     string? ProfilePic,
-    string Token,
-    string RefreshToken,
     bool IsModerator
     );

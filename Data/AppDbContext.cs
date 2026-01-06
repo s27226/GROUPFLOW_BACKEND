@@ -28,7 +28,6 @@ public class AppDbContext : DbContext
     public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<ProjectEvent> ProjectEvents => Set<ProjectEvent>();
     public DbSet<SavedPost> SavedPosts => Set<SavedPost>();
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserSkill> UserSkills => Set<UserSkill>();
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
     public DbSet<PostLike> PostLikes => Set<PostLike>();
