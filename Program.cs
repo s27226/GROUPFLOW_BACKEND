@@ -7,6 +7,8 @@ using NAME_WIP_BACKEND;
 using NAME_WIP_BACKEND.Controllers;
 using NAME_WIP_BACKEND.GraphQL.Types;
 using NAME_WIP_BACKEND.Services;
+using NAME_WIP_BACKEND.Services.Friendship;
+using NAME_WIP_BACKEND.Services.Post;
 using Amazon.S3;
 using Amazon.Runtime;
 
@@ -34,6 +36,10 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 });
 
 builder.Services.AddSingleton<IS3Service, S3Service>();
+
+// Register business logic services - isolate DB from API
+builder.Services.AddScoped<IFriendshipService, FriendshipService>();
+builder.Services.AddScoped<IPostService, PostService>();
 
 
 
