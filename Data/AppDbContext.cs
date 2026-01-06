@@ -346,5 +346,32 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.ImageBlobId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Add indexes for performance
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Nickname)
+            .IsUnique();
+
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => p.Created);
+
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => p.Public);
+
+        modelBuilder.Entity<Entry>()
+            .HasIndex(e => e.Sent);
+
+        modelBuilder.Entity<Entry>()
+            .HasIndex(e => e.Public);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.UserId);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.CreatedAt);
     }
 }

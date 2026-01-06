@@ -27,6 +27,9 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
         npgsqlOptions =>
         {
             npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+            npgsqlOptions.MinBatchSize(1);
+            npgsqlOptions.MaxBatchSize(100);
+            npgsqlOptions.CommandTimeout(30);
         }));
 
 
