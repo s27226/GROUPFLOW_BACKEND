@@ -6,20 +6,25 @@ namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class UserChatQuery
 {
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public UserChatQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
     
     /// <summary>
     /// Get the UserChat ID for the current user in a specific chat
     /// </summary>
     [GraphQLName("myuserchat")]
-    public UserChat? GetMyUserChat(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int chatId)
+    public UserChat? GetMyUserChat(int chatId)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        return context.UserChats
+        return _context.UserChats
             .FirstOrDefault(uc => uc.ChatId == chatId && uc.UserId == userId);
     }
 }

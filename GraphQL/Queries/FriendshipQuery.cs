@@ -6,33 +6,37 @@ namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class FriendshipQuery
 {
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public FriendshipQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     [GraphQLName("myfriends")]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<User> GetMyFriends(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor)
+    public IQueryable<User> GetMyFriends()
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        return context.Users
-            .Where(u => context.Friendships
+        return _context.Users
+            .Where(u => _context.Friendships
                 .Any(f => (f.UserId == userId && f.FriendId == u.Id && f.IsAccepted) ||
                          (f.FriendId == userId && f.UserId == u.Id && f.IsAccepted)));
     }
 
     [GraphQLName("friendshipstatus")]
-    public string GetFriendshipStatus(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int friendId)
+    public string GetFriendshipStatus(int friendId)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        var friendship = context.Friendships
+        var friendship = _context.Friendships
             .FirstOrDefault(f => 
                 (f.UserId == userId && f.FriendId == friendId) ||
                 (f.FriendId == userId && f.UserId == friendId));

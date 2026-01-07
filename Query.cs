@@ -7,32 +7,34 @@ namespace NAME_WIP_BACKEND;
 public class Query
 {
     private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public Query(AppDbContext context)
+    public Query(AppDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    public ChatQuery Chat => new();
+    public ChatQuery Chat => new(_context, _httpContextAccessor);
     
-    public EntryQuery Entry => new();
+    public EntryQuery Entry => new(_context);
     
     
-    public FriendRequestQuery FriendRequest => new();
-    public ProjectInvitationQuery ProjectInvitation => new();
-    public ProjectRecommendationQuery ProjectRecommendation => new();
+    public FriendRequestQuery FriendRequest => new(_context, _httpContextAccessor);
+    public ProjectInvitationQuery ProjectInvitation => new(_context, _httpContextAccessor);
+    public ProjectRecommendationQuery ProjectRecommendation => new(_context);
     
-    public UserChatQuery UserChat => new();
+    public UserChatQuery UserChat => new(_context, _httpContextAccessor);
     
     public UsersQuery Users => new(_context);
-    public PostQuery Post => new();
-    public ProjectQuery Project => new();
-    public FriendshipQuery Friendship => new();
-    public ProjectEventQuery ProjectEvent => new();
-    public SavedPostQuery SavedPost => new();
-    public UserTagQuery UserTag => new();
-    public NotificationQuery Notification => new();
-    public BlockedUserQuery BlockedUser => new();
-    public AdminQuery Admin => new();
-    public ModerationQuery Moderation => new();
+    public PostQuery Post => new(_context, _httpContextAccessor);
+    public ProjectQuery Project => new(_context, _httpContextAccessor);
+    public FriendshipQuery Friendship => new(_context, _httpContextAccessor);
+    public ProjectEventQuery ProjectEvent => new(_context);
+    public SavedPostQuery SavedPost => new(_context, _httpContextAccessor);
+    public UserTagQuery UserTag => new(_context, _httpContextAccessor);
+    public NotificationQuery Notification => new(_context, _httpContextAccessor);
+    public BlockedUserQuery BlockedUser => new(_context, _httpContextAccessor);
+    public AdminQuery Admin => new(_context, _httpContextAccessor);
+    public ModerationQuery Moderation => new(_context, _httpContextAccessor);
 }

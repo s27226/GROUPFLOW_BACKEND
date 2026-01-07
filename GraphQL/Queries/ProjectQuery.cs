@@ -4,29 +4,44 @@ using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.GraphQL.Responses;
 
 namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class ProjectQuery
 {
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public ProjectQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     [GraphQLName("allprojects")]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Project> GetProjects([Service] AppDbContext context) => 
-        context.Projects.Where(p => p.IsPublic);
+    public IQueryable<ProjectResponse> GetProjects() => 
+        _context.Projects
+            .Include(p => p.Owner)
+            .Include(p => p.Skills)
+            .Include(p => p.Interests)
+            .Include(p => p.Collaborators)
+            .Include(p => p.Likes)
+            .Include(p => p.Views)
+            .Where(p => p.IsPublic)
+            .Select(p => ProjectResponse.FromProject(p));
 
     [GraphQLName("projectbyid")]
-    public async Task<Project?> GetProjectById(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int id)
+    public async Task<ProjectResponse?> GetProjectById(int id)
     {
-        var currentUser = httpContextAccessor.HttpContext?.User;
+        var currentUser = _httpContextAccessor.HttpContext?.User;
         var userIdClaim = currentUser?.FindFirstValue(ClaimTypes.NameIdentifier);
         int? userId = userIdClaim != null ? int.Parse(userIdClaim) : null;
         
-        var project = await context.Projects
+        var project = await _context.Projects
             .Include(p => p.Owner)
             .Include(p => p.ImageBlob)
             .Include(p => p.BannerBlob)
@@ -44,7 +59,7 @@ public class ProjectQuery
             var today = DateTime.UtcNow.Date;
             
             // Check if user already viewed today
-            var existingView = await context.ProjectViews
+            var existingView = await _context.ProjectViews
                 .FirstOrDefaultAsync(pv => pv.ProjectId == id && 
                                           pv.UserId == userId.Value && 
                                           pv.ViewDate == today);
@@ -60,23 +75,21 @@ public class ProjectQuery
                     Created = DateTime.UtcNow
                 };
                 
-                context.ProjectViews.Add(view);
-                await context.SaveChangesAsync();
+                _context.ProjectViews.Add(view);
+                await _context.SaveChangesAsync();
             }
         }
         
-        return project;
+        return project != null ? ProjectResponse.FromProject(project) : null;
     }
 
     [GraphQLName("myprojects")]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Project> GetMyProjects(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor)
+    public IQueryable<ProjectResponse> GetMyProjects()
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userIdClaim == null)
         {
@@ -84,8 +97,16 @@ public class ProjectQuery
         }
         int userId = int.Parse(userIdClaim);
         
-        return context.Projects.Where(p => 
-            p.OwnerId == userId || p.Collaborators.Any(c => c.UserId == userId));
+        return _context.Projects
+            .Include(p => p.Owner)
+            .Include(p => p.Skills)
+            .Include(p => p.Interests)
+            .Include(p => p.Collaborators)
+            .Include(p => p.Likes)
+            .Include(p => p.Views)
+            .Where(p => 
+                p.OwnerId == userId || p.Collaborators.Any(c => c.UserId == userId))
+            .Select(p => ProjectResponse.FromProject(p));
     }
 
     [GraphQLName("trendingprojects")]
@@ -93,7 +114,7 @@ public class ProjectQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Project> GetTrendingProjects([Service] AppDbContext context)
+    public IQueryable<ProjectResponse> GetTrendingProjects()
     {
         var now = DateTime.UtcNow;
         var oneDayAgo = now.AddDays(-1);
@@ -102,7 +123,7 @@ public class ProjectQuery
 
         // Calculate trending score based on post activity with time-decay weights
         // Formula: (daily_posts * 10) + (weekly_posts * 5) + (monthly_posts * 2) + (total_posts * 0.5) + (likes * 0.3) + (views * 0.1)
-        var projects = context.Projects
+        var projects = _context.Projects
             .Where(p => p.IsPublic)
             .Select(p => new
             {
@@ -124,44 +145,46 @@ public class ProjectQuery
             })
             .OrderByDescending(x => x.TrendingScore)
             .ThenByDescending(x => x.Project.LastUpdated)
-            .Select(x => x.Project);
+            .Select(x => ProjectResponse.FromProject(x.Project));
 
         return projects;
     }
 
     [GraphQLName("userprojects")]
-    public IQueryable<Project> GetUserProjects(
-        [Service] AppDbContext context,
-        int userId)
+    public IQueryable<ProjectResponse> GetUserProjects(int userId)
     {
         // Return all projects the user is part of (either as owner or as member)
-        return context.Projects
+        return _context.Projects
             .Include(p => p.ImageBlob)
             .Include(p => p.BannerBlob)
+            .Include(p => p.Owner)
+            .Include(p => p.Skills)
+            .Include(p => p.Interests)
+            .Include(p => p.Collaborators)
+            .Include(p => p.Likes)
+            .Include(p => p.Views)
             .Where(p => 
-                p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)));
+                p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)))
+            .Select(p => ProjectResponse.FromProject(p));
     }
 
     [GraphQLName("projectposts")]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Post> GetProjectPosts(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId)
+    public IQueryable<PostResponse> GetProjectPosts(int projectId)
     {
-        var currentUser = httpContextAccessor.HttpContext?.User;
+        var currentUser = _httpContextAccessor.HttpContext?.User;
         var userIdClaim = currentUser?.FindFirstValue(ClaimTypes.NameIdentifier);
         int? userId = userIdClaim != null ? int.Parse(userIdClaim) : null;
         
-        var project = context.Projects
+        var project = _context.Projects
             .Include(p => p.Collaborators)
             .FirstOrDefault(p => p.Id == projectId);
             
         if (project == null)
         {
-            return Enumerable.Empty<Post>().AsQueryable();
+            return Enumerable.Empty<PostResponse>().AsQueryable();
         }
         
         // Check if user is a member (owner or collaborator)
@@ -169,19 +192,20 @@ public class ProjectQuery
             (project.OwnerId == userId.Value || 
              project.Collaborators.Any(c => c.UserId == userId.Value));
         
-        return context.Posts
+        return _context.Posts
+            .Include(p => p.User)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
             .Where(p => p.ProjectId == projectId && 
                 (p.Public || isMember)) // Show public posts OR all posts if user is a member
+            .Select(p => PostResponse.FromPost(p))
             .OrderByDescending(p => p.Created);
     }
 
     [GraphQLName("haslikedproject")]
-    public async Task<bool> HasLikedProject(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId)
+    public async Task<bool> HasLikedProject(int projectId)
     {
-        var currentUser = httpContextAccessor.HttpContext?.User;
+        var currentUser = _httpContextAccessor.HttpContext?.User;
         var userIdClaim = currentUser?.FindFirstValue(ClaimTypes.NameIdentifier);
         
         if (userIdClaim == null)
@@ -191,28 +215,30 @@ public class ProjectQuery
 
         int userId = int.Parse(userIdClaim);
 
-        return await context.ProjectLikes
+        return await _context.ProjectLikes
             .AnyAsync(pl => pl.ProjectId == projectId && pl.UserId == userId);
     }
 
     [Authorize]
     [GraphQLName("searchprojects")]
     [UseProjection]
-    public async Task<List<Project>> SearchProjects(
-        AppDbContext context,
+    public async Task<List<ProjectResponse>> SearchProjects(
         ClaimsPrincipal claimsPrincipal,
         SearchProjectsInput? input = null)
     {
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var currentUserId))
         {
-            return new List<Project>();
+            return new List<ProjectResponse>();
         }
 
-        var query = context.Projects
+        var query = _context.Projects
             .Include(p => p.Skills)
             .Include(p => p.Interests)
             .Include(p => p.Owner)
+            .Include(p => p.Collaborators)
+            .Include(p => p.Likes)
+            .Include(p => p.Views)
             .Where(p => p.IsPublic)
             .AsQueryable();
 
@@ -239,6 +265,6 @@ public class ProjectQuery
                 input.Interests.Contains(i.InterestName)));
         }
 
-        return await query.ToListAsync();
+        return (await query.ToListAsync()).Select(p => ProjectResponse.FromProject(p)).ToList();
     }
 }

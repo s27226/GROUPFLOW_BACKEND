@@ -2,47 +2,55 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.GraphQL.Responses;
 
 namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class PostQuery
 {
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public PostQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     [GraphQLName("allposts")]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Post> GetPosts(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor)
+    public IQueryable<PostResponse> GetPosts()
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
         
         // Get all projects where user is owner or collaborator
-        var userProjectIds = context.Projects
+        var userProjectIds = _context.Projects
             .Where(p => p.OwnerId == userId || p.Collaborators.Any(c => c.UserId == userId))
             .Select(p => p.Id)
             .ToList();
         
         // Get IDs of users that the current user has blocked or has been blocked by
-        var blockedUserIds = context.BlockedUsers
+        var blockedUserIds = _context.BlockedUsers
             .Where(bu => bu.UserId == userId || bu.BlockedUserId == userId)
             .Select(bu => bu.UserId == userId ? bu.BlockedUserId : bu.UserId)
             .ToList();
         
         // Get current user's skills and interests
-        var currentUserSkills = context.UserSkills
+        var currentUserSkills = _context.UserSkills
             .Where(us => us.UserId == userId)
             .Select(us => us.SkillName.ToLower())
             .ToHashSet();
         
-        var currentUserInterests = context.UserInterests
+        var currentUserInterests = _context.UserInterests
             .Where(ui => ui.UserId == userId)
             .Select(ui => ui.InterestName.ToLower())
             .ToHashSet();
         
         // Get all posts with necessary related data
-        var posts = context.Posts
+        var posts = _context.Posts
             .Include(p => p.Likes)
             .Include(p => p.Comments)
             .Include(p => p.User)
@@ -66,7 +74,7 @@ public class PostQuery
             })
             .OrderByDescending(x => x.RelevanceScore)
             .ThenByDescending(x => x.Post.Created)
-            .Select(x => x.Post)
+            .Select(x => PostResponse.FromPost(x.Post))
             .AsQueryable();
         
         return posts;
@@ -152,15 +160,12 @@ public class PostQuery
 
     [GraphQLName("allpostsbyid")]
     [UseProjection]
-    public Post? GetPostsById(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int id)
+    public PostResponse? GetPostsById(int id)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
         
-        var post = context.Posts
+        var post = _context.Posts
             .Include(p => p.Likes)
             .Include(p => p.Project)
                 .ThenInclude(p => p.Collaborators)
@@ -178,19 +183,16 @@ public class PostQuery
                        (post.Project.OwnerId == userId || // User is project owner
                         post.Project.Collaborators.Any(c => c.UserId == userId))); // User is collaborator
         
-        return canView ? post : null;
+        return canView ? PostResponse.FromPost(post) : null;
     }
 
     [GraphQLName("isPostLikedByUser")]
-    public async Task<bool> IsPostLikedByUser(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int postId)
+    public async Task<bool> IsPostLikedByUser(int postId)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
         
-        return await context.PostLikes
+        return await _context.PostLikes
             .AnyAsync(pl => pl.PostId == postId && pl.UserId == userId);
     }
 }

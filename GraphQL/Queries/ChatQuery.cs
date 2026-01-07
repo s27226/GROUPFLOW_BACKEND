@@ -7,32 +7,38 @@ namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class ChatQuery
 {
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public ChatQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     [GraphQLName("allchats")]
     [UsePaging]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Chat> GetChats(AppDbContext context) => context.Chats;
+    public IQueryable<Chat> GetChats() => _context.Chats;
     
     [GraphQLName("chatbyid")]
     [UseProjection]
-    public IQueryable<Chat> GetChatById(AppDbContext context, int id) => context.Chats.Where(c => c.Id == id);
+    public IQueryable<Chat> GetChatById(int id) => _context.Chats.Where(c => c.Id == id);
     
     /// <summary>
     /// Get or create a direct message chat between the current user and a friend.
     /// Direct message chats have ProjectId = null.
     /// </summary>
     [GraphQLName("getorcreatedirectchat")]
-    public async Task<Chat?> GetOrCreateDirectChat(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int friendId)
+    public async Task<Chat?> GetOrCreateDirectChat(int friendId)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
         // Check if users are friends
-        var areFriends = await context.Friendships
+        var areFriends = await _context.Friendships
             .AnyAsync(f => 
                 ((f.UserId == userId && f.FriendId == friendId) ||
                  (f.FriendId == userId && f.UserId == friendId)) &&
@@ -45,7 +51,7 @@ public class ChatQuery
         
         // Find existing direct chat between these two users
         // Direct chats have ProjectId = null
-        var existingChat = await context.Chats
+        var existingChat = await _context.Chats
             .Include(c => c.UserChats)
                 .ThenInclude(uc => uc.User)
             .Where(c => c.ProjectId == null) // Direct message chats
@@ -65,8 +71,8 @@ public class ChatQuery
             ProjectId = null // null indicates a direct message chat
         };
         
-        context.Chats.Add(newChat);
-        await context.SaveChangesAsync();
+        _context.Chats.Add(newChat);
+        await _context.SaveChangesAsync();
         
         // Add both users to the chat
         var userChat1 = new UserChat
@@ -81,12 +87,12 @@ public class ChatQuery
             UserId = friendId
         };
         
-        context.UserChats.Add(userChat1);
-        context.UserChats.Add(userChat2);
-        await context.SaveChangesAsync();
+        _context.UserChats.Add(userChat1);
+        _context.UserChats.Add(userChat2);
+        await _context.SaveChangesAsync();
         
         // Reload with navigation properties
-        return await context.Chats
+        return await _context.Chats
             .Include(c => c.UserChats)
                 .ThenInclude(uc => uc.User)
             .FirstAsync(c => c.Id == newChat.Id);
@@ -96,14 +102,12 @@ public class ChatQuery
     /// Get all direct message chats for the current user
     /// </summary>
     [GraphQLName("mydirectchats")]
-    public IQueryable<Chat> GetMyDirectChats(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor)
+    public IQueryable<Chat> GetMyDirectChats()
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        return context.Chats
+        return _context.Chats
             .Where(c => c.ProjectId == null) // Direct message chats only
             .Where(c => c.UserChats.Any(uc => uc.UserId == userId));
     }

@@ -7,16 +7,22 @@ namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class NotificationQuery
 {
-    [GraphQLName("myNotifications")]
-    public async Task<List<Notification>> GetMyNotifications(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int limit = 5)
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public NotificationQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    [GraphQLName("myNotifications")]
+    public async Task<List<Notification>> GetMyNotifications(int limit = 5)
+    {
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var notifications = await context.Notifications
+        var notifications = await _context.Notifications
             .Include(n => n.ActorUser)
             .Include(n => n.Post)
             .Where(n => n.UserId == userId)
@@ -28,14 +34,12 @@ public class NotificationQuery
     }
 
     [GraphQLName("unreadNotificationsCount")]
-    public async Task<int> GetUnreadNotificationsCount(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor)
+    public async Task<int> GetUnreadNotificationsCount()
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
+        var currentUser = _httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var count = await context.Notifications
+        var count = await _context.Notifications
             .Where(n => n.UserId == userId && !n.IsRead)
             .CountAsync();
 

@@ -7,22 +7,30 @@ namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class ProjectInvitationQuery
 {
+    private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public ProjectInvitationQuery(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     [GraphQLName("allprojectinvitations")]
     [UsePaging]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<ProjectInvitation> GetProjectInvitations(
-        AppDbContext context,
-        ClaimsPrincipal claimsPrincipal)
+    public IQueryable<ProjectInvitation> GetProjectInvitations()
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
+        var claimsPrincipal = _httpContextAccessor.HttpContext?.User;
+        var userIdClaim = claimsPrincipal?.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
         {
             return Enumerable.Empty<ProjectInvitation>().AsQueryable();
         }
 
         // Return project invitations where the current user is the invitee (received invitations)
-        return context.ProjectInvitations
+        return _context.ProjectInvitations
             .Include(pi => pi.Project)
             .Include(pi => pi.Inviting)
             .Include(pi => pi.Invited)
@@ -31,5 +39,5 @@ public class ProjectInvitationQuery
     
     [GraphQLName("projectinvitationbyid")]
     [UseProjection]
-    public ProjectInvitation? GetProjectInvitationById(AppDbContext context, int id) => context.ProjectInvitations.FirstOrDefault(g => g.Id == id);
+    public ProjectInvitation? GetProjectInvitationById(int id) => _context.ProjectInvitations.FirstOrDefault(g => g.Id == id);
 }

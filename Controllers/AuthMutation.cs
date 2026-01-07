@@ -1,4 +1,4 @@
-﻿namespace NAME_WIP_BACKEND.Controllers;
+namespace NAME_WIP_BACKEND.Controllers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -14,15 +14,21 @@ using NAME_WIP_BACKEND.GraphQL.Responses;
 
 public class AuthMutation
 {
+    private readonly AppDbContext _db;
+
+    public AuthMutation(AppDbContext db)
+    {
+        _db = db;
+    }
+
     public async Task<AuthPayloadResponse> RegisterUser(
-        [Service] AppDbContext db,
         UserRegisterInput input,
         CancellationToken ct = default)
     {
-        using var transaction = await db.Database.BeginTransactionAsync(ct);
+        using var transaction = await _db.Database.BeginTransactionAsync(ct);
         try
         {
-            if (await db.Users.AnyAsync(u => u.Email == input.Email, ct))
+            if (await _db.Users.AnyAsync(u => u.Email == input.Email, ct))
             {
                 throw new GraphQLException(new Error("Email already exists", "EMAIL_EXISTS"));
             }
@@ -36,11 +42,11 @@ public class AuthMutation
                 Password = BCrypt.Net.BCrypt.HashPassword(input.Password)
             };
 
-            db.Users.Add(user);
-            await db.SaveChangesAsync(ct);
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync(ct);
 
             var token = GenerateJwt(user);
-            var refreshToken = await GenerateRefreshToken(db, user.Id, ct);
+            var refreshToken = await GenerateRefreshToken(_db, user.Id, ct);
             
             await transaction.CommitAsync(ct);
             return new AuthPayloadResponse(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
@@ -53,23 +59,22 @@ public class AuthMutation
     }
 
     public async Task<AuthPayloadResponse> LoginUser(
-        [Service] AppDbContext db,
         UserLoginInput input,
         CancellationToken ct = default)
     {
         try
         {
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email, ct);
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == input.Email, ct);
             if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
             {
                 throw new GraphQLException(new Error("Invalid email or password", "INVALID_LOGIN"));
             }
 
-            await HandleUserBanAsync(db, user, ct);
-            await HandleUserSuspensionAsync(db, user, ct);
+            await HandleUserBanAsync(_db, user, ct);
+            await HandleUserSuspensionAsync(_db, user, ct);
 
             var token = GenerateJwt(user);
-            var refreshToken = await GenerateRefreshToken(db, user.Id, ct);
+            var refreshToken = await GenerateRefreshToken(_db, user.Id, ct);
             
             return new AuthPayloadResponse(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
         }
@@ -84,14 +89,13 @@ public class AuthMutation
     }
 
     public async Task<AuthPayloadResponse> RefreshToken(
-        [Service] AppDbContext db,
         string refreshToken,
         CancellationToken ct = default)
     {
-        using var transaction = await db.Database.BeginTransactionAsync(ct);
+        using var transaction = await _db.Database.BeginTransactionAsync(ct);
         try
         {
-            var storedToken = await db.RefreshTokens
+            var storedToken = await _db.RefreshTokens
                 .Include(rt => rt.User)
                 .FirstOrDefaultAsync(rt => rt.Token == refreshToken, ct);
 
@@ -105,9 +109,9 @@ public class AuthMutation
             
             // Generate new tokens
             var newAccessToken = GenerateJwt(storedToken.User);
-            var newRefreshToken = await GenerateRefreshToken(db, storedToken.UserId, ct);
+            var newRefreshToken = await GenerateRefreshToken(_db, storedToken.UserId, ct);
 
-            await db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
             return new AuthPayloadResponse(
@@ -129,11 +133,10 @@ public class AuthMutation
     }
 
     public async Task<bool> RevokeRefreshToken(
-        [Service] AppDbContext db,
         string refreshToken,
         CancellationToken ct = default)
     {
-        var storedToken = await db.RefreshTokens
+        var storedToken = await _db.RefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == refreshToken, ct);
 
         if (storedToken == null)
@@ -142,7 +145,7 @@ public class AuthMutation
         }
 
         storedToken.IsRevoked = true;
-        await db.SaveChangesAsync(ct);
+        await _db.SaveChangesAsync(ct);
         return true;
     }
 
@@ -171,7 +174,7 @@ public class AuthMutation
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private static async Task<string> GenerateRefreshToken(AppDbContext db, int userId, CancellationToken ct = default)
+    private static async Task<string> GenerateRefreshToken(AppDbContext _db, int userId, CancellationToken ct = default)
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
@@ -187,13 +190,13 @@ public class AuthMutation
             IsRevoked = false
         };
 
-        db.RefreshTokens.Add(refreshToken);
-        await db.SaveChangesAsync(ct);
+        _db.RefreshTokens.Add(refreshToken);
+        await _db.SaveChangesAsync(ct);
 
         return token;
     }
 
-    private static async Task HandleUserBanAsync(AppDbContext db, User user, CancellationToken ct)
+    private static async Task HandleUserBanAsync(AppDbContext _db, User user, CancellationToken ct)
     {
         if (!user.IsBanned) return;
 
@@ -217,11 +220,11 @@ public class AuthMutation
             user.BanReason = null;
             user.BanExpiresAt = null;
             user.BannedByUserId = null;
-            await db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(ct);
         }
     }
 
-    private static async Task HandleUserSuspensionAsync(AppDbContext db, User user, CancellationToken ct)
+    private static async Task HandleUserSuspensionAsync(AppDbContext _db, User user, CancellationToken ct)
     {
         if (user.SuspendedUntil == null) return;
 
@@ -235,7 +238,7 @@ public class AuthMutation
         {
             // Suspension has expired, clear it
             user.SuspendedUntil = null;
-            await db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(ct);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
 using NAME_WIP_BACKEND.Models;
 using System.Security.Claims;
@@ -8,6 +8,13 @@ namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
 public class FriendRequestMutation
 {
+    private readonly AppDbContext _context;
+
+    public FriendRequestMutation(AppDbContext context)
+    {
+        _context = context;
+    }
+
     private const int FriendRequestExpirationHours = 72;
     
     private static int GetUserId(ClaimsPrincipal claimsPrincipal)
@@ -22,7 +29,6 @@ public class FriendRequestMutation
     
     
     public async Task<FriendRequest> SendFriendRequest(
-        AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
         int requesteeId,
         CancellationToken cancellationToken)
@@ -34,7 +40,7 @@ public class FriendRequestMutation
             throw new GraphQLException("You cannot send a friend request to yourself");
         }
 
-        var exists = await context.FriendRequests.AnyAsync(
+        var exists = await _context.FriendRequests.AnyAsync(
             fr => fr.RequesterId == requesterId && fr.RequesteeId == requesteeId,
             cancellationToken);
 
@@ -51,12 +57,12 @@ public class FriendRequestMutation
             Expiring = DateTime.UtcNow.AddHours(FriendRequestExpirationHours)
         };
 
-        context.FriendRequests.Add(request);
-        await context.SaveChangesAsync(cancellationToken);
+        _context.FriendRequests.Add(request);
+        await _context.SaveChangesAsync(cancellationToken);
         
         // Load navigation properties
-        context.Entry(request).Reference(r => r.Requester).Load();
-        context.Entry(request).Reference(r => r.Requestee).Load();
+        _context.Entry(request).Reference(r => r.Requester).Load();
+        _context.Entry(request).Reference(r => r.Requestee).Load();
         
         return request;
     }
@@ -69,7 +75,7 @@ public class FriendRequestMutation
     {
         var userId = GetUserId(claimsPrincipal);
 
-        var request = await context.FriendRequests
+        var request = await _context.FriendRequests
             .FirstOrDefaultAsync(fr => fr.Id == friendRequestId, cancellationToken);
 
         if (request == null)
@@ -78,9 +84,9 @@ public class FriendRequestMutation
         if (request.RequesteeId != userId)
             throw new GraphQLException("Not authorized");
 
-        using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-        context.Friendships.AddRange(
+        _context.Friendships.AddRange(
             new Friendship
             {
                 UserId = request.RequesterId,
@@ -96,9 +102,9 @@ public class FriendRequestMutation
                 CreatedAt = DateTime.UtcNow
             });
 
-        context.FriendRequests.Remove(request);
+        _context.FriendRequests.Remove(request);
 
-        await context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         return true;
@@ -113,7 +119,7 @@ public class FriendRequestMutation
     {
         var userId = GetUserId(claimsPrincipal);
 
-        var request = await context.FriendRequests
+        var request = await _context.FriendRequests
             .FirstOrDefaultAsync(fr => fr.Id == friendRequestId, cancellationToken);
 
         if (request == null)
@@ -122,8 +128,8 @@ public class FriendRequestMutation
         if (request.RequesteeId != userId)
             throw new GraphQLException("You can only reject friend requests sent to you");
 
-        context.FriendRequests.Remove(request);
-        await context.SaveChangesAsync(cancellationToken);
+        _context.FriendRequests.Remove(request);
+        await _context.SaveChangesAsync(cancellationToken);
 
         return true;
     }
@@ -138,7 +144,7 @@ public class FriendRequestMutation
         if (requesterId == input.RequesteeId)
             throw new GraphQLException("You cannot send a friend request to yourself.");
     
-        var exists = await context.FriendRequests.AnyAsync(
+        var exists = await _context.FriendRequests.AnyAsync(
             fr => fr.RequesterId == requesterId && fr.RequesteeId == input.RequesteeId,
             cancellationToken);
     
@@ -153,8 +159,8 @@ public class FriendRequestMutation
             Expiring = DateTime.UtcNow.AddHours(FriendRequestExpirationHours)
         };
     
-        context.FriendRequests.Add(request);
-        await context.SaveChangesAsync(cancellationToken);
+        _context.FriendRequests.Add(request);
+        await _context.SaveChangesAsync(cancellationToken);
     
         return request;
     }
@@ -173,14 +179,14 @@ public class FriendRequestMutation
         UpdateFriendRequestInput input,
         CancellationToken cancellationToken)
     {
-        var request = await context.FriendRequests
+        var request = await _context.FriendRequests
             .FirstOrDefaultAsync(fr => fr.Id == input.Id, cancellationToken);
 
         if (request == null)
             return null;
         if (input.RequesterId.HasValue) request.RequesterId = input.RequesterId.Value;
         if (input.RequesteeId.HasValue) request.RequesteeId = input.RequesteeId.Value;
-        await context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return request;
     }
 
@@ -189,14 +195,14 @@ public class FriendRequestMutation
         int id,
         CancellationToken cancellationToken)
     {
-        var request = await context.FriendRequests
+        var request = await _context.FriendRequests
             .FirstOrDefaultAsync(fr => fr.Id == id, cancellationToken);
 
         if (request == null)
             return false;
 
-        context.FriendRequests.Remove(request);
-        await context.SaveChangesAsync(cancellationToken);
+        _context.FriendRequests.Remove(request);
+        await _context.SaveChangesAsync(cancellationToken);
 
         return true;
     }

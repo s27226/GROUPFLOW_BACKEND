@@ -6,12 +6,19 @@ namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class EntryQuery
 {
+    private readonly AppDbContext _context;
+
+    public EntryQuery(AppDbContext context)
+    {
+        _context = context;
+    }
+
     [GraphQLName("allentries")]
     [UsePaging]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Entry> GetEntries(AppDbContext context) => context.Entries;
+    public IQueryable<Entry> GetEntries() => _context.Entries;
     
     // [GraphQLName("entrybyid")]
     // [UseProjection]
@@ -23,9 +30,9 @@ public class EntryQuery
     /// </summary>
     [GraphQLName("chatmessages")]
     [UseProjection]
-    public IQueryable<Entry> GetChatMessages(AppDbContext context, int chatId)
+    public IQueryable<Entry> GetChatMessages(int chatId)
     {
-        return context.Entries
+        return _context.Entries
             .Where(e => e.UserChat.ChatId == chatId)
             .OrderBy(e => e.Sent);
     }

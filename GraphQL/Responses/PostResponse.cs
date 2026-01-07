@@ -13,4 +13,21 @@ public record PostResponse(
     UserResponse User,
     int LikesCount,
     int CommentsCount
-);
+)
+{
+    public static PostResponse FromPost(Post post)
+    {
+        return new PostResponse(
+            post.Id,
+            post.Title,
+            post.Description,
+            post.Content,
+            post.ImageUrl,
+            post.Public,
+            post.Created,
+            UserResponse.FromUser(post.User),
+            post.Likes.Count,
+            post.Comments.Count
+        );
+    }
+}
