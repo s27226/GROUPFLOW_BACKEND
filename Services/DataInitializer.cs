@@ -7,10 +7,8 @@ namespace NAME_WIP_BACKEND;
 
 public class DataInitializer
 {
-    public static async void Seed(AppDbContext db, ILogger logger)
+    public static async Task Seed(AppDbContext db, ILogger logger)
         {
-            logger.LogInformation("=== STARTING DATA SEEDING ===");
-            
             // === USER ROLES ===
             if (!db.UserRoles.Any())
             {
@@ -758,6 +756,5 @@ public class DataInitializer
             
             
             
-
-        }
+            logger.LogInformation("=== ENDING DATA SEEDING ===");        }
 }

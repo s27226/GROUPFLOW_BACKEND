@@ -28,7 +28,7 @@ public class AuthMutationTests : IDisposable
             .Options;
 
         _context = new AppDbContext(options);
-        _authMutation = new AuthMutation();
+        _authMutation = new AuthMutation(_context);
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        var result = await _authMutation.RegisterUser(_context, input);
+        var result = await _authMutation.RegisterUser(input);
 
         // Assert
         result.Should().NotBeNull();
@@ -87,7 +87,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        Func<Task> act = async () => await _authMutation.RegisterUser(_context, input);
+        Func<Task> act = async () => await _authMutation.RegisterUser(input);
 
         // Assert
         await act.Should().ThrowAsync<HotChocolate.GraphQLException>()
@@ -116,7 +116,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        var result = await _authMutation.LoginUser(_context, input);
+        var result = await _authMutation.LoginUser(input);
 
         // Assert
         result.Should().NotBeNull();
@@ -135,7 +135,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        Func<Task> act = async () => await _authMutation.LoginUser(_context, input);
+        Func<Task> act = async () => await _authMutation.LoginUser(input);
 
         // Assert
         await act.Should().ThrowAsync<HotChocolate.GraphQLException>()
@@ -163,7 +163,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        Func<Task> act = async () => await _authMutation.LoginUser(_context, input);
+        Func<Task> act = async () => await _authMutation.LoginUser(input);
 
         // Assert
         await act.Should().ThrowAsync<HotChocolate.GraphQLException>()
@@ -183,7 +183,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        var result = await _authMutation.RegisterUser(_context, input);
+        var result = await _authMutation.RegisterUser(input);
 
         // Assert
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == input.Email);

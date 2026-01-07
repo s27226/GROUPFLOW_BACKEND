@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using NAME_WIP_BACKEND.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -12,8 +12,15 @@ using Scrutor;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.S3;
 using NAME_WIP_BACKEND.Services;
+using Serilog;
 
 DotNetEnv.Env.Load();
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +43,9 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
             npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
         }));
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("Database");
+
 builder.Services.AddAWSService<IAmazonS3>();
 
 var assembly = Assembly.GetExecutingAssembly();
@@ -48,10 +58,10 @@ builder.Services.Scan(scan => scan
             type.Name.EndsWith("Service")
             ))
     .AsSelf()
+    .AsImplementedInterfaces()
     .WithScopedLifetime()
 );
 
-builder.Services.AddScoped<IS3Service, S3Service>();
 
 // Rejestracja wszystkich mutacji kończących się na "Mutation"
 builder.Services.Scan(scan => scan
@@ -66,37 +76,37 @@ builder.Services.Scan(scan => scan
 
 builder.Services.AddScoped<AuthMutation>();
 
-builder.Services.AddScoped<Mutation>();
-builder.Services
-    .AddGraphQLServer()
-    .AddQueryType<Query>()
-    .AddMutationType<Mutation>()
-    .AddTypeExtension<AuthMutation>()
-    .AddAuthorization()
-    .AddProjections()
-    .AddFiltering()
-    .AddSorting()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = env.IsDevelopment())
-    .DisableIntrospection(false);
+// builder.Services.AddScoped<Mutation>();
+// builder.Services
+//     .AddGraphQLServer()
+//     .AddQueryType<Query>()
+//     .AddMutationType<Mutation>()
+//     .AddTypeExtension<AuthMutation>()
+//     .AddAuthorization()
+//     .AddProjections()
+//     .AddFiltering()
+//     .AddSorting()
+//     .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = env.IsDevelopment())
+//     .DisableIntrospection(false);
 
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? throw new InvalidOperationException("JWT_SECRET not found in environment variables.")))
-    };
-});
+// builder.Services.AddHttpContextAccessor();
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+// }).AddJwtBearer(options =>
+// {
+//     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+//     {
+//         ValidateIssuer = false,
+//         ValidateAudience = false,
+//         ValidateLifetime = true,
+//         ValidateIssuerSigningKey = true,
+//         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? throw new InvalidOperationException("JWT_SECRET not found in environment variables.")))
+//     };
+// });
 
 builder.Services.AddCors(options =>
 {
@@ -139,11 +149,12 @@ else
 
 app.UseCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 
-app.MapGraphQL("/api").RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");;
+// app.MapGraphQL("/api").RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");;
 app.MapControllers().RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
+app.MapHealthChecks("/health");
 // app.Run();
 
 //
@@ -154,13 +165,12 @@ app.MapControllers().RequireCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
  using var scope = app.Services.CreateScope();
  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
  var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataInitializer>>();
- if (env.IsDevelopment())
+if (false) // env.IsDevelopment()
  {
-     DataInitializer.Seed(db, logger);
- }
-
- //db.Database.Migrate();
-
+    await DataInitializer.Seed(db, logger);
+}
 
 
 app.Run();
+
+Log.CloseAndFlush();
