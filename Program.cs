@@ -51,6 +51,7 @@ builder.Services
     .AddTypeExtension<PostTypeExtensions>()
     .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Types.UserTypeExtensions>()
     .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Types.ProjectTypeExtensions>()
+    .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Types.BlobFileTypeExtensions>()
     .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Mutations.BlobMutation>()
     .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Queries.BlobQuery>()
     .AddAuthorization()
