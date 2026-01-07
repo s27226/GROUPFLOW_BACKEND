@@ -5,6 +5,7 @@ namespace NAME_WIP_BACKEND.Models;
 
 [Index(nameof(UserId))]
 [Index(nameof(PostId))]
+[Index(nameof(CreatedAt))]
 public class Notification
 {
     public int Id { get; set; }

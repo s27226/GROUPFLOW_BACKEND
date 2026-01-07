@@ -3,6 +3,7 @@
 namespace NAME_WIP_BACKEND.Models;
 
 [Index(nameof(UserChatId))]
+[Index(nameof(Sent))]
 public class Entry
 {
     public int Id { get; set; }
