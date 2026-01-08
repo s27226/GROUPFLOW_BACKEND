@@ -84,7 +84,24 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            // Try to get access token from cookie first
+            // Skip authentication for refresh token requests - they handle their own validation
+            if (context.Request.ContentType?.Contains("application/json") == true)
+            {
+                context.Request.EnableBuffering();
+                using (var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true))
+                {
+                    var body = reader.ReadToEndAsync().GetAwaiter().GetResult();
+                    context.Request.Body.Position = 0;
+                    
+                    if (body.Contains("refreshToken", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Don't set a token for refresh requests - let the mutation handle it
+                        return Task.CompletedTask;
+                    }
+                }
+            }
+
+            // For all other requests, use access_token cookie
             if (context.Request.Cookies.ContainsKey("access_token"))
             {
                 context.Token = context.Request.Cookies["access_token"];
@@ -111,7 +128,7 @@ builder.Services.AddCors(options =>
         var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? "http://localhost:3000";
         policy.WithOrigins(allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
               .AllowCredentials()
-              .WithHeaders("Authorization", "Content-Type")
+              .AllowAnyHeader() // Allow all headers for cookie-based auth
               .WithMethods("GET", "POST", "OPTIONS");
     });
 });

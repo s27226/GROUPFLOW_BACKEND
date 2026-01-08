@@ -117,6 +117,7 @@ public class AuthMutation
         return true;
     }
 
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public async Task<AuthPayload> RefreshToken(
         [Service] AppDbContext db,
         [Service] IHttpContextAccessor httpContextAccessor)
@@ -148,8 +149,17 @@ public class AuthMutation
 
             var principal = tokenHandler.ValidateToken(refreshToken, validationParameters, out var validatedToken);
             
-            // Get user ID from token claims
-            var userIdClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub);
+            // Verify this is actually a refresh token
+            var tokenTypeClaim = principal.FindFirst("token_type");
+            if (tokenTypeClaim?.Value != "refresh")
+            {
+                throw new GraphQLException(new Error("Invalid token type", "INVALID_TOKEN_TYPE"));
+            }
+            
+            // Get user ID from token claims - check both "sub" and ClaimTypes.NameIdentifier
+            // because ASP.NET may map the claim differently depending on context
+            var userIdClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub) 
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             {
                 throw new GraphQLException(new Error("Invalid token claims", "INVALID_TOKEN"));
