@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using Moq;
 using NAME_WIP_BACKEND.Controllers;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
@@ -14,6 +16,8 @@ public class AuthMutationTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly AuthMutation _authMutation;
+    private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
+    private readonly DefaultHttpContext _httpContext;
 
     public AuthMutationTests()
     {
@@ -27,6 +31,11 @@ public class AuthMutationTests : IDisposable
 
         _context = new AppDbContext(options);
         _authMutation = new AuthMutation();
+
+        // Setup HttpContext mock for cookie management
+        _httpContext = new DefaultHttpContext();
+        _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+        _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(_httpContext);
     }
 
     [Fact]
@@ -42,13 +51,17 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        var result = await _authMutation.RegisterUser(_context, input);
+        var result = await _authMutation.RegisterUser(_context, _httpContextAccessorMock.Object, input);
 
         // Assert
         result.Should().NotBeNull();
         result.Name.Should().Be("John");
         result.Email.Should().Be("john@example.com");
-        result.Token.Should().NotBeNullOrEmpty();
+        
+        // Tokens are now in HTTP-only cookies, not in the response
+        var cookies = _httpContext.Response.Headers["Set-Cookie"].ToString();
+        cookies.Should().Contain("access_token");
+        cookies.Should().Contain("refresh_token");
 
         var userInDb = await _context.Users.FirstOrDefaultAsync(u => u.Email == input.Email);
         userInDb.Should().NotBeNull();
@@ -85,7 +98,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        Func<Task> act = async () => await _authMutation.RegisterUser(_context, input);
+        Func<Task> act = async () => await _authMutation.RegisterUser(_context, _httpContextAccessorMock.Object, input);
 
         // Assert
         await act.Should().ThrowAsync<HotChocolate.GraphQLException>()
@@ -114,13 +127,17 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        var result = await _authMutation.LoginUser(_context, input);
+        var result = await _authMutation.LoginUser(_context, _httpContextAccessorMock.Object, input);
 
         // Assert
         result.Should().NotBeNull();
         result.Email.Should().Be("login@example.com");
         result.Name.Should().Be("Login");
-        result.Token.Should().NotBeNullOrEmpty();
+        
+        // Tokens are now in HTTP-only cookies, not in the response
+        var cookies = _httpContext.Response.Headers["Set-Cookie"].ToString();
+        cookies.Should().Contain("access_token");
+        cookies.Should().Contain("refresh_token");
     }
 
     [Fact]
@@ -133,7 +150,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        Func<Task> act = async () => await _authMutation.LoginUser(_context, input);
+        Func<Task> act = async () => await _authMutation.LoginUser(_context, _httpContextAccessorMock.Object, input);
 
         // Assert
         await act.Should().ThrowAsync<HotChocolate.GraphQLException>()
@@ -161,7 +178,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        Func<Task> act = async () => await _authMutation.LoginUser(_context, input);
+        Func<Task> act = async () => await _authMutation.LoginUser(_context, _httpContextAccessorMock.Object, input);
 
         // Assert
         await act.Should().ThrowAsync<HotChocolate.GraphQLException>()
@@ -181,7 +198,7 @@ public class AuthMutationTests : IDisposable
         );
 
         // Act
-        var result = await _authMutation.RegisterUser(_context, input);
+        var result = await _authMutation.RegisterUser(_context, _httpContextAccessorMock.Object, input);
 
         // Assert
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == input.Email);

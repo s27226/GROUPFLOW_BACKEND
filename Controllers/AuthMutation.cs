@@ -1,7 +1,6 @@
 ﻿namespace NAME_WIP_BACKEND.Controllers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 using HotChocolate;
@@ -15,6 +14,7 @@ public class AuthMutation
 {
     public async Task<AuthPayload> RegisterUser(
         [Service] AppDbContext db,
+        [Service] IHttpContextAccessor httpContextAccessor,
         UserRegisterInput input)
     {
         if (await db.Users.AnyAsync(u => u.Email == input.Email))
@@ -34,14 +34,16 @@ public class AuthMutation
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
-        var token = GenerateJwt(user);
-        var refreshToken = await GenerateRefreshToken(db, user.Id);
+        var accessToken = GenerateAccessToken(user);
+        var refreshToken = GenerateRefreshToken(user);
+        SetAuthCookies(httpContextAccessor.HttpContext!, accessToken, refreshToken);
         
-        return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
+        return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, user.IsModerator);
     }
 
     public async Task<AuthPayload> LoginUser(
         [Service] AppDbContext db,
+        [Service] IHttpContextAccessor httpContextAccessor,
         UserLoginInput input)
     {
         try
@@ -93,10 +95,11 @@ public class AuthMutation
                 await db.SaveChangesAsync();
             }
 
-            var token = GenerateJwt(user);
-            var refreshToken = await GenerateRefreshToken(db, user.Id);
+            var accessToken = GenerateAccessToken(user);
+            var refreshToken = GenerateRefreshToken(user);
+            SetAuthCookies(httpContextAccessor.HttpContext!, accessToken, refreshToken);
             
-            return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, token, refreshToken, user.IsModerator);
+            return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, user.IsModerator);
         }
         catch (GraphQLException)
         {
@@ -108,68 +111,103 @@ public class AuthMutation
         }
     }
 
-    public async Task<AuthPayload> RefreshToken(
-        [Service] AppDbContext db,
-        string refreshToken)
+    public bool Logout([Service] IHttpContextAccessor httpContextAccessor)
     {
-        var storedToken = await db.RefreshTokens
-            .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
-
-        if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiryDate < DateTime.UtcNow)
-        {
-            throw new GraphQLException(new Error("Invalid or expired refresh token", "INVALID_REFRESH_TOKEN"));
-        }
-
-        // Revoke the old refresh token
-        storedToken.IsRevoked = true;
-        
-        // Generate new tokens
-        var newAccessToken = GenerateJwt(storedToken.User);
-        var newRefreshToken = await GenerateRefreshToken(db, storedToken.UserId);
-
-        await db.SaveChangesAsync();
-
-        return new AuthPayload(
-            storedToken.User.Id, 
-            storedToken.User.Name, 
-            storedToken.User.Surname, 
-            storedToken.User.Nickname, 
-            storedToken.User.Email, 
-            storedToken.User.ProfilePic, 
-            newAccessToken, 
-            newRefreshToken,
-            storedToken.User.IsModerator);
-    }
-
-    public async Task<bool> RevokeRefreshToken(
-        [Service] AppDbContext db,
-        string refreshToken)
-    {
-        var storedToken = await db.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
-
-        if (storedToken == null)
-        {
-            return false;
-        }
-
-        storedToken.IsRevoked = true;
-        await db.SaveChangesAsync();
+        ClearAuthCookies(httpContextAccessor.HttpContext!);
         return true;
     }
 
-    private static string GenerateJwt(User user)
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    public async Task<AuthPayload> RefreshToken(
+        [Service] AppDbContext db,
+        [Service] IHttpContextAccessor httpContextAccessor)
+    {
+        var context = httpContextAccessor.HttpContext!;
+        
+        // Get refresh token from cookie
+        if (!context.Request.Cookies.TryGetValue("refresh_token", out var refreshToken))
+        {
+            throw new GraphQLException(new Error("No refresh token provided", "NO_REFRESH_TOKEN"));
+        }
+
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(
+                Environment.GetEnvironmentVariable("JWT_SECRET") 
+                ?? throw new InvalidOperationException("JWT_SECRET not found"));
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            var principal = tokenHandler.ValidateToken(refreshToken, validationParameters, out var validatedToken);
+            
+            // Verify this is actually a refresh token
+            var tokenTypeClaim = principal.FindFirst("token_type");
+            if (tokenTypeClaim?.Value != "refresh")
+            {
+                throw new GraphQLException(new Error("Invalid token type", "INVALID_TOKEN_TYPE"));
+            }
+            
+            // Get user ID from token claims - check both "sub" and ClaimTypes.NameIdentifier
+            // because ASP.NET may map the claim differently depending on context
+            var userIdClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub) 
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                throw new GraphQLException(new Error("Invalid token claims", "INVALID_TOKEN"));
+            }
+
+            // Get user from database
+            var user = await db.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new GraphQLException(new Error("User not found", "USER_NOT_FOUND"));
+            }
+
+            // Check if user is banned or suspended
+            if (user.IsBanned)
+            {
+                throw new GraphQLException(new Error("User is banned", "USER_BANNED"));
+            }
+
+            // Generate new tokens
+            var newAccessToken = GenerateAccessToken(user);
+            var newRefreshToken = GenerateRefreshToken(user);
+            SetAuthCookies(context, newAccessToken, newRefreshToken);
+
+            return new AuthPayload(user.Id, user.Name, user.Surname, user.Nickname, user.Email, user.ProfilePic, user.IsModerator);
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            throw new GraphQLException(new Error("Refresh token expired", "TOKEN_EXPIRED"));
+        }
+        catch (Exception ex) when (ex is not GraphQLException)
+        {
+            throw new GraphQLException(new Error("Invalid refresh token", "INVALID_TOKEN"));
+        }
+    }
+
+    private static string GenerateAccessToken(User user)
     {
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email)
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("token_type", "access")
         };
 
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(
-                Environment.GetEnvironmentVariable("JWT_SECRET")?? throw new InvalidOperationException("JWT_SECRET not found in environment variables."))); 
+                Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? throw new InvalidOperationException("JWT_SECRET not found")));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -177,32 +215,72 @@ public class AuthMutation
             issuer: "api/v1.0.0",
             audience: null,
             claims: claims,
-            expires: DateTime.Now.AddHours(1),
+            expires: DateTime.UtcNow.AddMinutes(15), // Short-lived access token
             signingCredentials: creds
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private static async Task<string> GenerateRefreshToken(AppDbContext db, int userId)
+    private static string GenerateRefreshToken(User user)
     {
-        var randomBytes = new byte[64];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomBytes);
-        var token = Convert.ToBase64String(randomBytes);
-
-        var refreshToken = new RefreshToken
+        var claims = new[]
         {
-            UserId = userId,
-            Token = token,
-            ExpiryDate = DateTime.UtcNow.AddDays(7), // Refresh token valid for 7 days
-            CreatedAt = DateTime.UtcNow,
-            IsRevoked = false
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("token_type", "refresh")
         };
 
-        db.RefreshTokens.Add(refreshToken);
-        await db.SaveChangesAsync();
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(
+                Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? throw new InvalidOperationException("JWT_SECRET not found")));
 
-        return token;
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: "api/v1.0.0",
+            audience: null,
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(7), // Long-lived refresh token
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static void SetAuthCookies(HttpContext context, string accessToken, string refreshToken)
+    {
+        var accessCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None, // Changed to None for cross-origin requests
+            Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+        };
+
+        var refreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None, // Changed to None for cross-origin requests
+            Expires = DateTimeOffset.UtcNow.AddDays(7)
+        };
+
+        context.Response.Cookies.Append("access_token", accessToken, accessCookieOptions);
+        context.Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
+    }
+
+    private static void ClearAuthCookies(HttpContext context)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None // Changed to None for cross-origin requests
+        };
+
+        context.Response.Cookies.Delete("access_token", cookieOptions);
+        context.Response.Cookies.Delete("refresh_token", cookieOptions);
     }
 }
