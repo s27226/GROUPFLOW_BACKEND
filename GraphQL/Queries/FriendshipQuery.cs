@@ -1,45 +1,43 @@
 using System.Security.Claims;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.Services.Friendship;
+using NAME_WIP_BACKEND.DTOs;
 
 namespace NAME_WIP_BACKEND.GraphQL.Queries;
 
 public class FriendshipQuery
 {
+    /// <summary>
+    /// Get user's friends - now uses service layer
+    /// </summary>
     [GraphQLName("myfriends")]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<User> GetMyFriends(
-        [Service] AppDbContext context,
+    public async Task<IEnumerable<User>> GetMyFriends(
+        [Service] IFriendshipService friendshipService,
         [Service] IHttpContextAccessor httpContextAccessor)
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        return context.Users
-            .Where(u => context.Friendships
-                .Any(f => (f.UserId == userId && f.FriendId == u.Id && f.IsAccepted) ||
-                         (f.FriendId == userId && f.UserId == u.Id && f.IsAccepted)));
+        return await friendshipService.GetUserFriendsAsync(userId);
     }
 
+    /// <summary>
+    /// Get friendship status - now returns DTO to isolate from DB model
+    /// </summary>
     [GraphQLName("friendshipstatus")]
-    public string GetFriendshipStatus(
-        [Service] AppDbContext context,
+    public async Task<string> GetFriendshipStatus(
+        [Service] IFriendshipService friendshipService,
         [Service] IHttpContextAccessor httpContextAccessor,
         int friendId)
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        var friendship = context.Friendships
-            .FirstOrDefault(f => 
-                (f.UserId == userId && f.FriendId == friendId) ||
-                (f.FriendId == userId && f.UserId == friendId));
-
-        if (friendship == null) return "none";
-        if (friendship.IsAccepted) return "friends";
-        if (friendship.UserId == userId) return "pending_sent";
-        return "pending_received";
+        var statusDto = await friendshipService.GetFriendshipStatusAsync(userId, friendId);
+        return statusDto.Status;
     }
 }
