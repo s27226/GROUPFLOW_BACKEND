@@ -1,5 +1,11 @@
-﻿using GROUPFLOW.Controllers;
-using GROUPFLOW.GraphQL.Mutations;
+﻿using GROUPFLOW.Features.Auth.GraphQL;
+using GROUPFLOW.Features.Chat.GraphQL;
+using GROUPFLOW.Features.Friendships.GraphQL;
+using GROUPFLOW.Features.Moderation.GraphQL;
+using GROUPFLOW.Features.Notifications.GraphQL;
+using GROUPFLOW.Features.Posts.GraphQL;
+using GROUPFLOW.Features.Projects.GraphQL;
+using GROUPFLOW.Features.Users.GraphQL;
 
 namespace GROUPFLOW;
 

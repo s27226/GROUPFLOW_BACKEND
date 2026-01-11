@@ -1,5 +1,10 @@
-﻿using GROUPFLOW.GraphQL.Queries;
-using GROUPFLOW.Models;
+﻿using GROUPFLOW.Features.Chat.GraphQL;
+using GROUPFLOW.Features.Friendships.GraphQL;
+using GROUPFLOW.Features.Moderation.GraphQL;
+using GROUPFLOW.Features.Notifications.GraphQL;
+using GROUPFLOW.Features.Posts.GraphQL;
+using GROUPFLOW.Features.Projects.GraphQL;
+using GROUPFLOW.Features.Users.GraphQL;
 
 namespace GROUPFLOW;
 
@@ -8,7 +13,6 @@ public class Query
     public ChatQuery Chat => new();
     
     public EntryQuery Entry => new();
-    
     
     public FriendRequestQuery FriendRequest => new();
     public ProjectInvitationQuery ProjectInvitation => new();
@@ -27,7 +31,4 @@ public class Query
     public BlockedUserQuery BlockedUser => new();
     public AdminQuery Admin => new();
     public ModerationQuery Moderation => new();
-
-
-
 }

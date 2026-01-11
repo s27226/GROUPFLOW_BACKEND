@@ -2,9 +2,10 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using GROUPFLOW.Controllers;
-using GROUPFLOW.Data;
-using GROUPFLOW.Models;
+using GROUPFLOW.Features.Auth.GraphQL;
+using GROUPFLOW.Features.Auth.Inputs;
+using GROUPFLOW.Common.Database;
+using GROUPFLOW.Features.Users.Entities;
 using Xunit;
 
 namespace GROUPFLOW.Tests.UnitTests.Controllers;

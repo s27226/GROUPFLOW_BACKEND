@@ -1,4 +1,8 @@
-using GROUPFLOW.Models;
+using GROUPFLOW.Features.Users.Entities;
+using GROUPFLOW.Features.Posts.Entities;
+using GROUPFLOW.Features.Projects.Entities;
+using GROUPFLOW.Features.Friendships.Entities;
+using GROUPFLOW.Features.Chat.Entities;
 using Xunit;
 
 namespace GROUPFLOW.Tests.UnitTests.Models;

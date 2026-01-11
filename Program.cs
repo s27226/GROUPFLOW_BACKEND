@@ -1,13 +1,16 @@
 ﻿using System.Reflection;
-using GROUPFLOW.Data;
+using GROUPFLOW.Common.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW;
-using GROUPFLOW.Controllers;
-using GROUPFLOW.GraphQL.Types;
-using GROUPFLOW.Services;
-using GROUPFLOW.Services.Friendship;
-using GROUPFLOW.Services.Post;
+using GROUPFLOW.Common.GraphQL;
+using GROUPFLOW.Features.Auth.GraphQL;
+using GROUPFLOW.Features.Posts.GraphQL;
+using GROUPFLOW.Features.Posts.Services;
+using GROUPFLOW.Features.Blobs.Services;
+using GROUPFLOW.Features.Friendships.Services;
+using GROUPFLOW.Features.Notifications.Services;
+using GROUPFLOW.Features.Projects.Services;
 using Amazon.S3;
 using Serilog;
 
@@ -89,29 +92,29 @@ try
 
     // Register services with constructor injection
     // Core services
-    builder.Services.AddScoped<DataInitializer>();
-    builder.Services.AddScoped<ProjectService>();
-    builder.Services.AddScoped<NotificationService>();
-    builder.Services.AddScoped<IS3Service, S3Service>();
+    builder.Services.AddScoped<GROUPFLOW.Common.Data.DataInitializer>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.Services.ProjectService>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Notifications.Services.NotificationService>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Blobs.Services.IS3Service, GROUPFLOW.Features.Blobs.Services.S3Service>();
     
-    // Legacy services (existing interfaces)
+    // Feature services
     builder.Services.AddScoped<IFriendshipService, FriendshipService>();
     builder.Services.AddScoped<IPostService, PostService>();
 
     // GraphQL Mutation classes (for constructor injection)
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.EntryMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.FriendRequestMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.FriendshipMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectInvitationMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectRecommendationMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectEventMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.SavedPostMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.UserTagMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.PostMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.NotificationMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.BlockedUserMutation>();
-    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ModerationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Chat.GraphQL.EntryMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.FriendRequestMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.FriendshipMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectInvitationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectRecommendationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectEventMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.SavedPostMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Users.GraphQL.UserTagMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.PostMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Notifications.GraphQL.NotificationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.BlockedUserMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Moderation.GraphQL.ModerationMutation>();
 
     // AWS S3 service (if configured)
     var awsAccessKey = GetEnv("AWS_ACCESS_KEY_ID");
@@ -125,7 +128,7 @@ try
     var disableIntrospection = GetEnvBool("GRAPHQL_DISABLE_INTROSPECTION", !isDev);
 
     // Register GraphQL error filter for unified error handling
-    builder.Services.AddSingleton<GROUPFLOW.GraphQL.Filters.GraphQLErrorFilter>();
+    builder.Services.AddSingleton<GraphQLErrorFilter>();
 
     builder.Services
         .AddGraphQLServer()
@@ -133,12 +136,12 @@ try
         .AddMutationType<Mutation>()
         .AddTypeExtension<AuthMutation>()
         .AddTypeExtension<PostTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.GraphQL.Types.UserTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.GraphQL.Types.ProjectTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.GraphQL.Types.BlobFileTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.GraphQL.Mutations.BlobMutation>()
-        .AddTypeExtension<GROUPFLOW.GraphQL.Queries.BlobQuery>()
-        .AddErrorFilter<GROUPFLOW.GraphQL.Filters.GraphQLErrorFilter>()
+        .AddTypeExtension<GROUPFLOW.Features.Users.GraphQL.UserTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Projects.GraphQL.ProjectTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.BlobFileTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.BlobMutation>()
+        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.BlobQuery>()
+        .AddErrorFilter<GraphQLErrorFilter>()
         .AddAuthorization()
         .AddProjections()
         .AddFiltering()
@@ -286,7 +289,7 @@ static async Task InitializeDatabaseAsync(WebApplication app, bool isDev)
         // Only seed in development
         if (isDev)
         {
-            var initializer = services.GetRequiredService<DataInitializer>();
+            var initializer = services.GetRequiredService<GROUPFLOW.Common.Data.DataInitializer>();
             
             using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
             await initializer.SeedAsync(cts.Token);

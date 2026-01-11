@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using GROUPFLOW.Data;
-using GROUPFLOW.Models;
+using GROUPFLOW.Common.Database;
+using GROUPFLOW.Features.Users.Entities;
+using GROUPFLOW.Features.Posts.Entities;
+using GROUPFLOW.Features.Projects.Entities;
+using GROUPFLOW.Features.Friendships.Entities;
 using Xunit;
 
 namespace GROUPFLOW.Tests.IntegrationTests;
