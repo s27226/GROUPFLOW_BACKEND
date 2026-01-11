@@ -1,14 +1,19 @@
-﻿using NAME_WIP_BACKEND.GraphQL.Queries;
-using NAME_WIP_BACKEND.Models;
+﻿using GROUPFLOW.Features.Chat.GraphQL.Queries;
+using GROUPFLOW.Features.Friendships.GraphQL.Queries;
+using GROUPFLOW.Features.Moderation.GraphQL.Queries;
+using GROUPFLOW.Features.Notifications.GraphQL.Queries;
+using GROUPFLOW.Features.Posts.GraphQL.Queries;
+using GROUPFLOW.Features.Projects.GraphQL.Queries;
+using GROUPFLOW.Features.Users.GraphQL.Queries;
+using GROUPFLOW.Features.Blobs.GraphQL.Queries;
 
-namespace NAME_WIP_BACKEND;
+namespace GROUPFLOW;
 
 public class Query
 {
     public ChatQuery Chat => new();
     
     public EntryQuery Entry => new();
-    
     
     public FriendRequestQuery FriendRequest => new();
     public ProjectInvitationQuery ProjectInvitation => new();
@@ -27,7 +32,4 @@ public class Query
     public BlockedUserQuery BlockedUser => new();
     public AdminQuery Admin => new();
     public ModerationQuery Moderation => new();
-
-
-
 }
