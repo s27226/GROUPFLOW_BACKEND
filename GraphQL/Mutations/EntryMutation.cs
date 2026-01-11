@@ -1,17 +1,23 @@
-﻿using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
+/// <summary>
+/// GraphQL mutations for chat entry operations.
+/// </summary>
 public class EntryMutation
 {
-    public Entry CreateEntry(AppDbContext context, EntryInput input)
+    public async Task<Entry> CreateEntry(
+        [Service] AppDbContext context,
+        EntryInput input,
+        CancellationToken ct = default)
     {
-        // Validate input using DataAnnotations
         input.ValidateInput();
-        
+
         var entry = new Entry
         {
             UserChatId = input.UserChatId,
@@ -19,15 +25,14 @@ public class EntryMutation
             Sent = DateTime.UtcNow,
             Public = input.Public
         };
+
         context.Entries.Add(entry);
-        context.SaveChanges();
-        
+        await context.SaveChangesAsync(ct);
+
         // Reload entry with navigation properties
-        return context.Entries
+        return await context.Entries
             .Include(e => e.UserChat)
                 .ThenInclude(uc => uc.User)
-            .First(e => e.Id == entry.Id);
+            .FirstAsync(e => e.Id == entry.Id, ct);
     }
-
-    
 }

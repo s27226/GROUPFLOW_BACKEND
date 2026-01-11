@@ -1,51 +1,52 @@
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.Exceptions;
+using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
+/// <summary>
+/// GraphQL mutations for blocked user operations.
+/// </summary>
 public class BlockedUserMutation
 {
-    public async Task<BlockedUser> BlockUser(
-        AppDbContext context,
-        ClaimsPrincipal claimsPrincipal,
-        int userIdToBlock)
-    {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            throw new GraphQLException("User not authenticated");
-        }
+    private readonly ILogger<BlockedUserMutation> _logger;
 
-        // Cannot block yourself
+    public BlockedUserMutation(ILogger<BlockedUserMutation> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<BlockedUser> BlockUser(
+        [Service] AppDbContext context,
+        ClaimsPrincipal claimsPrincipal,
+        int userIdToBlock,
+        CancellationToken ct = default)
+    {
+        var userId = claimsPrincipal.GetAuthenticatedUserId();
+
         if (userId == userIdToBlock)
-        {
-            throw new GraphQLException("You cannot block yourself");
-        }
+            throw BusinessRuleException.CannotBlockYourself();
 
         // Check if users are friends
         var areFriends = await context.Friendships
-            .AnyAsync(f => 
+            .AnyAsync(f =>
                 ((f.UserId == userId && f.FriendId == userIdToBlock) ||
                  (f.UserId == userIdToBlock && f.FriendId == userId)) &&
-                f.IsAccepted);
+                f.IsAccepted, ct);
 
         if (areFriends)
-        {
-            throw new GraphQLException("You cannot block a friend. Please remove them as a friend first.");
-        }
+            throw new BusinessRuleException("You cannot block a friend. Please remove them as a friend first.");
 
         // Check if already blocked
         var existingBlock = await context.BlockedUsers
-            .FirstOrDefaultAsync(bu => bu.UserId == userId && bu.BlockedUserId == userIdToBlock);
+            .FirstOrDefaultAsync(bu => bu.UserId == userId && bu.BlockedUserId == userIdToBlock, ct);
 
         if (existingBlock != null)
-        {
-            throw new GraphQLException("User is already blocked");
-        }
+            throw new DuplicateEntityException("BlockedUser");
 
-        // Create the block
         var blockedUser = new BlockedUser
         {
             UserId = userId,
@@ -54,33 +55,28 @@ public class BlockedUserMutation
         };
 
         context.BlockedUsers.Add(blockedUser);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
 
+        _logger.LogInformation("User {UserId} blocked user {BlockedUserId}", userId, userIdToBlock);
         return blockedUser;
     }
 
     public async Task<bool> UnblockUser(
-        AppDbContext context,
+        [Service] AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        int userIdToUnblock)
+        int userIdToUnblock,
+        CancellationToken ct = default)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            throw new GraphQLException("User not authenticated");
-        }
+        var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var blockedUser = await context.BlockedUsers
-            .FirstOrDefaultAsync(bu => bu.UserId == userId && bu.BlockedUserId == userIdToUnblock);
-
-        if (blockedUser == null)
-        {
-            throw new GraphQLException("User is not blocked");
-        }
+            .FirstOrDefaultAsync(bu => bu.UserId == userId && bu.BlockedUserId == userIdToUnblock, ct)
+            ?? throw new EntityNotFoundException("BlockedUser");
 
         context.BlockedUsers.Remove(blockedUser);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
 
+        _logger.LogInformation("User {UserId} unblocked user {UnblockedUserId}", userId, userIdToUnblock);
         return true;
     }
 }

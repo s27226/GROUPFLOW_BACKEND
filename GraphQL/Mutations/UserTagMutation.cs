@@ -1,37 +1,42 @@
 using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.Exceptions;
 using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
+/// <summary>
+/// GraphQL mutations for user skills and interests.
+/// </summary>
 public class UserTagMutation
 {
+    private readonly ILogger<UserTagMutation> _logger;
+
+    public UserTagMutation(ILogger<UserTagMutation> logger)
+    {
+        _logger = logger;
+    }
+
     [Authorize]
     [GraphQLName("addskill")]
-    public async Task<UserSkill?> AddSkill(
-        AppDbContext context,
+    public async Task<UserSkill> AddSkill(
+        [Service] AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        UserSkillInput input)
+        UserSkillInput input,
+        CancellationToken ct = default)
     {
-        // Validate input using DataAnnotations
         input.ValidateInput();
-        
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return null;
-        }
+        var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var existingSkill = await context.UserSkills
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.SkillName == input.SkillName);
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.SkillName == input.SkillName, ct);
 
         if (existingSkill != null)
-        {
             return existingSkill;
-        }
 
         var skill = new UserSkill
         {
@@ -41,59 +46,49 @@ public class UserTagMutation
         };
 
         context.UserSkills.Add(skill);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogDebug("User {UserId} added skill: {SkillName}", userId, input.SkillName);
         return skill;
     }
 
     [Authorize]
     [GraphQLName("removeskill")]
     public async Task<bool> RemoveSkill(
-        AppDbContext context,
+        [Service] AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        int skillId)
+        int skillId,
+        CancellationToken ct = default)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return false;
-        }
+        var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var skill = await context.UserSkills
-            .FirstOrDefaultAsync(s => s.Id == skillId && s.UserId == userId);
-
-        if (skill == null)
-        {
-            return false;
-        }
+            .FirstOrDefaultAsync(s => s.Id == skillId && s.UserId == userId, ct)
+            ?? throw new EntityNotFoundException("UserSkill", skillId);
 
         context.UserSkills.Remove(skill);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogDebug("User {UserId} removed skill {SkillId}", userId, skillId);
         return true;
     }
 
     [Authorize]
     [GraphQLName("addinterest")]
-    public async Task<UserInterest?> AddInterest(
-        AppDbContext context,
+    public async Task<UserInterest> AddInterest(
+        [Service] AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        UserInterestInput input)
+        UserInterestInput input,
+        CancellationToken ct = default)
     {
-        // Validate input using DataAnnotations
         input.ValidateInput();
-        
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return null;
-        }
+        var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var existingInterest = await context.UserInterests
-            .FirstOrDefaultAsync(i => i.UserId == userId && i.InterestName == input.InterestName);
+            .FirstOrDefaultAsync(i => i.UserId == userId && i.InterestName == input.InterestName, ct);
 
         if (existingInterest != null)
-        {
             return existingInterest;
-        }
 
         var interest = new UserInterest
         {
@@ -103,33 +98,30 @@ public class UserTagMutation
         };
 
         context.UserInterests.Add(interest);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogDebug("User {UserId} added interest: {InterestName}", userId, input.InterestName);
         return interest;
     }
 
     [Authorize]
     [GraphQLName("removeinterest")]
     public async Task<bool> RemoveInterest(
-        AppDbContext context,
+        [Service] AppDbContext context,
         ClaimsPrincipal claimsPrincipal,
-        int interestId)
+        int interestId,
+        CancellationToken ct = default)
     {
-        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return false;
-        }
+        var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var interest = await context.UserInterests
-            .FirstOrDefaultAsync(i => i.Id == interestId && i.UserId == userId);
-
-        if (interest == null)
-        {
-            return false;
-        }
+            .FirstOrDefaultAsync(i => i.Id == interestId && i.UserId == userId, ct)
+            ?? throw new EntityNotFoundException("UserInterest", interestId);
 
         context.UserInterests.Remove(interest);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogDebug("User {UserId} removed interest {InterestId}", userId, interestId);
         return true;
     }
 }

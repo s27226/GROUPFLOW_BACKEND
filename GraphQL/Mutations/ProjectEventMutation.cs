@@ -1,19 +1,32 @@
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using HotChocolate;
+using Microsoft.Extensions.Logging;
+using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.Exceptions;
+using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
+/// <summary>
+/// GraphQL mutations for project event operations.
+/// </summary>
 public class ProjectEventMutation
 {
-    public ProjectEvent CreateProjectEvent(AppDbContext context, ProjectEventInput input)
+    private readonly ILogger<ProjectEventMutation> _logger;
+
+    public ProjectEventMutation(ILogger<ProjectEventMutation> logger)
     {
-        // Validate input using DataAnnotations
+        _logger = logger;
+    }
+
+    public async Task<ProjectEvent> CreateProjectEvent(
+        [Service] AppDbContext context,
+        ProjectEventInput input,
+        CancellationToken ct = default)
+    {
         input.ValidateInput();
-        
+
         var projectEvent = new ProjectEvent
         {
             ProjectId = input.ProjectId,
@@ -24,60 +37,54 @@ public class ProjectEventMutation
             Time = input.Time,
             CreatedAt = DateTime.UtcNow
         };
+
         context.ProjectEvents.Add(projectEvent);
-        context.SaveChanges();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Created project event {EventId} for project {ProjectId}", projectEvent.Id, input.ProjectId);
         return projectEvent;
     }
 
-    public ProjectEvent? UpdateProjectEvent(AppDbContext context, UpdateProjectEventInput input)
+    public async Task<ProjectEvent?> UpdateProjectEvent(
+        [Service] AppDbContext context,
+        UpdateProjectEventInput input,
+        CancellationToken ct = default)
     {
-        // Validate input using DataAnnotations
         input.ValidateInput();
-        
-        var projectEvent = context.ProjectEvents.Find(input.Id);
+
+        var projectEvent = await context.ProjectEvents.FindAsync(new object[] { input.Id }, ct);
         if (projectEvent == null) return null;
-        
+
         if (!string.IsNullOrEmpty(input.Title)) projectEvent.Title = input.Title;
         if (input.Description != null) projectEvent.Description = input.Description;
         if (input.EventDate.HasValue) projectEvent.EventDate = input.EventDate.Value;
         if (input.Time != null) projectEvent.Time = input.Time;
-        
-        context.SaveChanges();
+
+        await context.SaveChangesAsync(ct);
         return projectEvent;
     }
 
-    public bool DeleteProjectEvent(
-        AppDbContext context,
-        IHttpContextAccessor httpContextAccessor,
-        int id)
+    public async Task<bool> DeleteProjectEvent(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int id,
+        CancellationToken ct = default)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
-        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
-        
-        if (userIdClaim == null)
-        {
-            throw new GraphQLException("User not authenticated");
-        }
-        
-        int userId = int.Parse(userIdClaim);
+        var userId = httpContextAccessor.GetAuthenticatedUserId();
 
-        var projectEvent = context.ProjectEvents
+        var projectEvent = await context.ProjectEvents
             .Include(pe => pe.Project)
-            .FirstOrDefault(pe => pe.Id == id);
-            
-        if (projectEvent == null)
-        {
-            throw new GraphQLException("Event not found");
-        }
-        
+            .FirstOrDefaultAsync(pe => pe.Id == id, ct)
+            ?? throw new EntityNotFoundException("ProjectEvent", id);
+
         // Check if user is the event creator or project owner
         if (projectEvent.CreatedById != userId && projectEvent.Project.OwnerId != userId)
-        {
-            throw new GraphQLException("You don't have permission to delete this event");
-        }
-        
+            throw new AuthorizationException("You don't have permission to delete this event");
+
         context.ProjectEvents.Remove(projectEvent);
-        context.SaveChanges();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogInformation("User {UserId} deleted project event {EventId}", userId, id);
         return true;
     }
 }

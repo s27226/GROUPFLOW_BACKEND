@@ -1,31 +1,39 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.Exceptions;
 using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
+/// <summary>
+/// GraphQL mutations for notification operations.
+/// </summary>
 public class NotificationMutation
 {
+    private readonly ILogger<NotificationMutation> _logger;
+
+    public NotificationMutation(ILogger<NotificationMutation> logger)
+    {
+        _logger = logger;
+    }
+
     [GraphQLName("markNotificationAsRead")]
     public async Task<bool> MarkNotificationAsRead(
         [Service] AppDbContext context,
         [Service] IHttpContextAccessor httpContextAccessor,
-        int notificationId)
+        int notificationId,
+        CancellationToken ct = default)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
-        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = httpContextAccessor.GetAuthenticatedUserId();
 
         var notification = await context.Notifications
-            .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId);
-
-        if (notification == null)
-        {
-            throw new GraphQLException("Notification not found");
-        }
+            .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId, ct)
+            ?? throw EntityNotFoundException.Notification(notificationId);
 
         notification.IsRead = true;
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
 
         return true;
     }
@@ -33,22 +41,23 @@ public class NotificationMutation
     [GraphQLName("markAllNotificationsAsRead")]
     public async Task<bool> MarkAllNotificationsAsRead(
         [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor)
+        [Service] IHttpContextAccessor httpContextAccessor,
+        CancellationToken ct = default)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
-        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = httpContextAccessor.GetAuthenticatedUserId();
 
         var notifications = await context.Notifications
             .Where(n => n.UserId == userId && !n.IsRead)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         foreach (var notification in notifications)
         {
             notification.IsRead = true;
         }
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct);
 
+        _logger.LogDebug("User {UserId} marked {Count} notifications as read", userId, notifications.Count);
         return true;
     }
 }

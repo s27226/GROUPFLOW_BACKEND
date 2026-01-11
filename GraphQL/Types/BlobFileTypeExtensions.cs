@@ -1,5 +1,6 @@
 using HotChocolate;
 using HotChocolate.Types;
+using Microsoft.Extensions.Logging;
 using NAME_WIP_BACKEND.Models;
 using NAME_WIP_BACKEND.Services;
 
@@ -14,7 +15,8 @@ namespace NAME_WIP_BACKEND.GraphQL.Types
         /// </summary>
         public async Task<string?> GetUrl(
             [Parent] BlobFile blobFile,
-            [Service] IS3Service s3Service)
+            [Service] IS3Service s3Service,
+            [Service] ILogger<BlobFileTypeExtensions> logger)
         {
             if (string.IsNullOrEmpty(blobFile.BlobPath))
             {
@@ -28,7 +30,7 @@ namespace NAME_WIP_BACKEND.GraphQL.Types
             catch (Exception ex)
             {
                 // Log error but don't throw - return null for graceful degradation
-                Console.WriteLine($"Error getting presigned URL for blob {blobFile.Id}: {ex.Message}");
+                logger.LogWarning(ex, "Error getting presigned URL for blob {BlobId}", blobFile.Id);
                 return null;
             }
         }

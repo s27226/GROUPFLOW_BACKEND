@@ -4,7 +4,7 @@
 
 GroupFlow to aplikacja webowa wspierająca współpracę użytkowników w ramach projektów. System umożliwia m.in. tworzenie projektów, publikowanie postów, komunikację w czasie rzeczywistym (chat), reakcje, rekomendacje, moderację treści oraz zarządzanie plikami.
 
-Backend aplikacji został zaimplementowany w technologii **ASP.NET Core** z wykorzystaniem **Entity Framework Core**, **GraphQL (HotChocolate)** oraz bazy danych **PostgreSQL**.
+Backend aplikacji został zaimplementowany w technologii **ASP.NET Core 8** z wykorzystaniem **Entity Framework Core 9**, **GraphQL (HotChocolate 15)** oraz bazy danych **PostgreSQL**.
 
 Projekt został przygotowany z uwzględnieniem zasad bezpieczeństwa, wydajności oraz dobrych praktyk inżynierii oprogramowania.
 
@@ -14,10 +14,10 @@ Projekt został przygotowany z uwzględnieniem zasad bezpieczeństwa, wydajnośc
 
 Aplikacja posiada architekturę warstwową:
 
-* **API / GraphQL** – obsługa zapytań i mutacji
-* **Warstwa logiki biznesowej** – walidacja danych wejściowych, reguły biznesowe
-* **Warstwa dostępu do danych** – Entity Framework Core
-* **Baza danych** – PostgreSQL
+* **API / GraphQL** – obsługa zapytań i mutacji z jednolitą obsługą błędów
+* **Warstwa serwisów** – logika biznesowa, transakcje, walidacja
+* **Warstwa dostępu do danych** – Entity Framework Core z async/await
+* **Baza danych** – PostgreSQL z connection pooling
 
 Komunikacja z frontendem odbywa się poprzez GraphQL, co umożliwia elastyczne pobieranie danych i ograniczenie nadmiarowych odpowiedzi.
 
@@ -27,92 +27,118 @@ Komunikacja z frontendem odbywa się poprzez GraphQL, co umożliwia elastyczne p
 
 ### 3.1 Indeksy bazodanowe
 
-W projekcie zastosowano indeksy w miejscach, gdzie są one istotne z punktu widzenia wydajności zapytań, w szczególności:
+W projekcie zastosowano indeksy w miejscach, gdzie są one istotne z punktu widzenia wydajności zapytań:
 
 * klucze obce (np. `UserId`, `ProjectId`, `PostId`)
 * relacje wiele-do-wielu (np. użytkownicy–projekty, polubienia)
 * często filtrowane pola (np. `IsPublic`, `CreatedAt`, `IsRead`)
 
-Indeksy są definiowane przy użyciu konfiguracji Fluent API w `OnModelCreating`.
-
-### 3.2 Spójność danych
+### 3.2 Spójność danych i transakcje
 
 * zastosowano relacje z kluczami obcymi
-* wykorzystano kolekcje nawigacyjne
-* zadbano o poprawne mapowanie relacji self-referencing (np. komentarze, udostępnione posty)
+* operacje wielokrokowe owinięte w transakcje (`BeginTransactionAsync`)
+* wszystkie operacje bazodanowe używają `SaveChangesAsync` z `CancellationToken`
+* poprawne rollback przy błędach
 
 ---
 
 ## 4. Walidacja danych wejściowych
 
-Dane wejściowe przekazywane do mutacji GraphQL są walidowane przy użyciu **DataAnnotations**.
+Dane wejściowe przekazywane do mutacji GraphQL są walidowane przy użyciu:
 
-Przykłady walidacji:
+* **DataAnnotations** – `[Required]`, `[StringLength]`, `[EmailAddress]`
+* **FluentValidation** – zaawansowane reguły walidacji
 
-* `[Required]` – pola wymagane
-* `[StringLength]` – ograniczenia długości tekstu
-* `[EmailAddress]` – poprawność adresu e-mail
-
-Walidacja odbywa się przed wykonaniem logiki biznesowej, co zapobiega zapisywaniu niepoprawnych danych do bazy.
+Walidacja odbywa się przed wykonaniem logiki biznesowej poprzez `ValidateInput()`.
 
 ---
 
-## 5. Konfiguracja środowisk (Development / Production)
+## 5. Obsługa błędów
 
-Aplikacja obsługuje różne ustawienia konfiguracyjne w zależności od środowiska uruchomieniowego:
+Aplikacja wykorzystuje jednolity system obsługi błędów:
 
-* **Development** – lokalne uruchomienie, szczegółowe komunikaty błędów
-* **Production** – środowisko produkcyjne, zwiększone bezpieczeństwo
+* **Wyjątki domenowe** (`DomainExceptions.cs`):
+  - `AuthenticationException` – brak uwierzytelnienia
+  - `AuthorizationException` – brak uprawnień
+  - `EntityNotFoundException` – brak encji
+  - `DuplicateEntityException` – duplikat
+  - `BusinessRuleException` – naruszenie reguły biznesowej
+  - `ValidationException` – błędy walidacji
 
-Wykorzystywana jest zmienna środowiskowa:
-
-```
-ASPNETCORE_ENVIRONMENT
-```
-
-Dzięki temu aplikacja automatycznie wybiera odpowiednie ustawienia bez konieczności modyfikacji kodu.
-
----
-
-## 6. Connection pooling i dostęp do bazy danych
-
-Połączenie z bazą PostgreSQL realizowane jest za pomocą **Entity Framework Core** oraz provider’a **Npgsql**.
-
-Zastosowano **connection pooling** w celu poprawy wydajności i skalowalności aplikacji:
-
-* `AddDbContextPool`
-* jawna konfiguracja minimalnej i maksymalnej liczby połączeń
-* obsługa retry policy (`EnableRetryOnFailure`)
-
-Connection stringi przechowywane są w zmiennych środowiskowych (np. plik `.env`), co zwiększa bezpieczeństwo i umożliwia łatwą konfigurację różnych środowisk.
+* **GraphQL Error Filter** – automatyczna konwersja wyjątków na spójne błędy GraphQL z kodami HTTP
 
 ---
 
-## 7. Konfiguracja CORS
+## 6. Logging (Serilog)
 
-W projekcie zastosowano poprawną konfigurację **CORS (Cross-Origin Resource Sharing)**, zależną od środowiska:
+Aplikacja wykorzystuje **Serilog** do logowania:
 
-* **Development** – dostęp tylko z `http://localhost:3000`
-* **Production** – dostęp wyłącznie z domeny frontendu aplikacji
-
-Nie stosowano `AllowAnyOrigin`, co zapobiega nieautoryzowanemu dostępowi do API.
+* logowanie do konsoli i plików
+* rotating log files (dzienne archiwum)
+* logowanie request/response przez `UseSerilogRequestLogging()`
+* strukturyzowane logowanie z kontekstem (UserId, ProjectId, etc.)
+* różne poziomy dla Microsoft/EF Core (redukcja szumu)
 
 ---
 
-## 8. Bezpieczeństwo
+## 7. Konfiguracja środowisk
+
+Aplikacja obsługuje różne ustawienia w zależności od środowiska:
+
+* **Development** – szczegółowe błędy, sensitive data logging
+* **Production** – zwiększone bezpieczeństwo, brak introspection GraphQL
+
+Zmienne środowiskowe z pliku `.env`:
+- `POSTGRES_CONN_STRING` – connection string
+- `JWT_SECRET` – klucz JWT
+- `CORS_ORIGINS` – dozwolone origins
+
+---
+
+## 8. Connection pooling i async
+
+* `AddDbContextPool` dla wydajności
+* `EnableRetryOnFailure` dla odporności
+* wszystkie operacje I/O używają `async/await`
+* `CancellationToken` we wszystkich metodach async
+* brak synchronicznego `SaveChanges()` w kodzie produkcyjnym
+
+---
+
+## 9. Konfiguracja CORS
+
+* **Development** – `http://localhost:3000`
+* **Production** – tylko domena frontendu
+* Brak `AllowAnyOrigin`
+
+---
+
+## 10. Bezpieczeństwo
 
 * brak wrażliwych danych w repozytorium
-* hasła użytkowników przechowywane w postaci haszowanej
-* kontrola dostępu po stronie backendu
+* hasła hashowane (BCrypt)
+* JWT authentication z tokenami w cookies
+* kontrola dostępu w każdej mutacji
 * oddzielenie konfiguracji środowisk
 
 ---
 
-## 9. Uruchomienie projektu
+## 11. Dependency Injection
+
+Aplikacja wykorzystuje DI z constructor injection:
+
+* Scoped services dla DbContext i serwisów biznesowych
+* `ILogger<T>` w każdej klasie dla logowania
+* `IHttpContextAccessor` dla kontekstu HTTP
+* Interfejsy dla głównych serwisów (`IPostService`, `IFriendshipService`)
+
+---
+
+## 12. Uruchomienie projektu
 
 ### Wymagania:
 
-* .NET 7+
+* .NET 8+
 * PostgreSQL
 * Node.js (frontend – opcjonalnie)
 
@@ -128,8 +154,8 @@ dotnet run
 
 ---
 
-## 10. Autor
+## 13. Autor
 
-Projekt wykonany w ramach zaliczenia przedmiotu.
+Projekt wykonany w ramach pracy dyplomowej.
 
-Autor: *[Twoje imię i nazwisko]*
+Autorzy: *[Twoje imię i nazwisko]*

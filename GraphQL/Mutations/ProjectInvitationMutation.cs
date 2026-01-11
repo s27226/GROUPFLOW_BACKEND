@@ -1,55 +1,54 @@
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
-using NAME_WIP_BACKEND.Models;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using HotChocolate;
+using Microsoft.Extensions.Logging;
+using NAME_WIP_BACKEND.Data;
+using NAME_WIP_BACKEND.Exceptions;
+using NAME_WIP_BACKEND.GraphQL.Inputs;
+using NAME_WIP_BACKEND.Models;
 
 namespace NAME_WIP_BACKEND.GraphQL.Mutations;
 
+/// <summary>
+/// GraphQL mutations for project invitation operations.
+/// </summary>
 public class ProjectInvitationMutation
 {
-    public ProjectInvitation CreateProjectInvitation(AppDbContext context, ProjectInvitationInput input)
-    {
-        // Validate input using DataAnnotations
-        input.ValidateInput();
-        
-        Console.WriteLine($"[CreateProjectInvitation] ProjectId={input.ProjectId}, InvitingId={input.InvitingId}, InvitedId={input.InvitedId}");
-        
-        // Validate that the invited user is not already a member of the project
-        var existingMembership = context.UserProjects
-            .Any(up => up.ProjectId == input.ProjectId && up.UserId == input.InvitedId);
-        
-        Console.WriteLine($"[CreateProjectInvitation] existingMembership={existingMembership}");
-        
-        if (existingMembership)
-        {
-            throw new GraphQLException("User is already a member of this project.");
-        }
+    private readonly ILogger<ProjectInvitationMutation> _logger;
 
-        // Validate that the inviting user and invited user are friends
-        var areFriends = context.Friendships
-            .Any(f => f.IsAccepted && 
-                     ((f.UserId == input.InvitingId && f.FriendId == input.InvitedId) ||
-                      (f.UserId == input.InvitedId && f.FriendId == input.InvitingId)));
-        
-        Console.WriteLine($"[CreateProjectInvitation] areFriends={areFriends}");
-        
+    public ProjectInvitationMutation(ILogger<ProjectInvitationMutation> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<ProjectInvitation> CreateProjectInvitation(
+        [Service] AppDbContext context,
+        ProjectInvitationInput input,
+        CancellationToken ct = default)
+    {
+        input.ValidateInput();
+
+        // Validate that the invited user is not already a member
+        var existingMembership = await context.UserProjects
+            .AnyAsync(up => up.ProjectId == input.ProjectId && up.UserId == input.InvitedId, ct);
+
+        if (existingMembership)
+            throw new BusinessRuleException("User is already a member of this project.");
+
+        // Validate that inviting and invited users are friends
+        var areFriends = await context.Friendships
+            .AnyAsync(f => f.IsAccepted &&
+                ((f.UserId == input.InvitingId && f.FriendId == input.InvitedId) ||
+                 (f.UserId == input.InvitedId && f.FriendId == input.InvitingId)), ct);
+
         if (!areFriends)
-        {
-            throw new GraphQLException("You can only invite friends to your projects.");
-        }
+            throw new BusinessRuleException("You can only invite friends to your projects.");
 
         // Check if invitation already exists
-        var existingInvite = context.ProjectInvitations
-            .Any(pi => pi.ProjectId == input.ProjectId && pi.InvitedId == input.InvitedId);
-        
-        Console.WriteLine($"[CreateProjectInvitation] existingInvite={existingInvite}");
-        
+        var existingInvite = await context.ProjectInvitations
+            .AnyAsync(pi => pi.ProjectId == input.ProjectId && pi.InvitedId == input.InvitedId, ct);
+
         if (existingInvite)
-        {
-            throw new GraphQLException("An invitation to this project already exists for this user.");
-        }
+            throw new DuplicateEntityException("ProjectInvitation");
 
         var invite = new ProjectInvitation
         {
@@ -59,160 +58,147 @@ public class ProjectInvitationMutation
             Sent = DateTime.UtcNow,
             Expiring = DateTime.UtcNow.AddHours(3)
         };
+
         context.ProjectInvitations.Add(invite);
-        context.SaveChanges();
-        
-        Console.WriteLine($"[CreateProjectInvitation] Invitation created successfully with ID={invite.Id}");
-        
-        // Reload with navigation properties to avoid null reference issues
-        return context.ProjectInvitations
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogInformation("User {InvitingId} invited user {InvitedId} to project {ProjectId}",
+            input.InvitingId, input.InvitedId, input.ProjectId);
+
+        return await context.ProjectInvitations
             .Include(pi => pi.Project)
             .Include(pi => pi.Inviting)
             .Include(pi => pi.Invited)
-            .First(pi => pi.Id == invite.Id);
+            .FirstAsync(pi => pi.Id == invite.Id, ct);
     }
 
-    public ProjectInvitation? UpdateProjectInvitation(AppDbContext context, UpdateProjectInvitationInput input)
+    public async Task<ProjectInvitation?> UpdateProjectInvitation(
+        [Service] AppDbContext context,
+        UpdateProjectInvitationInput input,
+        CancellationToken ct = default)
     {
-        // Validate input using DataAnnotations
         input.ValidateInput();
-        
-        var invite = context.ProjectInvitations.Find(input.Id);
+
+        var invite = await context.ProjectInvitations.FindAsync(new object[] { input.Id }, ct);
         if (invite == null) return null;
+
         if (input.ProjectId.HasValue) invite.ProjectId = input.ProjectId.Value;
         if (input.InvitingId.HasValue) invite.InvitingId = input.InvitingId.Value;
         if (input.InvitedId.HasValue) invite.InvitedId = input.InvitedId.Value;
-        context.SaveChanges();
+
+        await context.SaveChangesAsync(ct);
         return invite;
     }
 
-    public bool DeleteProjectInvitation(AppDbContext context, int id)
+    public async Task<bool> DeleteProjectInvitation(
+        [Service] AppDbContext context,
+        int id,
+        CancellationToken ct = default)
     {
-        var invite = context.ProjectInvitations.Find(id);
+        var invite = await context.ProjectInvitations.FindAsync(new object[] { id }, ct);
         if (invite == null) return false;
+
         context.ProjectInvitations.Remove(invite);
-        context.SaveChanges();
+        await context.SaveChangesAsync(ct);
         return true;
     }
 
-    public bool AcceptProjectInvitation(
-        AppDbContext context,
-        IHttpContextAccessor httpContextAccessor,
-        int invitationId)
+    public async Task<bool> AcceptProjectInvitation(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int invitationId,
+        CancellationToken ct = default)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
-        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
-        
-        if (userIdClaim == null)
-        {
-            throw new GraphQLException("User not authenticated");
-        }
-        
-        int userId = int.Parse(userIdClaim);
+        var userId = httpContextAccessor.GetAuthenticatedUserId();
 
-        // Find the invitation
-        var invitation = context.ProjectInvitations
-            .Include(pi => pi.Project)
-                .ThenInclude(p => p.Chat)
-            .FirstOrDefault(pi => pi.Id == invitationId);
-        
-        if (invitation == null)
-        {
-            throw new GraphQLException("Invitation not found");
-        }
+        var invitation = await context.ProjectInvitations
+            .Include(pi => pi.Project).ThenInclude(p => p.Chat)
+            .FirstOrDefaultAsync(pi => pi.Id == invitationId, ct)
+            ?? throw new EntityNotFoundException("ProjectInvitation", invitationId);
 
-        // Check if the invitation is for the current user
         if (invitation.InvitedId != userId)
-        {
-            throw new GraphQLException("This invitation is not for you");
-        }
+            throw new AuthorizationException("This invitation is not for you");
 
-        // Check if invitation has expired
         if (invitation.Expiring < DateTime.UtcNow)
         {
             context.ProjectInvitations.Remove(invitation);
-            context.SaveChanges();
-            throw new GraphQLException("This invitation has expired");
+            await context.SaveChangesAsync(ct);
+            throw new BusinessRuleException("This invitation has expired");
         }
 
-        // Check if user is already a collaborator
-        var existingCollaborator = context.UserProjects
-            .FirstOrDefault(up => up.ProjectId == invitation.ProjectId && up.UserId == userId);
-        
-        if (existingCollaborator != null)
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        try
         {
-            // User is already a collaborator, just remove the invitation
+            // Check if user is already a collaborator
+            var existingCollaborator = await context.UserProjects
+                .FirstOrDefaultAsync(up => up.ProjectId == invitation.ProjectId && up.UserId == userId, ct);
+
+            if (existingCollaborator != null)
+            {
+                context.ProjectInvitations.Remove(invitation);
+                await context.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
+                return true;
+            }
+
+            // Add user as collaborator
+            context.UserProjects.Add(new UserProject
+            {
+                UserId = userId,
+                ProjectId = invitation.ProjectId,
+                Role = "Collaborator",
+                JoinedAt = DateTime.UtcNow
+            });
+
+            // Add user to project chat if it exists
+            if (invitation.Project.Chat != null)
+            {
+                var existingUserChat = await context.UserChats
+                    .FirstOrDefaultAsync(uc => uc.ChatId == invitation.Project.Chat.Id && uc.UserId == userId, ct);
+
+                if (existingUserChat == null)
+                {
+                    context.UserChats.Add(new UserChat
+                    {
+                        UserId = userId,
+                        ChatId = invitation.Project.Chat.Id
+                    });
+                }
+            }
+
             context.ProjectInvitations.Remove(invitation);
-            context.SaveChanges();
+            await context.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            _logger.LogInformation("User {UserId} accepted invitation {InvitationId} to project {ProjectId}",
+                userId, invitationId, invitation.ProjectId);
             return true;
         }
-
-        // Add user as collaborator
-        var userProject = new UserProject
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            UserId = userId,
-            ProjectId = invitation.ProjectId,
-            Role = "Collaborator",
-            JoinedAt = DateTime.UtcNow
-        };
-        context.UserProjects.Add(userProject);
-
-        // Add user to project chat if it exists
-        if (invitation.Project.Chat != null)
-        {
-            var existingUserChat = context.UserChats
-                .FirstOrDefault(uc => uc.ChatId == invitation.Project.Chat.Id && uc.UserId == userId);
-            
-            if (existingUserChat == null)
-            {
-                var userChat = new UserChat
-                {
-                    UserId = userId,
-                    ChatId = invitation.Project.Chat.Id
-                };
-                context.UserChats.Add(userChat);
-            }
+            await transaction.RollbackAsync(ct);
+            throw;
         }
-
-        // Remove the invitation
-        context.ProjectInvitations.Remove(invitation);
-        
-        context.SaveChanges();
-        return true;
     }
 
-    public bool RejectProjectInvitation(
-        AppDbContext context,
-        IHttpContextAccessor httpContextAccessor,
-        int invitationId)
+    public async Task<bool> RejectProjectInvitation(
+        [Service] AppDbContext context,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        int invitationId,
+        CancellationToken ct = default)
     {
-        var currentUser = httpContextAccessor.HttpContext!.User;
-        var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
-        
-        if (userIdClaim == null)
-        {
-            throw new GraphQLException("User not authenticated");
-        }
-        
-        int userId = int.Parse(userIdClaim);
+        var userId = httpContextAccessor.GetAuthenticatedUserId();
 
-        // Find the invitation
-        var invitation = context.ProjectInvitations.Find(invitationId);
-        
-        if (invitation == null)
-        {
-            throw new GraphQLException("Invitation not found");
-        }
+        var invitation = await context.ProjectInvitations.FindAsync(new object[] { invitationId }, ct)
+            ?? throw new EntityNotFoundException("ProjectInvitation", invitationId);
 
-        // Check if the invitation is for the current user
         if (invitation.InvitedId != userId)
-        {
-            throw new GraphQLException("This invitation is not for you");
-        }
+            throw new AuthorizationException("This invitation is not for you");
 
-        // Remove the invitation
         context.ProjectInvitations.Remove(invitation);
-        context.SaveChanges();
+        await context.SaveChangesAsync(ct);
+
+        _logger.LogInformation("User {UserId} rejected invitation {InvitationId}", userId, invitationId);
         return true;
     }
 }
