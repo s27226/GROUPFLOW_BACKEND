@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
-using GROUPFLOW.Features.Friendships.DTOs;
+using GROUPFLOW.Features.Friendships.GraphQL.Responses;
 using GROUPFLOW.Features.Friendships.Entities;
 using GROUPFLOW.Features.Users.Entities;
 

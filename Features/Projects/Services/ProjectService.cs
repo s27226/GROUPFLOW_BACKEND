@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using GROUPFLOW.Common.Database;
 using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Projects.Entities;
-using GROUPFLOW.Features.Projects.Inputs;
+using GROUPFLOW.Features.Projects.GraphQL.Inputs;
 using GROUPFLOW.Features.Chat.Entities;
 
 namespace GROUPFLOW.Features.Projects.Services;

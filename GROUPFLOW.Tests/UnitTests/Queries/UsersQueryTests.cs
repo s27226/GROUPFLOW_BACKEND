@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
 using GROUPFLOW.Features.Users.Entities;
-using GROUPFLOW.Features.Users.GraphQL;
+using GROUPFLOW.Features.Users.GraphQL.Queries;
 using Xunit;
 
 namespace GROUPFLOW.Tests.UnitTests.Queries;

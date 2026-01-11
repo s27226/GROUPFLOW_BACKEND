@@ -1,5 +1,5 @@
 using FluentValidation;
-using GROUPFLOW.Features.Posts.Inputs;
+using GROUPFLOW.Features.Posts.GraphQL.Inputs;
 
 namespace GROUPFLOW.Features.Posts.Validators;
 

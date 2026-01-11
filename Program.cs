@@ -102,19 +102,19 @@ try
     builder.Services.AddScoped<IPostService, PostService>();
 
     // GraphQL Mutation classes (for constructor injection)
-    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Chat.GraphQL.EntryMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.FriendRequestMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.FriendshipMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectInvitationMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectRecommendationMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.ProjectEventMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.SavedPostMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Users.GraphQL.UserTagMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.PostMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Notifications.GraphQL.NotificationMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.BlockedUserMutation>();
-    builder.Services.AddScoped<GROUPFLOW.Features.Moderation.GraphQL.ModerationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.Mutations.ProjectMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Chat.GraphQL.Mutations.EntryMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.Mutations.FriendRequestMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.Mutations.FriendshipMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.Mutations.ProjectInvitationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.Mutations.ProjectRecommendationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.Mutations.ProjectEventMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.Mutations.SavedPostMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Users.GraphQL.Mutations.UserTagMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.Mutations.PostMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Notifications.GraphQL.Mutations.NotificationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.Mutations.BlockedUserMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Moderation.GraphQL.Mutations.ModerationMutation>();
 
     // AWS S3 service (if configured)
     var awsAccessKey = GetEnv("AWS_ACCESS_KEY_ID");
@@ -134,13 +134,13 @@ try
         .AddGraphQLServer()
         .AddQueryType<Query>()
         .AddMutationType<Mutation>()
-        .AddTypeExtension<AuthMutation>()
-        .AddTypeExtension<PostTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Users.GraphQL.UserTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Projects.GraphQL.ProjectTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.BlobFileTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.BlobMutation>()
-        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.BlobQuery>()
+        .AddTypeExtension<GROUPFLOW.Features.Auth.GraphQL.Mutations.AuthMutation>()
+        .AddTypeExtension<GROUPFLOW.Features.Posts.GraphQL.Extensions.PostTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Users.GraphQL.Extensions.UserTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Projects.GraphQL.Extensions.ProjectTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Extensions.BlobFileTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Mutations.BlobMutation>()
+        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Queries.BlobQuery>()
         .AddErrorFilter<GraphQLErrorFilter>()
         .AddAuthorization()
         .AddProjections()

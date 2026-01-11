@@ -1,11 +1,11 @@
-﻿using GROUPFLOW.Features.Auth.GraphQL;
-using GROUPFLOW.Features.Chat.GraphQL;
-using GROUPFLOW.Features.Friendships.GraphQL;
-using GROUPFLOW.Features.Moderation.GraphQL;
-using GROUPFLOW.Features.Notifications.GraphQL;
-using GROUPFLOW.Features.Posts.GraphQL;
-using GROUPFLOW.Features.Projects.GraphQL;
-using GROUPFLOW.Features.Users.GraphQL;
+﻿using GROUPFLOW.Features.Auth.GraphQL.Mutations;
+using GROUPFLOW.Features.Chat.GraphQL.Mutations;
+using GROUPFLOW.Features.Friendships.GraphQL.Mutations;
+using GROUPFLOW.Features.Moderation.GraphQL.Mutations;
+using GROUPFLOW.Features.Notifications.GraphQL.Mutations;
+using GROUPFLOW.Features.Posts.GraphQL.Mutations;
+using GROUPFLOW.Features.Projects.GraphQL.Mutations;
+using GROUPFLOW.Features.Users.GraphQL.Mutations;
 
 namespace GROUPFLOW;
 

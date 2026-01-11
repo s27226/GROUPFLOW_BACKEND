@@ -1,4 +1,4 @@
-using GROUPFLOW.Features.Friendships.DTOs;
+using GROUPFLOW.Features.Friendships.GraphQL.Responses;
 using GROUPFLOW.Features.Users.Entities;
 
 namespace GROUPFLOW.Features.Friendships.Services;
