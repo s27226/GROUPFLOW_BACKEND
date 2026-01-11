@@ -1,0 +1,118 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NAME_WIP_BACKEND.Models;
+
+namespace NAME_WIP_BACKEND.Data.Configurations;
+
+public class ProjectConfiguration : IEntityTypeConfiguration<Project>
+{
+    public void Configure(EntityTypeBuilder<Project> builder)
+    {
+        // Relationships
+        builder.HasOne(p => p.Owner)
+            .WithMany(u => u.OwnedProjects)
+            .HasForeignKey(p => p.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.ImageBlob)
+            .WithMany()
+            .HasForeignKey(p => p.ImageBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(p => p.BannerBlob)
+            .WithMany()
+            .HasForeignKey(p => p.BannerBlobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Indexes
+        builder.HasIndex(p => p.OwnerId);
+        builder.HasIndex(p => p.IsPublic);
+        builder.HasIndex(p => p.Created);
+        builder.HasIndex(p => p.LastUpdated);
+        builder.HasIndex(p => new { p.IsPublic, p.LastUpdated })
+            .HasDatabaseName("IX_Projects_IsPublic_LastUpdated");
+    }
+}
+
+public class UserProjectConfiguration : IEntityTypeConfiguration<UserProject>
+{
+    public void Configure(EntityTypeBuilder<UserProject> builder)
+    {
+        builder.HasKey(up => new { up.UserId, up.ProjectId });
+
+        builder.HasOne(up => up.User)
+            .WithMany(u => u.ProjectCollaborations)
+            .HasForeignKey(up => up.UserId);
+
+        builder.HasOne(up => up.Project)
+            .WithMany(p => p.Collaborators)
+            .HasForeignKey(up => up.ProjectId);
+
+        // Indexes
+        builder.HasIndex(up => up.UserId);
+        builder.HasIndex(up => up.ProjectId);
+    }
+}
+
+public class ProjectLikeConfiguration : IEntityTypeConfiguration<ProjectLike>
+{
+    public void Configure(EntityTypeBuilder<ProjectLike> builder)
+    {
+        builder.HasOne(pl => pl.User)
+            .WithMany()
+            .HasForeignKey(pl => pl.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(pl => pl.Project)
+            .WithMany(p => p.Likes)
+            .HasForeignKey(pl => pl.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(pl => new { pl.UserId, pl.ProjectId }).IsUnique();
+    }
+}
+
+public class ProjectViewConfiguration : IEntityTypeConfiguration<ProjectView>
+{
+    public void Configure(EntityTypeBuilder<ProjectView> builder)
+    {
+        builder.HasOne(pv => pv.User)
+            .WithMany()
+            .HasForeignKey(pv => pv.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(pv => pv.Project)
+            .WithMany(p => p.Views)
+            .HasForeignKey(pv => pv.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(pv => new { pv.UserId, pv.ProjectId, pv.ViewDate }).IsUnique();
+    }
+}
+
+public class ProjectSkillConfiguration : IEntityTypeConfiguration<ProjectSkill>
+{
+    public void Configure(EntityTypeBuilder<ProjectSkill> builder)
+    {
+        builder.HasIndex(ps => ps.ProjectId);
+        builder.HasIndex(ps => ps.SkillName);
+    }
+}
+
+public class ProjectInterestConfiguration : IEntityTypeConfiguration<ProjectInterest>
+{
+    public void Configure(EntityTypeBuilder<ProjectInterest> builder)
+    {
+        builder.HasIndex(pi => pi.ProjectId);
+        builder.HasIndex(pi => pi.InterestName);
+    }
+}
+
+public class ProjectInvitationConfiguration : IEntityTypeConfiguration<ProjectInvitation>
+{
+    public void Configure(EntityTypeBuilder<ProjectInvitation> builder)
+    {
+        builder.HasIndex(pi => pi.InvitedId);
+        builder.HasIndex(pi => pi.ProjectId);
+    }
+}

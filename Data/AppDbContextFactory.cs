@@ -9,13 +9,7 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
         Env.Load();
 
-        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-                  ?? "Development";
-
-        string connectionString = env == "Development"
-            ? Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_DEV")
-            : Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_PROD");
-
+        var connectionString = Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING");
 
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
         optionsBuilder.UseNpgsql(connectionString ?? throw new InvalidOperationException("Connection string not found in environment variables."));

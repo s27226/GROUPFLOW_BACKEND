@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NAME_WIP_BACKEND.Data;
 using NAME_WIP_BACKEND.Models;
+using NAME_WIP_BACKEND.GraphQL;
 
 public class AuthMutation
 {
@@ -17,6 +18,9 @@ public class AuthMutation
         [Service] IHttpContextAccessor httpContextAccessor,
         UserRegisterInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         if (await db.Users.AnyAsync(u => u.Email == input.Email))
         {
             throw new GraphQLException(new Error("Email already exists", "EMAIL_EXISTS"));
@@ -46,6 +50,9 @@ public class AuthMutation
         [Service] IHttpContextAccessor httpContextAccessor,
         UserLoginInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         try
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email);

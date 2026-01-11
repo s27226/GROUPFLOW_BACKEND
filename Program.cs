@@ -11,37 +11,71 @@ using NAME_WIP_BACKEND.Services.Friendship;
 using NAME_WIP_BACKEND.Services.Post;
 using Amazon.S3;
 using Amazon.Runtime;
-
-
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load .env file - primary source of configuration
 DotNetEnv.Env.Load();
 
-// Sprawdzenie środowiska
+// Helper to get required env variable
+static string RequireEnv(string name) =>
+    Environment.GetEnvironmentVariable(name)
+    ?? throw new InvalidOperationException($"Required environment variable '{name}' is not set");
+
+// Helper to get optional env variable with default
+static string GetEnv(string name, string defaultValue = "") =>
+    Environment.GetEnvironmentVariable(name) ?? defaultValue;
+
+static int GetEnvInt(string name, int defaultValue) =>
+    int.TryParse(Environment.GetEnvironmentVariable(name), out var value) ? value : defaultValue;
+
+static bool GetEnvBool(string name, bool defaultValue) =>
+    bool.TryParse(Environment.GetEnvironmentVariable(name), out var value) ? value : defaultValue;
+
+// Environment detection
 var env = builder.Environment;
+var isDev = env.IsDevelopment();
 
-// Wybór connection stringa w zależności od środowiska
-string connectionString = env.IsDevelopment()
-    ? Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_DEV")
-      ?? throw new InvalidOperationException("POSTGRES_CONN_STRING_DEV not set")
-    : Environment.GetEnvironmentVariable("POSTGRES_CONN_STRING_PROD")
-      ?? throw new InvalidOperationException("POSTGRES_CONN_STRING_PROD not set");
+// Database configuration from .env
+var connectionString = RequireEnv("POSTGRES_CONN_STRING");
+var maxRetryCount = GetEnvInt("DB_MAX_RETRY_COUNT", 5);
+var maxRetryDelaySeconds = GetEnvInt("DB_MAX_RETRY_DELAY_SECONDS", 10);
+var commandTimeoutSeconds = GetEnvInt("DB_COMMAND_TIMEOUT_SECONDS", 30);
+var enableSensitiveDataLogging = GetEnvBool("DB_SENSITIVE_LOGGING", isDev);
 
+// DbContext Pool - correctly configured for connection pooling
 builder.Services.AddDbContextPool<AppDbContext>(options =>
+{
     options.UseNpgsql(
         connectionString,
         npgsqlOptions =>
         {
-            npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: maxRetryCount,
+                maxRetryDelay: TimeSpan.FromSeconds(maxRetryDelaySeconds),
+                errorCodesToAdd: null);
             npgsqlOptions.MinBatchSize(1);
             npgsqlOptions.MaxBatchSize(100);
-            npgsqlOptions.CommandTimeout(30);
-        }));
-// Register business logic services - isolate DB from API
+            npgsqlOptions.CommandTimeout(commandTimeoutSeconds);
+        });
+
+    if (enableSensitiveDataLogging)
+    {
+        options.EnableSensitiveDataLogging();
+    }
+});
+
+// Register FluentValidation validators from assembly
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// Register business logic services
 builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 builder.Services.AddScoped<IPostService, PostService>();
 
-
+// GraphQL configuration from .env
+var includeExceptionDetails = GetEnvBool("GRAPHQL_INCLUDE_EXCEPTION_DETAILS", isDev);
+var disableIntrospection = GetEnvBool("GRAPHQL_DISABLE_INTROSPECTION", !isDev);
 
 builder.Services
     .AddGraphQLServer()
@@ -58,8 +92,8 @@ builder.Services
     .AddProjections()
     .AddFiltering()
     .AddSorting()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = env.IsDevelopment())
-    .DisableIntrospection(false);
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = includeExceptionDetails)
+    .DisableIntrospection(disableIntrospection);
 
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 builder.Services.AddControllers();
@@ -123,29 +157,28 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("DevCors",policy =>
+    // CORS origins from .env (comma-separated list)
+    var corsOrigins = GetEnv("CORS_ORIGINS", isDev ? "http://localhost:3000" : "");
+    var origins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    if (origins.Length == 0 && !isDev)
     {
-        var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? "http://localhost:3000";
-        policy.WithOrigins(allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
+        throw new InvalidOperationException("CORS_ORIGINS must be set in .env for production environment");
+    }
+
+    options.AddPolicy("AppCorsPolicy", policy =>
+    {
+        policy.WithOrigins(origins)
               .AllowCredentials()
-              .AllowAnyHeader() // Allow all headers for cookie-based auth
+              .AllowAnyHeader()
               .WithMethods("GET", "POST", "OPTIONS");
     });
-    
-    options.AddPolicy("ProdCors",policy =>
-    {
-        policy.WithOrigins("https://groupflows.netlify.app")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-    
 });
 
 using var app = builder.Build();
 
-// Middleware zależne od środowiska
-if (env.IsDevelopment())
+// Middleware dependent on environment
+if (isDev)
 {
     app.UseDeveloperExceptionPage();
 }
@@ -156,29 +189,36 @@ else
     app.UseHttpsRedirection();
 }
 
-app.UseCors(env.IsDevelopment() ? "DevCors" : "ProdCors");
+// Use unified CORS policy (configured per environment via appsettings)
+app.UseCors("AppCorsPolicy");
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGraphQL("/api");
 app.MapControllers();
-// app.Run();
-
-//
-// 
 
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
- using var scope = app.Services.CreateScope();
- var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
- if (env.IsDevelopment())
- {
-     DataInitializer.Seed(db);
- }
-
- //db.Database.Migrate();
-
-
+    try
+    {
+        // Ensure database is created and all migrations are applied
+        Console.WriteLine("Applying database migrations...");
+        db.Database.Migrate();
+        Console.WriteLine("Migrations applied successfully.");
+        
+        // Seed initial data
+        DataInitializer.Seed(db);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during database initialization: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        throw;
+    }
+}
 
 app.Run();

@@ -8,6 +8,9 @@ public class ProjectRecommendationMutation
 {
     public ProjectRecommendation CreateProjectRecommendation(AppDbContext context, ProjectRecommendationInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var rec = new ProjectRecommendation
         {
             UserId = input.UserId,
@@ -21,6 +24,9 @@ public class ProjectRecommendationMutation
 
     public ProjectRecommendation? UpdateProjectRecommendation(AppDbContext context, UpdateProjectRecommendationInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var rec = context.ProjectRecommendations.Find(input.Id);
         if (rec == null) return null;
         if (input.UserId.HasValue) rec.UserId = input.UserId.Value;

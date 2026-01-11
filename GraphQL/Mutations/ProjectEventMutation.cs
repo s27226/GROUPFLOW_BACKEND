@@ -11,6 +11,9 @@ public class ProjectEventMutation
 {
     public ProjectEvent CreateProjectEvent(AppDbContext context, ProjectEventInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var projectEvent = new ProjectEvent
         {
             ProjectId = input.ProjectId,
@@ -28,6 +31,9 @@ public class ProjectEventMutation
 
     public ProjectEvent? UpdateProjectEvent(AppDbContext context, UpdateProjectEventInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var projectEvent = context.ProjectEvents.Find(input.Id);
         if (projectEvent == null) return null;
         

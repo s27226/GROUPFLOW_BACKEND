@@ -11,6 +11,9 @@ public class ProjectInvitationMutation
 {
     public ProjectInvitation CreateProjectInvitation(AppDbContext context, ProjectInvitationInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         Console.WriteLine($"[CreateProjectInvitation] ProjectId={input.ProjectId}, InvitingId={input.InvitingId}, InvitedId={input.InvitedId}");
         
         // Validate that the invited user is not already a member of the project
@@ -71,6 +74,9 @@ public class ProjectInvitationMutation
 
     public ProjectInvitation? UpdateProjectInvitation(AppDbContext context, UpdateProjectInvitationInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var invite = context.ProjectInvitations.Find(input.Id);
         if (invite == null) return null;
         if (input.ProjectId.HasValue) invite.ProjectId = input.ProjectId.Value;

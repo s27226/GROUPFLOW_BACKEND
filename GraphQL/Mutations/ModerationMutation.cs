@@ -11,6 +11,9 @@ public class ModerationMutation
 {
     public async Task<User> BanUser(BanUserInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         var moderator = await context.Users.FindAsync(moderatorId);
         
@@ -61,6 +64,9 @@ public class ModerationMutation
 
     public async Task<User> SuspendUser(SuspendUserInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         var moderator = await context.Users.FindAsync(moderatorId);
         
@@ -189,6 +195,9 @@ public class ModerationMutation
 
     public async Task<User> ResetPassword(ResetPasswordInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         var moderator = await context.Users.FindAsync(moderatorId);
         
@@ -211,6 +220,9 @@ public class ModerationMutation
 
     public async Task<User> ManageUserRole(ManageUserRoleInput input, [Service] AppDbContext context, ClaimsPrincipal claimsPrincipal)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var moderatorId = int.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         var moderator = await context.Users.FindAsync(moderatorId);
         

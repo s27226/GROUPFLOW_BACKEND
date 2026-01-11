@@ -16,6 +16,9 @@ public class UserTagMutation
         ClaimsPrincipal claimsPrincipal,
         UserSkillInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {
@@ -75,6 +78,9 @@ public class UserTagMutation
         ClaimsPrincipal claimsPrincipal,
         UserInterestInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {

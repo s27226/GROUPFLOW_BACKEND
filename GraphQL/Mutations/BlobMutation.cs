@@ -22,6 +22,9 @@ namespace NAME_WIP_BACKEND.GraphQL.Mutations
             [Service] IS3Service s3Service,
             ClaimsPrincipal claimsPrincipal)
         {
+            // Validate input using DataAnnotations
+            input.ValidateInput();
+            
             var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {

@@ -13,6 +13,9 @@ public class ProjectMutation
         IHttpContextAccessor httpContextAccessor,
         ProjectInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var currentUser = httpContextAccessor.HttpContext!.User;
         var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
         
@@ -97,6 +100,9 @@ public class ProjectMutation
         IHttpContextAccessor httpContextAccessor,
         UpdateProjectInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var currentUser = httpContextAccessor.HttpContext!.User;
         var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
         
@@ -155,6 +161,9 @@ public class ProjectMutation
         IHttpContextAccessor httpContextAccessor,
         CreateProjectWithMembersInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var currentUser = httpContextAccessor.HttpContext!.User;
         var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
         

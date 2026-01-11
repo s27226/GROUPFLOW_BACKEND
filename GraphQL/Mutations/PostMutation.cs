@@ -18,8 +18,11 @@ public class PostMutation
         [Service] IHttpContextAccessor httpContextAccessor,
         PostInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var currentUser = httpContextAccessor.HttpContext!.User;
-        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         return await postService.CreatePostAsync(
             userId,
@@ -167,8 +170,11 @@ public class PostMutation
         [Service] IHttpContextAccessor httpContextAccessor,
         ReportPostInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var currentUser = httpContextAccessor.HttpContext!.User;
-        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier));
+        int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         // Check if post exists
         var post = await context.Posts.FindAsync(input.PostId);

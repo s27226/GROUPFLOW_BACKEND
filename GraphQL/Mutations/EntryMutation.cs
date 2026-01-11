@@ -9,6 +9,9 @@ public class EntryMutation
 {
     public Entry CreateEntry(AppDbContext context, EntryInput input)
     {
+        // Validate input using DataAnnotations
+        input.ValidateInput();
+        
         var entry = new Entry
         {
             UserChatId = input.UserChatId,
