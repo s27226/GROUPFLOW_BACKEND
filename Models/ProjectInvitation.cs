@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace NAME_WIP_BACKEND.Models;
+namespace GROUPFLOW.Models;
 [Index(nameof(ProjectId), nameof(InvitingId),nameof(InvitedId), IsUnique = true)]
 public class ProjectInvitation
 {

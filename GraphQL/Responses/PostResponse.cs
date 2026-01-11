@@ -1,4 +1,4 @@
-namespace NAME_WIP_BACKEND.GraphQL.Responses;
+namespace GROUPFLOW.GraphQL.Responses;
 
 /// <summary>
 /// Response DTO for Post entity - isolates API layer from database model.

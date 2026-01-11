@@ -1,11 +1,11 @@
 using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
+using GROUPFLOW.GraphQL.Inputs;
 
-namespace NAME_WIP_BACKEND.GraphQL.Queries;
+namespace GROUPFLOW.GraphQL.Queries;
 
 public class ProjectQuery
 {

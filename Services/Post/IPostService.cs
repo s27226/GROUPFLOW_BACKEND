@@ -1,6 +1,6 @@
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services.Post;
+namespace GROUPFLOW.Services.Post;
 
 /// <summary>
 /// Service interface for post operations - isolates business logic

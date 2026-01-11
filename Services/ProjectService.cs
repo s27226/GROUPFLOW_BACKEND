@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Exceptions;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
-using NAME_WIP_BACKEND.GraphQL.Responses;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Exceptions;
+using GROUPFLOW.GraphQL.Inputs;
+using GROUPFLOW.GraphQL.Responses;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services;
+namespace GROUPFLOW.Services;
 
 /// <summary>
 /// Service for project-related operations.

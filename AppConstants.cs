@@ -1,6 +1,6 @@
 using Serilog;
 
-namespace NAME_WIP_BACKEND;
+namespace GROUPFLOW;
 
 /// <summary>
 /// Centralized application constants to eliminate magic strings and numbers.
@@ -25,9 +25,9 @@ public static class AppConstants
     // ============================
     // Namespaces for Assembly Scanning
     // ============================
-    public const string MutationsNamespace = "NAME_WIP_BACKEND.GraphQL.Mutations";
-    public const string QueriesNamespace = "NAME_WIP_BACKEND.GraphQL.Queries";
-    public const string ServicesNamespace = "NAME_WIP_BACKEND.Services";
+    public const string MutationsNamespace = "GROUPFLOW.GraphQL.Mutations";
+    public const string QueriesNamespace = "GROUPFLOW.GraphQL.Queries";
+    public const string ServicesNamespace = "GROUPFLOW.Services";
 
     // ============================
     // Environment Variable Names

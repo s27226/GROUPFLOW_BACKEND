@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Data.Configurations;
+namespace GROUPFLOW.Data.Configurations;
 
 public class ProjectConfiguration : IEntityTypeConfiguration<Project>
 {

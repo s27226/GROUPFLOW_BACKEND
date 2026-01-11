@@ -1,10 +1,10 @@
 using HotChocolate;
 using HotChocolate.Types;
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.Services;
+using GROUPFLOW.Models;
+using GROUPFLOW.Services;
 
-namespace NAME_WIP_BACKEND.GraphQL.Types
+namespace GROUPFLOW.GraphQL.Types
 {
     [ExtendObjectType(typeof(BlobFile))]
     public class BlobFileTypeExtensions

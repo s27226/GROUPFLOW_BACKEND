@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.GraphQL.Inputs;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations;
+namespace GROUPFLOW.GraphQL.Mutations;
 
 /// <summary>
 /// GraphQL mutations for project recommendation operations.

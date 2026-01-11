@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Exceptions;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Exceptions;
+using GROUPFLOW.GraphQL.Inputs;
+using GROUPFLOW.Models;
 using BCrypt.Net;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations;
+namespace GROUPFLOW.GraphQL.Mutations;
 
 /// <summary>
 /// GraphQL mutations for moderation operations.

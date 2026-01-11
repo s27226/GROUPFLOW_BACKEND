@@ -1,4 +1,4 @@
-namespace NAME_WIP_BACKEND.DTOs;
+namespace GROUPFLOW.DTOs;
 
 /// <summary>
 /// DTO for post-related operations to isolate from DB model

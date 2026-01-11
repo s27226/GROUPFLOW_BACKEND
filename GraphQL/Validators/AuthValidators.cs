@@ -1,7 +1,7 @@
 using FluentValidation;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Validators;
+namespace GROUPFLOW.GraphQL.Validators;
 
 /// <summary>
 /// Validator for user login input.

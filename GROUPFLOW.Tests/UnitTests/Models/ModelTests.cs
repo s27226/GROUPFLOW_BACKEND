@@ -1,7 +1,7 @@
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Models;
 using Xunit;
 
-namespace NAME_WIP_BACKEND.Tests.UnitTests.Models;
+namespace GROUPFLOW.Tests.UnitTests.Models;
 
 public class UserModelTests
 {

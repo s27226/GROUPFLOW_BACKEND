@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
 using System.Security.Claims;
 
-namespace NAME_WIP_BACKEND.GraphQL.Queries;
+namespace GROUPFLOW.GraphQL.Queries;
 
 public class ModerationQuery
 {

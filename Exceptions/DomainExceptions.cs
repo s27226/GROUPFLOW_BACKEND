@@ -1,4 +1,4 @@
-namespace NAME_WIP_BACKEND.Exceptions;
+namespace GROUPFLOW.Exceptions;
 
 /// <summary>
 /// Base exception for all domain-specific exceptions.

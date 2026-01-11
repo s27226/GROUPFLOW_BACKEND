@@ -1,7 +1,7 @@
-using NAME_WIP_BACKEND.DTOs;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.DTOs;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services.Friendship;
+namespace GROUPFLOW.Services.Friendship;
 
 /// <summary>
 /// Service interface for friendship operations - isolates business logic

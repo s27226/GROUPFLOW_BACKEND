@@ -1,9 +1,9 @@
 using HotChocolate;
-using NAME_WIP_BACKEND.Exceptions;
+using GROUPFLOW.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 
-namespace NAME_WIP_BACKEND.GraphQL.Filters;
+namespace GROUPFLOW.GraphQL.Filters;
 
 /// <summary>
 /// Unified error filter that converts domain exceptions to GraphQL errors.

@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Exceptions;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.Services.Friendship;
+using GROUPFLOW.Data;
+using GROUPFLOW.Exceptions;
+using GROUPFLOW.Models;
+using GROUPFLOW.Services.Friendship;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations;
+namespace GROUPFLOW.GraphQL.Mutations;
 
 /// <summary>
 /// GraphQL mutations for friendship operations.

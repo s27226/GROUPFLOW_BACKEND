@@ -1,7 +1,7 @@
-﻿using NAME_WIP_BACKEND.Controllers;
-using NAME_WIP_BACKEND.GraphQL.Mutations;
+﻿using GROUPFLOW.Controllers;
+using GROUPFLOW.GraphQL.Mutations;
 
-namespace NAME_WIP_BACKEND;
+namespace GROUPFLOW;
 
 /// <summary>
 /// Root GraphQL mutation type that aggregates all domain-specific mutations.

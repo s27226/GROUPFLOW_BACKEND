@@ -2,12 +2,12 @@ using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Exceptions;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Exceptions;
+using GROUPFLOW.GraphQL.Inputs;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Mutations;
+namespace GROUPFLOW.GraphQL.Mutations;
 
 /// <summary>
 /// GraphQL mutations for user skills and interests.

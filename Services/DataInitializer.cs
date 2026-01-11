@@ -1,13 +1,13 @@
-using NAME_WIP_BACKEND.Data;
+using GROUPFLOW.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services;
+namespace GROUPFLOW.Services;
 
 // Type aliases to resolve namespace conflicts with Services.Post and Services.Friendship folders
-using PostModel = NAME_WIP_BACKEND.Models.Post;
-using FriendshipModel = NAME_WIP_BACKEND.Models.Friendship;
+using PostModel = GROUPFLOW.Models.Post;
+using FriendshipModel = GROUPFLOW.Models.Friendship;
 
 /// <summary>
 /// Handles database seeding with async support and proper logging.

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Types;
+namespace GROUPFLOW.GraphQL.Types;
 
 [ExtendObjectType(typeof(Post))]
 public class PostTypeExtensions

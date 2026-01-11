@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.DTOs;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.DTOs;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services.Friendship;
+namespace GROUPFLOW.Services.Friendship;
 
 /// <summary>
 /// Service implementation for friendship operations

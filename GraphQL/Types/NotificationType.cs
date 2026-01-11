@@ -1,6 +1,6 @@
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Types;
+namespace GROUPFLOW.GraphQL.Types;
 
 public class NotificationType
 {

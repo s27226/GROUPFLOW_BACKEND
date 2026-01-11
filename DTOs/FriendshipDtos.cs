@@ -1,4 +1,4 @@
-namespace NAME_WIP_BACKEND.DTOs;
+namespace GROUPFLOW.DTOs;
 
 /// <summary>
 /// DTO for friendship-related operations to isolate from DB model

@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace NAME_WIP_BACKEND.Models;
+namespace GROUPFLOW.Models;
 
 public record UserLoginInput(
     [property: Required]

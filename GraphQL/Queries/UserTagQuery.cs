@@ -1,10 +1,10 @@
 using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.GraphQL.Queries;
+namespace GROUPFLOW.GraphQL.Queries;
 
 public class UserTagQuery
 {

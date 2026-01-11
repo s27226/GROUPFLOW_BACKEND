@@ -1,13 +1,13 @@
 ﻿using System.Reflection;
-using NAME_WIP_BACKEND.Data;
+using GROUPFLOW.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND;
-using NAME_WIP_BACKEND.Controllers;
-using NAME_WIP_BACKEND.GraphQL.Types;
-using NAME_WIP_BACKEND.Services;
-using NAME_WIP_BACKEND.Services.Friendship;
-using NAME_WIP_BACKEND.Services.Post;
+using GROUPFLOW;
+using GROUPFLOW.Controllers;
+using GROUPFLOW.GraphQL.Types;
+using GROUPFLOW.Services;
+using GROUPFLOW.Services.Friendship;
+using GROUPFLOW.Services.Post;
 using Amazon.S3;
 using Serilog;
 
@@ -99,19 +99,19 @@ try
     builder.Services.AddScoped<IPostService, PostService>();
 
     // GraphQL Mutation classes (for constructor injection)
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.ProjectMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.EntryMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.FriendRequestMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.FriendshipMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.ProjectInvitationMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.ProjectRecommendationMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.ProjectEventMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.SavedPostMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.UserTagMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.PostMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.NotificationMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.BlockedUserMutation>();
-    builder.Services.AddScoped<NAME_WIP_BACKEND.GraphQL.Mutations.ModerationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.EntryMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.FriendRequestMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.FriendshipMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectInvitationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectRecommendationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ProjectEventMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.SavedPostMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.UserTagMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.PostMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.NotificationMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.BlockedUserMutation>();
+    builder.Services.AddScoped<GROUPFLOW.GraphQL.Mutations.ModerationMutation>();
 
     // AWS S3 service (if configured)
     var awsAccessKey = GetEnv("AWS_ACCESS_KEY_ID");
@@ -125,7 +125,7 @@ try
     var disableIntrospection = GetEnvBool("GRAPHQL_DISABLE_INTROSPECTION", !isDev);
 
     // Register GraphQL error filter for unified error handling
-    builder.Services.AddSingleton<NAME_WIP_BACKEND.GraphQL.Filters.GraphQLErrorFilter>();
+    builder.Services.AddSingleton<GROUPFLOW.GraphQL.Filters.GraphQLErrorFilter>();
 
     builder.Services
         .AddGraphQLServer()
@@ -133,12 +133,12 @@ try
         .AddMutationType<Mutation>()
         .AddTypeExtension<AuthMutation>()
         .AddTypeExtension<PostTypeExtensions>()
-        .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Types.UserTypeExtensions>()
-        .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Types.ProjectTypeExtensions>()
-        .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Types.BlobFileTypeExtensions>()
-        .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Mutations.BlobMutation>()
-        .AddTypeExtension<NAME_WIP_BACKEND.GraphQL.Queries.BlobQuery>()
-        .AddErrorFilter<NAME_WIP_BACKEND.GraphQL.Filters.GraphQLErrorFilter>()
+        .AddTypeExtension<GROUPFLOW.GraphQL.Types.UserTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.GraphQL.Types.ProjectTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.GraphQL.Types.BlobFileTypeExtensions>()
+        .AddTypeExtension<GROUPFLOW.GraphQL.Mutations.BlobMutation>()
+        .AddTypeExtension<GROUPFLOW.GraphQL.Queries.BlobQuery>()
+        .AddErrorFilter<GROUPFLOW.GraphQL.Filters.GraphQLErrorFilter>()
         .AddAuthorization()
         .AddProjections()
         .AddFiltering()

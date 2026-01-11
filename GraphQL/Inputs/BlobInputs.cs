@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-namespace NAME_WIP_BACKEND.GraphQL.Inputs
+namespace GROUPFLOW.GraphQL.Inputs
 {
     public class UploadBlobInput
     {

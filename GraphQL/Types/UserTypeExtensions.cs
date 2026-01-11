@@ -1,9 +1,9 @@
 using HotChocolate;
 using HotChocolate.Types;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.Services;
+using GROUPFLOW.Models;
+using GROUPFLOW.Services;
 
-namespace NAME_WIP_BACKEND.GraphQL.Types
+namespace GROUPFLOW.GraphQL.Types
 {
     [ExtendObjectType(typeof(User))]
     public class UserTypeExtensions

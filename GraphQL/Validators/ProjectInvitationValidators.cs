@@ -1,7 +1,7 @@
 using FluentValidation;
-using NAME_WIP_BACKEND.GraphQL.Inputs;
+using GROUPFLOW.GraphQL.Inputs;
 
-namespace NAME_WIP_BACKEND.GraphQL.Validators;
+namespace GROUPFLOW.GraphQL.Validators;
 
 /// <summary>
 /// Validator for project invitation input.

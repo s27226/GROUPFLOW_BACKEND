@@ -1,10 +1,10 @@
 using System.Security.Claims;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
-using NAME_WIP_BACKEND.Services.Friendship;
-using NAME_WIP_BACKEND.DTOs;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
+using GROUPFLOW.Services.Friendship;
+using GROUPFLOW.DTOs;
 
-namespace NAME_WIP_BACKEND.GraphQL.Queries;
+namespace GROUPFLOW.GraphQL.Queries;
 
 public class FriendshipQuery
 {

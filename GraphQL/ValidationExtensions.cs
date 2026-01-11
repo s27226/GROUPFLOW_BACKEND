@@ -4,7 +4,7 @@ using FluentValidation.Results;
 using HotChocolate;
 using ValidationResult = System.ComponentModel.DataAnnotations.ValidationResult;
 
-namespace NAME_WIP_BACKEND.GraphQL;
+namespace GROUPFLOW.GraphQL;
 
 /// <summary>
 /// Extension methods for input validation.

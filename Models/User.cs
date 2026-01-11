@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace NAME_WIP_BACKEND.Models;
+namespace GROUPFLOW.Models;
 
 [Index(nameof(Email), IsUnique = true)]
 [Index(nameof(Nickname), IsUnique = true)]

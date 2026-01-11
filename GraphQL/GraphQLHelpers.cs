@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using NAME_WIP_BACKEND.Exceptions;
+using GROUPFLOW.Exceptions;
 
-namespace NAME_WIP_BACKEND.GraphQL;
+namespace GROUPFLOW.GraphQL;
 
 /// <summary>
 /// Shared helper methods for GraphQL resolvers.

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services.Post;
+namespace GROUPFLOW.Services.Post;
 
 /// <summary>
 /// Service implementation for post operations

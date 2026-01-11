@@ -2,12 +2,12 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using NAME_WIP_BACKEND.Controllers;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Controllers;
+using GROUPFLOW.Data;
+using GROUPFLOW.Models;
 using Xunit;
 
-namespace NAME_WIP_BACKEND.Tests.UnitTests.Controllers;
+namespace GROUPFLOW.Tests.UnitTests.Controllers;
 
 /// <summary>
 /// Unit tests for authentication mutations (register and login)

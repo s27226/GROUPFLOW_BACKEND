@@ -1,4 +1,4 @@
-namespace NAME_WIP_BACKEND.GraphQL.Responses;
+namespace GROUPFLOW.GraphQL.Responses;
 
 /// <summary>
 /// Response DTO for authentication payloads.

@@ -1,4 +1,4 @@
-﻿namespace NAME_WIP_BACKEND.Models;
+﻿namespace GROUPFLOW.Models;
 
 public record AuthPayload(
     int Id,

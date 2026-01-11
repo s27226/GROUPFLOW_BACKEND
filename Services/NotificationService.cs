@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NAME_WIP_BACKEND.Data;
-using NAME_WIP_BACKEND.Exceptions;
-using NAME_WIP_BACKEND.Models;
+using GROUPFLOW.Data;
+using GROUPFLOW.Exceptions;
+using GROUPFLOW.Models;
 
-namespace NAME_WIP_BACKEND.Services;
+namespace GROUPFLOW.Services;
 
 /// <summary>
 /// Service for notification-related operations.
