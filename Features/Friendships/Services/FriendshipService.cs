@@ -75,12 +75,13 @@ public class FriendshipService : IFriendshipService
 
     public async Task<bool> RemoveFriendshipAsync(int userId, int friendId)
     {
-        // Use transaction for consistency
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var result = false;
+
+        await strategy.ExecuteAsync(async () =>
         {
-            // Remove both directions of the friendship
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var friendships = await _context.Friendships
                 .Where(f => (f.UserId == userId && f.FriendId == friendId) ||
                            (f.UserId == friendId && f.FriendId == userId))
@@ -88,36 +89,34 @@ public class FriendshipService : IFriendshipService
 
             if (!friendships.Any())
             {
-                return false;
+                result = false;
+                return;
             }
 
             _context.Friendships.RemoveRange(friendships);
-            
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+            result = true;
+        });
 
-            return true;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return result;
     }
 
     public async Task<Friendship> AcceptFriendRequestAsync(int userId, int friendRequestId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        Friendship? resultFriendship = null;
+
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var request = await _context.FriendRequests.FindAsync(friendRequestId);
             if (request == null || request.RequesteeId != userId)
             {
                 throw new InvalidOperationException("Friend request not found or not authorized");
             }
 
-            // Create bidirectional friendship
             var friendship1 = new Friendship
             {
                 UserId = request.RequesterId,
@@ -139,13 +138,9 @@ public class FriendshipService : IFriendshipService
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+            resultFriendship = friendship1;
+        });
 
-            return friendship1;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return resultFriendship!;
     }
 }

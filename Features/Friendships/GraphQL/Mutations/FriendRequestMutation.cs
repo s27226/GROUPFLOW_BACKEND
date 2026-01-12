@@ -81,9 +81,11 @@ public class FriendRequestMutation
         if (request.RequesteeId != userId)
             throw new AuthorizationException("You can only accept friend requests sent to you");
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             // Create bidirectional friendship
             context.Friendships.AddRange(
                 new Friendship
@@ -105,15 +107,10 @@ public class FriendRequestMutation
             context.FriendRequests.Remove(request);
             await context.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+        });
 
-            _logger.LogInformation("User {UserId} accepted friend request {RequestId}", userId, friendRequestId);
-            return true;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        _logger.LogInformation("User {UserId} accepted friend request {RequestId}", userId, friendRequestId);
+        return true;
     }
 
     public async Task<bool> RejectFriendRequest(
