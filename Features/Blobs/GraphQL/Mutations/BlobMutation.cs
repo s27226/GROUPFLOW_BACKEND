@@ -40,8 +40,19 @@ public class BlobMutation
             throw new Exception("User not found");
         }
 
-        // Parse blob type
-        if (!Enum.TryParse<BlobType>(input.BlobType, true, out var blobType))
+        // Parse blob type - map frontend types to backend enum
+        var mappedBlobType = input.BlobType.ToLowerInvariant() switch
+        {
+            "profile" => "UserProfilePicture",
+            "post" => "PostImage",
+            "project" => "ProjectFile",
+            "chat" => "PostImage", // Chat attachments use PostImage type
+            "projectlogo" => "ProjectLogo",
+            "projectbanner" => "ProjectBanner",
+            _ => input.BlobType
+        };
+        
+        if (!Enum.TryParse<BlobType>(mappedBlobType, true, out var blobType))
         {
             throw new ArgumentException($"Invalid blob type: {input.BlobType}");
         }

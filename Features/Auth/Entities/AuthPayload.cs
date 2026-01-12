@@ -8,4 +8,10 @@ public record AuthPayload(
     string Email,
     string? ProfilePic,
     bool IsModerator
-);
+)
+{
+    /// <summary>
+    /// Alias for ProfilePic to maintain frontend compatibility
+    /// </summary>
+    public string? ProfilePicUrl => ProfilePic;
+};
