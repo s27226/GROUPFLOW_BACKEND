@@ -12,7 +12,7 @@ using System.Security.Claims;
 
 namespace GROUPFLOW.Features.Blobs.GraphQL.Mutations;
 
-[ExtendObjectType(typeof(GROUPFLOW.Mutation))]
+[ExtendObjectType(typeof(Mutation))]
 public class BlobMutation
 {
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using GROUPFLOW.Features.Auth.GraphQL.Mutations;
+using GROUPFLOW.Features.Auth.GraphQL.Mutations;
 using GROUPFLOW.Features.Chat.GraphQL.Mutations;
 using GROUPFLOW.Features.Friendships.GraphQL.Mutations;
 using GROUPFLOW.Features.Moderation.GraphQL.Mutations;
@@ -7,7 +7,7 @@ using GROUPFLOW.Features.Posts.GraphQL.Mutations;
 using GROUPFLOW.Features.Projects.GraphQL.Mutations;
 using GROUPFLOW.Features.Users.GraphQL.Mutations;
 
-namespace GROUPFLOW;
+namespace GROUPFLOW.Common.GraphQL;
 
 /// <summary>
 /// Root GraphQL mutation type that aggregates all domain-specific mutations.

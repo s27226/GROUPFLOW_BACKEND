@@ -1,11 +1,12 @@
 using HotChocolate;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.GraphQL;
 using GROUPFLOW.Features.Blobs.Entities;
 
 namespace GROUPFLOW.Features.Blobs.GraphQL.Queries;
 
-[ExtendObjectType(typeof(GROUPFLOW.Query))]
+[ExtendObjectType(typeof(Query))]
 public class BlobQuery
 {
     /// <summary>

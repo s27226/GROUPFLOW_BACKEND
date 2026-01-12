@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
+using GROUPFLOW.Common;
 using GROUPFLOW.Common.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using GROUPFLOW;
 using GROUPFLOW.Common.GraphQL;
 using GROUPFLOW.Features.Auth.GraphQL;
 using GROUPFLOW.Features.Posts.GraphQL;
