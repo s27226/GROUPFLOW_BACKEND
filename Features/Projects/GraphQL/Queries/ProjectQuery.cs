@@ -137,8 +137,11 @@ public class ProjectQuery
     {
         // Return all projects the user is part of (either as owner or as member)
         return context.Projects
+            .Include(p => p.Owner)
             .Include(p => p.ImageBlob)
             .Include(p => p.BannerBlob)
+            .Include(p => p.Likes)
+            .Include(p => p.Views)
             .Where(p => 
                 p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)));
     }
