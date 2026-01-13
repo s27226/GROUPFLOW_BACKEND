@@ -45,3 +45,12 @@ public record ResetPasswordInput(
     [property: MinLength(8)]
     string NewPassword
 );
+
+public record ChangePasswordInput(
+    [property: Required]
+    string CurrentPassword,
+    
+    [property: Required]
+    [property: MinLength(8)]
+    string NewPassword
+);
