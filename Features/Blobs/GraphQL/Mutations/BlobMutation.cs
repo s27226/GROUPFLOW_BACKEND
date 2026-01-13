@@ -210,7 +210,10 @@ public class BlobMutation
             throw new UnauthorizedAccessException("You can only update your own profile picture");
         }
 
-        var user = await context.Users.FindAsync(userId);
+        var user = await context.Users
+            .Include(u => u.ProfilePicBlob)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+            
         if (user == null)
         {
             throw new Exception("User not found");
@@ -219,6 +222,10 @@ public class BlobMutation
         user.ProfilePicBlobId = input.ProfilePicBlobId;
 
         await context.SaveChangesAsync();
+        
+        // Reload with blob to ensure profilePicUrl resolver works
+        await context.Entry(user).Reference(u => u.ProfilePicBlob).LoadAsync();
+        
         return user;
     }
 
@@ -242,7 +249,10 @@ public class BlobMutation
             throw new UnauthorizedAccessException("You can only update your own banner");
         }
 
-        var user = await context.Users.FindAsync(userId);
+        var user = await context.Users
+            .Include(u => u.BannerPicBlob)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+            
         if (user == null)
         {
             throw new Exception("User not found");
@@ -251,6 +261,10 @@ public class BlobMutation
         user.BannerPicBlobId = input.BannerPicBlobId;
 
         await context.SaveChangesAsync();
+        
+        // Reload with blob to ensure bannerPicUrl resolver works
+        await context.Entry(user).Reference(u => u.BannerPicBlob).LoadAsync();
+        
         return user;
     }
 

@@ -67,12 +67,7 @@ public class EntryReactionConfiguration : IEntityTypeConfiguration<EntryReaction
             .HasForeignKey(er => er.EntryId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(er => er.Emote)
-            .WithMany(em => em.Reactions)
-            .HasForeignKey(er => er.EmoteId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasIndex(er => new { er.UserId, er.EmoteId, er.EntryId }).IsUnique();
+        builder.HasIndex(er => new { er.UserId, er.EntryId }).IsUnique();
     }
 }
 
@@ -104,13 +99,5 @@ public class SharedFileConfiguration : IEntityTypeConfiguration<SharedFile>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(sf => sf.ChatId);
-    }
-}
-
-public class EmoteConfiguration : IEntityTypeConfiguration<Emote>
-{
-    public void Configure(EntityTypeBuilder<Emote> builder)
-    {
-        builder.HasIndex(e => e.Name).IsUnique();
     }
 }

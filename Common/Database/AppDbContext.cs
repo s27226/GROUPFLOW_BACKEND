@@ -60,7 +60,6 @@ public class AppDbContext : DbContext
     public DbSet<EntryReaction> EntryReactions => Set<EntryReaction>();
     public DbSet<ReadBy> ReadBys => Set<ReadBy>();
     public DbSet<SharedFile> SharedFiles => Set<SharedFile>();
-    public DbSet<Emote> Emotes => Set<Emote>();
     
     // Other entities
     public DbSet<Notification> Notifications => Set<Notification>();

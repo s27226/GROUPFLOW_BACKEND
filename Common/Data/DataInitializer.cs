@@ -42,7 +42,6 @@ public class DataInitializer
         {
             await SeedUserRolesAsync(cancellationToken);
             await SeedUsersAsync(cancellationToken);
-            await SeedEmotesAsync(cancellationToken);
             await SeedFriendRequestsAsync(cancellationToken);
             await SeedFriendRecommendationsAsync(cancellationToken);
             await SeedProjectsAsync(cancellationToken);
@@ -115,22 +114,6 @@ public class DataInitializer
         _db.Users.AddRange(users);
         await _db.SaveChangesAsync(ct);
         _logger.LogDebug("Seeded {Count} users", users.Count);
-    }
-
-    private async Task SeedEmotesAsync(CancellationToken ct)
-    {
-        if (await _db.Emotes.AnyAsync(ct))
-            return;
-
-        _logger.LogInformation("Seeding Emotes...");
-        var emotes = new List<Emote>
-        {
-            new() { Name = "like" },
-            new() { Name = "Hate" },
-            new() { Name = "Eh" }
-        };
-        _db.Emotes.AddRange(emotes);
-        await _db.SaveChangesAsync(ct);
     }
 
     private async Task SeedFriendRequestsAsync(CancellationToken ct)
@@ -504,8 +487,8 @@ public class DataInitializer
         {
             var reactions = new List<EntryReaction>
             {
-                new() { EntryId = entries[0].Id, UserId = 2, EmoteId = 1 },
-                new() { EntryId = entries[2].Id, UserId = 1, EmoteId = 1 }
+                new() { EntryId = entries[0].Id, UserId = 2, Reaction = "👍" },
+                new() { EntryId = entries[2].Id, UserId = 1, Reaction = "❤️" }
             };
             _db.EntryReactions.AddRange(reactions);
             await _db.SaveChangesAsync(ct);

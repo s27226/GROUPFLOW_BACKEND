@@ -43,17 +43,16 @@ public class Entry
     public ICollection<ReadBy> ReadBys { get; set; } = new List<ReadBy>();
 }
 
-[Index(nameof(UserId), nameof(EmoteId), nameof(EntryId), IsUnique = true)]
+[Index(nameof(UserId), nameof(EntryId), IsUnique = true)]
 public class EntryReaction
 {
     public int Id { get; set; }
     public int UserId { get; set; }
     public int EntryId { get; set; }
-    public int EmoteId { get; set; }
+    public string? Reaction { get; set; }
 
     public User User { get; set; } = null!;
     public Entry Entry { get; set; } = null!;
-    public Emote Emote { get; set; } = null!;
 }
 
 [Index(nameof(UserId), nameof(EntryId), IsUnique = true)]
@@ -75,12 +74,4 @@ public class SharedFile
     public string Link { get; set; } = null!;
 
     public Chat Chat { get; set; } = null!;
-}
-
-public class Emote
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = null!;
-
-    public ICollection<EntryReaction> Reactions { get; set; } = new List<EntryReaction>();
 }
