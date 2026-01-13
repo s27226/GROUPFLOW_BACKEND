@@ -102,7 +102,7 @@ public class ProjectQuery
         var oneMonthAgo = now.AddDays(-30);
 
         // Calculate trending score based on post activity with time-decay weights
-        // Formula: (daily_posts * 10) + (weekly_posts * 5) + (monthly_posts * 2) + (total_posts * 0.5) + (likes * 0.3) + (views * 0.1)
+        // Formula: (daily_posts * 10) + (weekly_posts * 5) + (monthly_posts * 2) + (total_posts * 0.5) + (views * 0.1)
         var projects = context.Projects
             .Where(p => p.IsPublic)
             .Select(p => new
@@ -112,15 +112,13 @@ public class ProjectQuery
                 WeeklyPosts = p.Posts.Count(post => post.Created >= oneWeekAgo && post.Created < oneDayAgo),
                 MonthlyPosts = p.Posts.Count(post => post.Created >= oneMonthAgo && post.Created < oneWeekAgo),
                 TotalPosts = p.Posts.Count,
-                // Count actual likes and views from the database tables
-                ActualLikes = p.Likes.Count,
+                // Count actual views from the database tables
                 ActualViews = p.Views.Count,
                 TrendingScore = 
                     (p.Posts.Count(post => post.Created >= oneDayAgo) * 10.0) +
                     (p.Posts.Count(post => post.Created >= oneWeekAgo && post.Created < oneDayAgo) * 5.0) +
                     (p.Posts.Count(post => post.Created >= oneMonthAgo && post.Created < oneWeekAgo) * 2.0) +
                     (p.Posts.Count * 0.5) +
-                    (p.Likes.Count * 0.3) +
                     (p.Views.Count * 0.1)
             })
             .OrderByDescending(x => x.TrendingScore)
@@ -140,7 +138,6 @@ public class ProjectQuery
             .Include(p => p.Owner)
             .Include(p => p.ImageBlob)
             .Include(p => p.BannerBlob)
-            .Include(p => p.Likes)
             .Include(p => p.Views)
             .Where(p => 
                 p.IsPublic && (p.OwnerId == userId || p.Collaborators.Any(up => up.UserId == userId)));
@@ -177,26 +174,6 @@ public class ProjectQuery
             .Where(p => p.ProjectId == projectId && 
                 (p.Public || isMember)) // Show public posts OR all posts if user is a member
             .OrderByDescending(p => p.Created);
-    }
-
-    [GraphQLName("haslikedproject")]
-    public async Task<bool> HasLikedProject(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId)
-    {
-        var currentUser = httpContextAccessor.HttpContext?.User;
-        var userIdClaim = currentUser?.FindFirstValue(ClaimTypes.NameIdentifier);
-        
-        if (userIdClaim == null)
-        {
-            return false; // Not authenticated
-        }
-
-        int userId = int.Parse(userIdClaim);
-
-        return await context.ProjectLikes
-            .AnyAsync(pl => pl.ProjectId == projectId && pl.UserId == userId);
     }
 
     [Authorize]

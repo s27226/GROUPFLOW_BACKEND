@@ -332,55 +332,6 @@ public class ProjectMutation
         return true;
     }
 
-    [GraphQLName("likeproject")]
-    public async Task<bool> LikeProject(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId,
-        CancellationToken ct = default)
-    {
-        var userId = httpContextAccessor.GetAuthenticatedUserId();
-
-        _ = await context.Projects.FindAsync(new object[] { projectId }, ct)
-            ?? throw EntityNotFoundException.Project(projectId);
-
-        var existingLike = await context.ProjectLikes
-            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId, ct);
-
-        if (existingLike != null)
-            return false;
-
-        context.ProjectLikes.Add(new ProjectLike
-        {
-            ProjectId = projectId,
-            UserId = userId,
-            Created = DateTime.UtcNow
-        });
-
-        await context.SaveChangesAsync(ct);
-        return true;
-    }
-
-    [GraphQLName("unlikeproject")]
-    public async Task<bool> UnlikeProject(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId,
-        CancellationToken ct = default)
-    {
-        var userId = httpContextAccessor.GetAuthenticatedUserId();
-
-        var like = await context.ProjectLikes
-            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId, ct);
-
-        if (like == null)
-            return false;
-
-        context.ProjectLikes.Remove(like);
-        await context.SaveChangesAsync(ct);
-        return true;
-    }
-
     [GraphQLName("recordprojectview")]
     public async Task<bool> RecordProjectView(
         [Service] AppDbContext context,
