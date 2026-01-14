@@ -17,17 +17,13 @@ using Serilog;
 // Load environment variables from .env file
 DotNetEnv.Env.Load();
 
-// Configure Serilog early for startup logging
+// Configure Serilog for console logging only (EB captures stdout)
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .WriteTo.File(
-        AppConstants.LogsPath,
-        rollingInterval: AppConstants.LogRollingInterval,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 
 try
@@ -252,6 +248,7 @@ try
 
     app.MapGraphQL(AppConstants.GraphQLEndpoint);
     app.MapControllers();
+    app.MapHealthChecks("/health");
 
     // Database initialization (async, with proper cancellation support)
     await InitializeDatabaseAsync(app, isDev);
