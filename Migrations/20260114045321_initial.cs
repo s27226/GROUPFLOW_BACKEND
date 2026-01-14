@@ -7,25 +7,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GROUPFLOW.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // This migration is intentionally empty.
-            // It serves as a baseline to sync EF Core migrations with the existing database schema.
-            // All tables already exist in the database.
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            // No-op
-        }
-    }
-}
-/*
-// Original Up method - commented out because database already has these tables
             migrationBuilder.CreateTable(
                 name: "ModerationAction",
                 columns: table => new
@@ -473,33 +459,6 @@ namespace GROUPFLOW.Migrations
                     table.ForeignKey(
                         name: "FK_ProjectInvitations_Users_InvitingId",
                         column: x => x.InvitingId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ProjectLikes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProjectId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProjectLikes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ProjectLikes_Projects_ProjectId",
-                        column: x => x.ProjectId,
-                        principalTable: "Projects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProjectLikes_Users_UserId",
-                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -1216,18 +1175,6 @@ namespace GROUPFLOW.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProjectLikes_ProjectId_UserId",
-                table: "ProjectLikes",
-                columns: new[] { "ProjectId", "UserId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProjectLikes_UserId_ProjectId",
-                table: "ProjectLikes",
-                columns: new[] { "UserId", "ProjectId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ProjectRecommendations_ProjectId",
                 table: "ProjectRecommendations",
                 column: "ProjectId");
@@ -1500,9 +1447,6 @@ namespace GROUPFLOW.Migrations
                 name: "ProjectInvitations");
 
             migrationBuilder.DropTable(
-                name: "ProjectLikes");
-
-            migrationBuilder.DropTable(
                 name: "ProjectRecommendations");
 
             migrationBuilder.DropTable(
@@ -1558,4 +1502,3 @@ namespace GROUPFLOW.Migrations
         }
     }
 }
-*/

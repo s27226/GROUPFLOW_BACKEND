@@ -12,18 +12,38 @@ using GROUPFLOW.Features.Friendships.Services;
 using GROUPFLOW.Features.Notifications.Services;
 using GROUPFLOW.Features.Projects.Services;
 using Amazon.S3;
+using Serilog;
 
 // Load environment variables from .env file
 DotNetEnv.Env.Load();
 
-var builder = WebApplication.CreateBuilder(args);
+// Configure Serilog early for startup logging
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        AppConstants.LogsPath,
+        rollingInterval: AppConstants.LogRollingInterval,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
 
-// Configure logging
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
+try
+{
+    Log.Information("Starting application...");
 
-    // Helper functions for environment variables (define before use)
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Use Serilog for all logging
+    builder.Host.UseSerilog();
+
+    // Environment detection
+    var env = builder.Environment;
+    var isDev = env.IsDevelopment();
+
+    // Helper functions for environment variables
     static string RequireEnv(string name) =>
         Environment.GetEnvironmentVariable(name)
         ?? throw new InvalidOperationException($"Required environment variable '{name}' is not set");
@@ -36,18 +56,6 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
     static bool GetEnvBool(string name, bool defaultValue) =>
         bool.TryParse(Environment.GetEnvironmentVariable(name), out var value) ? value : defaultValue;
-
-    // Configure port - use PORT env var for AWS EB compatibility, default to 5000
-    var port = int.Parse(GetEnv("PORT", "5000"));
-    Console.WriteLine($"[STARTUP] Configuring Kestrel to listen on 0.0.0.0:{port}");
-    builder.WebHost.ConfigureKestrel(options =>
-    {
-        options.ListenAnyIP(port);
-    });
-
-    // Environment detection
-    var env = builder.Environment;
-    var isDev = env.IsDevelopment();
 
     // Database configuration
     var connectionString = RequireEnv(AppConstants.PostgresConnString);
@@ -70,7 +78,8 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
                 npgsqlOptions.MinBatchSize(AppConstants.MinBatchSize);
                 npgsqlOptions.MaxBatchSize(AppConstants.MaxBatchSize);
                 npgsqlOptions.CommandTimeout(commandTimeoutSeconds);
-            });
+            })
+        .UseLoggerFactory(LoggerFactory.Create(lb => lb.AddSerilog()));
         if (enableSensitiveDataLogging)
         {
             options.EnableSensitiveDataLogging();
@@ -230,8 +239,11 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
     {
         app.UseExceptionHandler(AppConstants.ErrorEndpoint);
         app.UseHsts();
-        // Note: HTTPS redirection removed for EB deployment - load balancer handles SSL termination
+        app.UseHttpsRedirection();
     }
+
+    // Request logging
+    app.UseSerilogRequestLogging();
 
     app.UseCors(AppConstants.AppCorsPolicy);
     app.UseRouting();
@@ -240,25 +252,23 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
     app.MapGraphQL(AppConstants.GraphQLEndpoint);
     app.MapControllers();
-    app.MapHealthChecks("/health");
+    app.MapHealthChecks(AppConstants.HealthCheckEndpoint);
 
-    // Start the app first so health checks can respond
-    // Run database initialization in background to avoid blocking startup
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    _ = Task.Run(async () =>
-    {
-        try
-        {
-            await InitializeDatabaseAsync(app, isDev);
-        }
-        catch (Exception ex)
-        {
-            logger.LogCritical(ex, "Database initialization failed - application may not function correctly");
-        }
-    });
+    // Database initialization (async, with proper cancellation support)
+    await InitializeDatabaseAsync(app, isDev);
 
-    logger.LogInformation("Application started successfully");
+    Log.Information("Application started successfully");
     await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 /// <summary>
 /// Initializes the database: applies migrations and seeds data in development.
