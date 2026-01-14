@@ -66,8 +66,7 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
                 npgsqlOptions.MinBatchSize(AppConstants.MinBatchSize);
                 npgsqlOptions.MaxBatchSize(AppConstants.MaxBatchSize);
                 npgsqlOptions.CommandTimeout(commandTimeoutSeconds);
-            })
-        .UseLoggerFactory(LoggerFactory.Create(lb => lb.AddSerilog()));
+            });
         if (enableSensitiveDataLogging)
         {
             options.EnableSensitiveDataLogging();
