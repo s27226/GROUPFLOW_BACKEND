@@ -38,8 +38,12 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
         bool.TryParse(Environment.GetEnvironmentVariable(name), out var value) ? value : defaultValue;
 
     // Configure port - use PORT env var for AWS EB compatibility, default to 5000
-    var port = GetEnv("PORT", "5000");
-    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+    var port = int.Parse(GetEnv("PORT", "5000"));
+    Console.WriteLine($"[STARTUP] Configuring Kestrel to listen on 0.0.0.0:{port}");
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(port);
+    });
 
     // Environment detection
     var env = builder.Environment;
