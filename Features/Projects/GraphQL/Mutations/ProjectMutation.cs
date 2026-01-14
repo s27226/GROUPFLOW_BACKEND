@@ -31,9 +31,12 @@ public class ProjectMutation
         input.ValidateInput();
         var userId = httpContextAccessor.GetAuthenticatedUserId();
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        Project? result = null;
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             var project = new Project
             {
                 Name = input.Name,
@@ -87,15 +90,11 @@ public class ProjectMutation
             await context.Entry(project).Collection(p => p.Skills).LoadAsync(ct);
             await context.Entry(project).Collection(p => p.Interests).LoadAsync(ct);
 
-            _logger.LogInformation("User {UserId} created project {ProjectId}: {ProjectName}", userId, project.Id, project.Name);
-            return project;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            _logger.LogError(ex, "Failed to create project for user {UserId}", userId);
-            throw;
-        }
+            result = project;
+        });
+
+        _logger.LogInformation("User {UserId} created project {ProjectId}: {ProjectName}", userId, result!.Id, result.Name);
+        return result;
     }
 
     public async Task<Project> UpdateProject(
@@ -137,9 +136,12 @@ public class ProjectMutation
         input.ValidateInput();
         var userId = httpContextAccessor.GetAuthenticatedUserId();
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        Project? result = null;
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             var project = new Project
             {
                 Name = input.Name,
@@ -203,22 +205,16 @@ public class ProjectMutation
             await context.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            var completeProject = await context.Projects
+            result = await context.Projects
                 .Include(p => p.Owner)
                 .Include(p => p.Collaborators).ThenInclude(up => up.User)
                 .Include(p => p.Skills)
                 .Include(p => p.Interests)
                 .FirstAsync(p => p.Id == project.Id, ct);
+        });
 
-            _logger.LogInformation("User {UserId} created project {ProjectId} with member invitations", userId, project.Id);
-            return completeProject;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            _logger.LogError(ex, "Failed to create project with members for user {UserId}", userId);
-            throw;
-        }
+        _logger.LogInformation("User {UserId} created project {ProjectId} with member invitations", userId, result!.Id);
+        return result;
     }
 
     public async Task<bool> DeleteProject(
@@ -240,9 +236,11 @@ public class ProjectMutation
         if (project.OwnerId != userId)
             throw AuthorizationException.NotProjectOwner();
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             context.ProjectInvitations.RemoveRange(context.ProjectInvitations.Where(pi => pi.ProjectId == id));
 
             if (project.Chat != null)
@@ -281,16 +279,10 @@ public class ProjectMutation
 
             await context.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+        });
 
-            _logger.LogInformation("User {UserId} deleted project {ProjectId}", userId, id);
-            return true;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            _logger.LogError(ex, "Failed to delete project {ProjectId}", id);
-            throw;
-        }
+        _logger.LogInformation("User {UserId} deleted project {ProjectId}", userId, id);
+        return true;
     }
 
     public async Task<bool> RemoveProjectMember(
@@ -317,9 +309,11 @@ public class ProjectMutation
         var collaborator = project.Collaborators.FirstOrDefault(c => c.UserId == userId)
             ?? throw new BusinessRuleException("User is not a member of this project");
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             context.UserProjects.Remove(collaborator);
 
             if (project.Chat != null)
@@ -332,63 +326,9 @@ public class ProjectMutation
 
             await context.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
-
-            _logger.LogInformation("User {CurrentUserId} removed member {UserId} from project {ProjectId}", currentUserId, userId, projectId);
-            return true;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
-    }
-
-    [GraphQLName("likeproject")]
-    public async Task<bool> LikeProject(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId,
-        CancellationToken ct = default)
-    {
-        var userId = httpContextAccessor.GetAuthenticatedUserId();
-
-        _ = await context.Projects.FindAsync(new object[] { projectId }, ct)
-            ?? throw EntityNotFoundException.Project(projectId);
-
-        var existingLike = await context.ProjectLikes
-            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId, ct);
-
-        if (existingLike != null)
-            return false;
-
-        context.ProjectLikes.Add(new ProjectLike
-        {
-            ProjectId = projectId,
-            UserId = userId,
-            Created = DateTime.UtcNow
         });
 
-        await context.SaveChangesAsync(ct);
-        return true;
-    }
-
-    [GraphQLName("unlikeproject")]
-    public async Task<bool> UnlikeProject(
-        [Service] AppDbContext context,
-        [Service] IHttpContextAccessor httpContextAccessor,
-        int projectId,
-        CancellationToken ct = default)
-    {
-        var userId = httpContextAccessor.GetAuthenticatedUserId();
-
-        var like = await context.ProjectLikes
-            .FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == userId, ct);
-
-        if (like == null)
-            return false;
-
-        context.ProjectLikes.Remove(like);
-        await context.SaveChangesAsync(ct);
+        _logger.LogInformation("User {CurrentUserId} removed member {UserId} from project {ProjectId}", currentUserId, userId, projectId);
         return true;
     }
 

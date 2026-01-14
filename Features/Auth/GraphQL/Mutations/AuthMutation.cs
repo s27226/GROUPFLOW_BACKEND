@@ -278,4 +278,37 @@ public class AuthMutation
         context.Response.Cookies.Delete("access_token", cookieOptions);
         context.Response.Cookies.Delete("refresh_token", cookieOptions);
     }
+
+    public async Task<bool> ChangePassword(
+        [Service] AppDbContext db,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        ChangePasswordInput input)
+    {
+        input.ValidateInput();
+
+        var context = httpContextAccessor.HttpContext!;
+        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier) 
+            ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub);
+        
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+        {
+            throw new GraphQLException(new Error("Not authenticated", "NOT_AUTHENTICATED"));
+        }
+
+        var user = await db.Users.FindAsync(userId);
+        if (user == null)
+        {
+            throw new GraphQLException(new Error("User not found", "USER_NOT_FOUND"));
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(input.CurrentPassword, user.Password))
+        {
+            throw new GraphQLException(new Error("Current password is incorrect", "INVALID_PASSWORD"));
+        }
+
+        user.Password = BCrypt.Net.BCrypt.HashPassword(input.NewPassword);
+        await db.SaveChangesAsync();
+
+        return true;
+    }
 }

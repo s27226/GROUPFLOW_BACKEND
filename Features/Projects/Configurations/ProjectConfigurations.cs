@@ -112,24 +112,6 @@ public class ProjectRecommendationConfiguration : IEntityTypeConfiguration<Proje
     }
 }
 
-public class ProjectLikeConfiguration : IEntityTypeConfiguration<ProjectLike>
-{
-    public void Configure(EntityTypeBuilder<ProjectLike> builder)
-    {
-        builder.HasOne(pl => pl.User)
-            .WithMany()
-            .HasForeignKey(pl => pl.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(pl => pl.Project)
-            .WithMany(p => p.Likes)
-            .HasForeignKey(pl => pl.ProjectId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasIndex(pl => new { pl.UserId, pl.ProjectId }).IsUnique();
-    }
-}
-
 public class ProjectViewConfiguration : IEntityTypeConfiguration<ProjectView>
 {
     public void Configure(EntityTypeBuilder<ProjectView> builder)

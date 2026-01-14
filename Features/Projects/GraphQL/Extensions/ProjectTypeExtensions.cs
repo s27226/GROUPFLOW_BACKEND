@@ -1,5 +1,7 @@
 using HotChocolate;
 using HotChocolate.Types;
+using Microsoft.EntityFrameworkCore;
+using GROUPFLOW.Common.Database;
 using GROUPFLOW.Features.Projects.Entities;
 using GROUPFLOW.Features.Blobs.Services;
 
@@ -57,5 +59,16 @@ public class ProjectTypeExtensions
         
         // Otherwise return the Banner string (URL or null)
         return project.Banner;
+    }
+
+    /// <summary>
+    /// Get the total number of likes across all posts in this project
+    /// </summary>
+    public async Task<int> GetTotalPostLikes(
+        [Parent] Project project,
+        [Service] AppDbContext context)
+    {
+        return await context.PostLikes
+            .CountAsync(pl => pl.Post.ProjectId == project.Id);
     }
 }

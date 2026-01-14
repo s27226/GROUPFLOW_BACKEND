@@ -127,10 +127,11 @@ public class ProjectInvitationMutation
             throw new BusinessRuleException("This invitation has expired");
         }
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
-            // Check if user is already a collaborator
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             var existingCollaborator = await context.UserProjects
                 .FirstOrDefaultAsync(up => up.ProjectId == invitation.ProjectId && up.UserId == userId, ct);
 
@@ -139,10 +140,9 @@ public class ProjectInvitationMutation
                 context.ProjectInvitations.Remove(invitation);
                 await context.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
-                return true;
+                return;
             }
 
-            // Add user as collaborator
             context.UserProjects.Add(new UserProject
             {
                 UserId = userId,
@@ -151,7 +151,6 @@ public class ProjectInvitationMutation
                 JoinedAt = DateTime.UtcNow
             });
 
-            // Add user to project chat if it exists
             if (invitation.Project.Chat != null)
             {
                 var existingUserChat = await context.UserChats
@@ -170,16 +169,11 @@ public class ProjectInvitationMutation
             context.ProjectInvitations.Remove(invitation);
             await context.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+        });
 
-            _logger.LogInformation("User {UserId} accepted invitation {InvitationId} to project {ProjectId}",
-                userId, invitationId, invitation.ProjectId);
-            return true;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        _logger.LogInformation("User {UserId} accepted invitation {InvitationId} to project {ProjectId}",
+            userId, invitationId, invitation.ProjectId);
+        return true;
     }
 
     public async Task<bool> RejectProjectInvitation(

@@ -1,6 +1,6 @@
 using Serilog;
 
-namespace GROUPFLOW;
+namespace GROUPFLOW.Common;
 
 /// <summary>
 /// Centralized application constants to eliminate magic strings and numbers.

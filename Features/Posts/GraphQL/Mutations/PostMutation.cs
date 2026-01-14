@@ -204,9 +204,11 @@ public class PostMutation
         var post = await context.Posts.FindAsync(new object[] { postId }, ct)
             ?? throw EntityNotFoundException.Post(postId);
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        try
+        var strategy = context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
             var reports = await context.PostReports
                 .Where(pr => pr.PostId == postId && !pr.IsResolved)
                 .ToListAsync(ct);
@@ -217,15 +219,10 @@ public class PostMutation
             context.Posts.Remove(post);
             await context.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+        });
 
-            _logger.LogInformation("Moderator {UserId} deleted reported post {PostId}", userId, postId);
-            return true;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        _logger.LogInformation("Moderator {UserId} deleted reported post {PostId}", userId, postId);
+        return true;
     }
 
     [GraphQLName("discardReport")]

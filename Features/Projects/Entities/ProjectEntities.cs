@@ -32,7 +32,6 @@ public class Project
     public ICollection<UserProject> Collaborators { get; set; } = new List<UserProject>();
     public ICollection<ProjectEvent> Events { get; set; } = new List<ProjectEvent>();
     public ICollection<Post> Posts { get; set; } = new List<Post>();
-    public ICollection<ProjectLike> Likes { get; set; } = new List<ProjectLike>();
     public ICollection<ProjectView> Views { get; set; } = new List<ProjectView>();
     public ICollection<ProjectSkill> Skills { get; set; } = new List<ProjectSkill>();
     public ICollection<ProjectInterest> Interests { get; set; } = new List<ProjectInterest>();
@@ -94,20 +93,6 @@ public class ProjectRecommendation
 
     public User User { get; set; } = null!;
     public Project Project { get; set; } = null!;
-}
-
-[Index(nameof(ProjectId), nameof(UserId), IsUnique = true)]
-public class ProjectLike
-{
-    public int Id { get; set; }
-    
-    public int ProjectId { get; set; }
-    public Project Project { get; set; } = null!;
-    
-    public int UserId { get; set; }
-    public User User { get; set; } = null!;
-    
-    public DateTime Created { get; set; } = DateTime.UtcNow;
 }
 
 [Index(nameof(UserId), nameof(ProjectId), nameof(ViewDate), IsUnique = true)]

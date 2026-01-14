@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using HotChocolate;
 using GROUPFLOW.Features.Blobs.Entities;
 using GROUPFLOW.Features.Chat.Entities;
 using GROUPFLOW.Features.Friendships.Entities;
@@ -17,16 +18,33 @@ public class User
     public string Surname { get; set; } = null!;
     public string Nickname { get; set; } = null!;
     public string Email { get; set; } = null!;
+    [GraphQLIgnore]
     public string Password { get; set; } = null!;
+    
+    // Legacy fields - kept for backward compatibility but hidden from GraphQL
+    [GraphQLIgnore]
     public string? ProfilePic { get; set; }
+    [GraphQLIgnore]
     public string? BannerPic { get; set; }
     
-    // Blob storage references
+    // Blob storage references - always projected for GetProfilePicUrl/GetBannerPicUrl resolvers
+    [GraphQLIgnore]
+    [IsProjected(true)]
     public int? ProfilePicBlobId { get; set; }
+    
+    [GraphQLIgnore]
+    [IsProjected(true)]
     public BlobFile? ProfilePicBlob { get; set; }
+    
+    [GraphQLIgnore]
+    [IsProjected(true)]
     public int? BannerPicBlobId { get; set; }
+    
+    [GraphQLIgnore]
+    [IsProjected(true)]
     public BlobFile? BannerPicBlob { get; set; }
     
+    public string? Bio { get; set; }
     public DateTime? DateOfBirth { get; set; }
     public DateTime Joined { get; set; } = DateTime.UtcNow;
     public bool IsModerator { get; set; } = false;

@@ -1,4 +1,4 @@
-﻿using GROUPFLOW.Features.Auth.GraphQL.Mutations;
+using GROUPFLOW.Features.Auth.GraphQL.Mutations;
 using GROUPFLOW.Features.Chat.GraphQL.Mutations;
 using GROUPFLOW.Features.Friendships.GraphQL.Mutations;
 using GROUPFLOW.Features.Moderation.GraphQL.Mutations;
@@ -7,7 +7,7 @@ using GROUPFLOW.Features.Posts.GraphQL.Mutations;
 using GROUPFLOW.Features.Projects.GraphQL.Mutations;
 using GROUPFLOW.Features.Users.GraphQL.Mutations;
 
-namespace GROUPFLOW;
+namespace GROUPFLOW.Common.GraphQL;
 
 /// <summary>
 /// Root GraphQL mutation type that aggregates all domain-specific mutations.
@@ -26,6 +26,7 @@ public class Mutation
     public ProjectEventMutation ProjectEvent { get; }
     public SavedPostMutation SavedPost { get; }
     public UserTagMutation UserTag { get; }
+    public UserMutation User { get; }
     public PostMutation Post { get; }
     public NotificationMutation Notification { get; }
     public BlockedUserMutation BlockedUser { get; }
@@ -41,6 +42,7 @@ public class Mutation
         ProjectEventMutation projectEvent,
         SavedPostMutation savedPost,
         UserTagMutation userTag,
+        UserMutation user,
         PostMutation post,
         NotificationMutation notification,
         BlockedUserMutation blockedUser,
@@ -55,6 +57,7 @@ public class Mutation
         ProjectEvent = projectEvent;
         SavedPost = savedPost;
         UserTag = userTag;
+        User = user;
         Post = post;
         Notification = notification;
         BlockedUser = blockedUser;

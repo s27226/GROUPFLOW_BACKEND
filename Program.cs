@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
+using GROUPFLOW.Common;
 using GROUPFLOW.Common.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using GROUPFLOW;
 using GROUPFLOW.Common.GraphQL;
 using GROUPFLOW.Features.Auth.GraphQL;
 using GROUPFLOW.Features.Posts.GraphQL;
@@ -111,6 +111,7 @@ try
     builder.Services.AddScoped<GROUPFLOW.Features.Projects.GraphQL.Mutations.ProjectEventMutation>();
     builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.Mutations.SavedPostMutation>();
     builder.Services.AddScoped<GROUPFLOW.Features.Users.GraphQL.Mutations.UserTagMutation>();
+    builder.Services.AddScoped<GROUPFLOW.Features.Users.GraphQL.Mutations.UserMutation>();
     builder.Services.AddScoped<GROUPFLOW.Features.Posts.GraphQL.Mutations.PostMutation>();
     builder.Services.AddScoped<GROUPFLOW.Features.Notifications.GraphQL.Mutations.NotificationMutation>();
     builder.Services.AddScoped<GROUPFLOW.Features.Friendships.GraphQL.Mutations.BlockedUserMutation>();

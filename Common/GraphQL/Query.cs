@@ -1,4 +1,4 @@
-﻿using GROUPFLOW.Features.Chat.GraphQL.Queries;
+using GROUPFLOW.Features.Chat.GraphQL.Queries;
 using GROUPFLOW.Features.Friendships.GraphQL.Queries;
 using GROUPFLOW.Features.Moderation.GraphQL.Queries;
 using GROUPFLOW.Features.Notifications.GraphQL.Queries;
@@ -7,7 +7,7 @@ using GROUPFLOW.Features.Projects.GraphQL.Queries;
 using GROUPFLOW.Features.Users.GraphQL.Queries;
 using GROUPFLOW.Features.Blobs.GraphQL.Queries;
 
-namespace GROUPFLOW;
+namespace GROUPFLOW.Common.GraphQL;
 
 public class Query
 {

@@ -21,11 +21,13 @@ public class PostService : IPostService
 
     public async Task<Post> CreatePostAsync(int userId, int? projectId, string title, string description, string content, string? imageUrl, int? sharedPostId, bool isPublic)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        Post? result = null;
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
-            // If projectId is provided, verify the user is a member
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             if (projectId.HasValue)
             {
                 var project = await _context.Projects
@@ -46,7 +48,6 @@ public class PostService : IPostService
                 }
             }
 
-            // If sharedPostId is provided, verify the post exists
             if (sharedPostId.HasValue)
             {
                 var sharedPost = await _context.Posts.FindAsync(sharedPostId.Value);
@@ -70,26 +71,25 @@ public class PostService : IPostService
             };
 
             _context.Posts.Add(post);
-            
             await _context.SaveChangesAsync();
             await _context.Entry(post).Reference(p => p.User).LoadAsync();
 
             await transaction.CommitAsync();
-            return post;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+            result = post;
+        });
+
+        return result!;
     }
 
     public async Task<PostLike> LikePostAsync(int userId, int postId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        PostLike? result = null;
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var post = await _context.Posts
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.Id == postId);
@@ -134,14 +134,10 @@ public class PostService : IPostService
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+            result = postLike;
+        });
 
-            return postLike;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return result!;
     }
 
     public async Task<bool> UnlikePostAsync(int userId, int postId)
@@ -162,10 +158,13 @@ public class PostService : IPostService
 
     public async Task<PostComment> AddCommentAsync(int userId, int postId, string content, int? parentCommentId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        PostComment? result = null;
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
             {
@@ -212,28 +211,29 @@ public class PostService : IPostService
             await _context.Entry(comment).Reference(c => c.User).LoadAsync();
 
             await transaction.CommitAsync();
-            return comment;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+            result = comment;
+        });
+
+        return result!;
     }
 
     public async Task<bool> DeleteCommentAsync(int userId, int commentId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        var result = false;
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var comment = await _context.PostComments
                 .Include(c => c.Replies)
                 .FirstOrDefaultAsync(c => c.Id == commentId);
 
             if (comment == null)
             {
-                return false;
+                result = false;
+                return;
             }
 
             if (comment.UserId != userId)
@@ -250,22 +250,21 @@ public class PostService : IPostService
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+            result = true;
+        });
 
-            return true;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return result;
     }
 
     public async Task<PostLike> LikeCommentAsync(int userId, int commentId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        PostLike? result = null;
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var comment = await _context.PostComments
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == commentId);
@@ -294,13 +293,10 @@ public class PostService : IPostService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return new PostLike { UserId = userId, PostId = comment.PostId, CreatedAt = commentLike.CreatedAt };
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+            result = new PostLike { UserId = userId, PostId = comment.PostId, CreatedAt = commentLike.CreatedAt };
+        });
+
+        return result!;
     }
 
     public async Task<bool> UnlikeCommentAsync(int userId, int commentId)
@@ -366,10 +362,13 @@ public class PostService : IPostService
 
     public async Task<bool> DeletePostAsync(int userId, int postId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
+        var result = false;
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var post = await _context.Posts
                 .Include(p => p.Likes)
                 .Include(p => p.Comments)
@@ -377,7 +376,8 @@ public class PostService : IPostService
 
             if (post == null)
             {
-                return false;
+                result = false;
+                return;
             }
 
             if (post.UserId != userId)
@@ -407,13 +407,9 @@ public class PostService : IPostService
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+            result = true;
+        });
 
-            return true;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return result;
     }
 }

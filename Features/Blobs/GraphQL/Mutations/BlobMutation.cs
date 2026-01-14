@@ -12,7 +12,7 @@ using System.Security.Claims;
 
 namespace GROUPFLOW.Features.Blobs.GraphQL.Mutations;
 
-[ExtendObjectType(typeof(GROUPFLOW.Mutation))]
+[ExtendObjectType(typeof(Mutation))]
 public class BlobMutation
 {
     /// <summary>
@@ -40,8 +40,19 @@ public class BlobMutation
             throw new Exception("User not found");
         }
 
-        // Parse blob type
-        if (!Enum.TryParse<BlobType>(input.BlobType, true, out var blobType))
+        // Parse blob type - map frontend types to backend enum
+        var mappedBlobType = input.BlobType.ToLowerInvariant() switch
+        {
+            "profile" => "UserProfilePicture",
+            "post" => "PostImage",
+            "project" => "ProjectFile",
+            "chat" => "PostImage", // Chat attachments use PostImage type
+            "projectlogo" => "ProjectLogo",
+            "projectbanner" => "ProjectBanner",
+            _ => input.BlobType
+        };
+        
+        if (!Enum.TryParse<BlobType>(mappedBlobType, true, out var blobType))
         {
             throw new ArgumentException($"Invalid blob type: {input.BlobType}");
         }
@@ -199,7 +210,10 @@ public class BlobMutation
             throw new UnauthorizedAccessException("You can only update your own profile picture");
         }
 
-        var user = await context.Users.FindAsync(userId);
+        var user = await context.Users
+            .Include(u => u.ProfilePicBlob)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+            
         if (user == null)
         {
             throw new Exception("User not found");
@@ -208,6 +222,10 @@ public class BlobMutation
         user.ProfilePicBlobId = input.ProfilePicBlobId;
 
         await context.SaveChangesAsync();
+        
+        // Reload with blob to ensure profilePicUrl resolver works
+        await context.Entry(user).Reference(u => u.ProfilePicBlob).LoadAsync();
+        
         return user;
     }
 
@@ -231,7 +249,10 @@ public class BlobMutation
             throw new UnauthorizedAccessException("You can only update your own banner");
         }
 
-        var user = await context.Users.FindAsync(userId);
+        var user = await context.Users
+            .Include(u => u.BannerPicBlob)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+            
         if (user == null)
         {
             throw new Exception("User not found");
@@ -240,6 +261,10 @@ public class BlobMutation
         user.BannerPicBlobId = input.BannerPicBlobId;
 
         await context.SaveChangesAsync();
+        
+        // Reload with blob to ensure bannerPicUrl resolver works
+        await context.Entry(user).Reference(u => u.BannerPicBlob).LoadAsync();
+        
         return user;
     }
 

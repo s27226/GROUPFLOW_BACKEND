@@ -40,7 +40,6 @@ public class AppDbContext : DbContext
     public DbSet<ProjectInvitation> ProjectInvitations => Set<ProjectInvitation>();
     public DbSet<ProjectRecommendation> ProjectRecommendations => Set<ProjectRecommendation>();
     public DbSet<ProjectEvent> ProjectEvents => Set<ProjectEvent>();
-    public DbSet<ProjectLike> ProjectLikes => Set<ProjectLike>();
     public DbSet<ProjectView> ProjectViews => Set<ProjectView>();
     public DbSet<ProjectSkill> ProjectSkills => Set<ProjectSkill>();
     public DbSet<ProjectInterest> ProjectInterests => Set<ProjectInterest>();
@@ -60,7 +59,6 @@ public class AppDbContext : DbContext
     public DbSet<EntryReaction> EntryReactions => Set<EntryReaction>();
     public DbSet<ReadBy> ReadBys => Set<ReadBy>();
     public DbSet<SharedFile> SharedFiles => Set<SharedFile>();
-    public DbSet<Emote> Emotes => Set<Emote>();
     
     // Other entities
     public DbSet<Notification> Notifications => Set<Notification>();
