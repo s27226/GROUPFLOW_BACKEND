@@ -46,7 +46,7 @@ jobs:
       run: |
         VERSION_LABEL=$(date +%Y%m%d%H%M%S)
         aws elasticbeanstalk create-application-version \
-          --application-name groupflow-be \
+          --application-name groupflow-backend \
           --version-label $VERSION_LABEL \
           --source-bundle S3Bucket="elasticbeanstalk-eu-north-1-338593158495",S3Key="app.zip"
         echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
