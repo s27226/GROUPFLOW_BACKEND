@@ -55,6 +55,6 @@ jobs:
       run: |
         VERSION_LABEL=$VERSION_LABEL
         aws elasticbeanstalk update-environment \
-          --application-name groupflow-be \
-          --environment-name Groupflow-be-env \
+          --application-name groupflow-backend \
+          --environment-name groupflow-backend-env \
           --version-label $VERSION_LABEL
