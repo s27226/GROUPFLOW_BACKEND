@@ -34,6 +34,7 @@ try
 
     // Use Serilog for all logging
     builder.Host.UseSerilog();
+    builder.WebHost.UseUrls($"http://0.0.0.0:5000");
 
     // Environment detection
     var env = builder.Environment;
