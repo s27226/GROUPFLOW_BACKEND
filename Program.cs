@@ -226,7 +226,7 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
     {
         app.UseExceptionHandler(AppConstants.ErrorEndpoint);
         app.UseHsts();
-        app.UseHttpsRedirection();
+        // Note: HTTPS redirection removed for EB deployment - load balancer handles SSL termination
     }
 
     app.UseCors(AppConstants.AppCorsPolicy);
