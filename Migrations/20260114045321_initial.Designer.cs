@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GROUPFLOW.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260112234237_AddBioToUsers")]
-    partial class AddBioToUsers
+    [Migration("20260114045321_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -822,34 +822,6 @@ namespace GROUPFLOW.Migrations
                     b.ToTable("ProjectInvitations");
                 });
 
-            modelBuilder.Entity("GROUPFLOW.Features.Projects.Entities.ProjectLike", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId", "UserId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId", "ProjectId")
-                        .IsUnique();
-
-                    b.ToTable("ProjectLikes");
-                });
-
             modelBuilder.Entity("GROUPFLOW.Features.Projects.Entities.ProjectRecommendation", b =>
                 {
                     b.Property<int>("Id")
@@ -1561,25 +1533,6 @@ namespace GROUPFLOW.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("GROUPFLOW.Features.Projects.Entities.ProjectLike", b =>
-                {
-                    b.HasOne("GROUPFLOW.Features.Projects.Entities.Project", "Project")
-                        .WithMany("Likes")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GROUPFLOW.Features.Users.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("GROUPFLOW.Features.Projects.Entities.ProjectRecommendation", b =>
                 {
                     b.HasOne("GROUPFLOW.Features.Projects.Entities.Project", "Project")
@@ -1747,8 +1700,6 @@ namespace GROUPFLOW.Migrations
                     b.Navigation("Events");
 
                     b.Navigation("Interests");
-
-                    b.Navigation("Likes");
 
                     b.Navigation("Posts");
 
