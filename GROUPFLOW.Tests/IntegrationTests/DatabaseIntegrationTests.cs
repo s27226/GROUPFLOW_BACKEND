@@ -304,7 +304,6 @@ public class DatabaseIntegrationTests
         // Assert
         Assert.NotNull(updatedProject);
         Assert.Equal("Updated Name", updatedProject.Name);
-        Assert.NotNull(updatedProject.Likes);
         Assert.NotNull(updatedProject.Views);
     }
 

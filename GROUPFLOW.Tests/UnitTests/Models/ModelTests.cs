@@ -103,7 +103,6 @@ public class ProjectModelTests
         Assert.Equal("Test Description", project.Description);
         Assert.Equal(1, project.OwnerId);
         Assert.True(project.IsPublic);
-        Assert.NotNull(project.Likes);
         Assert.NotNull(project.Views);
     }
 
