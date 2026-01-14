@@ -12,32 +12,20 @@ using GROUPFLOW.Features.Friendships.Services;
 using GROUPFLOW.Features.Notifications.Services;
 using GROUPFLOW.Features.Projects.Services;
 using Amazon.S3;
-using Serilog;
 
 // Load environment variables from .env file
 DotNetEnv.Env.Load();
 
-// Configure Serilog for console logging only (EB captures stdout)
-// Verbose logging enabled for production debugging
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Verbose()
-    .Enrich.FromLogContext()
-    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .CreateLogger();
+var builder = WebApplication.CreateBuilder(args);
 
-try
-{
-    Log.Information("Starting application...");
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
-    var builder = WebApplication.CreateBuilder(args);
-
-    // Use Serilog for all logging
-    builder.Host.UseSerilog();
-    
     // Configure port - use PORT env var for AWS EB compatibility, default to 5000
     var port = GetEnv("PORT", "5000");
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
-    Log.Information($"Configured to listen on port {port}");
 
     // Environment detection
     var env = builder.Environment;
@@ -242,9 +230,6 @@ try
         app.UseHttpsRedirection();
     }
 
-    // Request logging
-    app.UseSerilogRequestLogging();
-
     app.UseCors(AppConstants.AppCorsPolicy);
     app.UseRouting();
     app.UseAuthentication();
@@ -256,6 +241,7 @@ try
 
     // Start the app first so health checks can respond
     // Run database initialization in background to avoid blocking startup
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
     _ = Task.Run(async () =>
     {
         try
@@ -264,22 +250,12 @@ try
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "Database initialization failed - application may not function correctly");
+            logger.LogCritical(ex, "Database initialization failed - application may not function correctly");
         }
     });
 
-    Log.Information("Application started successfully");
+    logger.LogInformation("Application started successfully");
     await app.RunAsync();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Application terminated unexpectedly");
-    throw;
-}
-finally
-{
-    Log.CloseAndFlush();
-}
 
 /// <summary>
 /// Initializes the database: applies migrations and seeds data in development.
