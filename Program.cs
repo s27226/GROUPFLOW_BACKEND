@@ -252,13 +252,12 @@ try
 
     app.MapGraphQL(AppConstants.GraphQLEndpoint);
     app.MapControllers();
-    app.MapHealthChecks(AppConstants.HealthCheckEndpoint);
 
     // Database initialization (async, with proper cancellation support)
     await InitializeDatabaseAsync(app, isDev);
 
     Log.Information("Application started successfully");
-    app.Run();
+    await app.RunAsync();
 }
 catch (Exception ex)
 {
