@@ -34,7 +34,11 @@ try
 
     // Use Serilog for all logging
     builder.Host.UseSerilog();
-    builder.WebHost.UseUrls($"http://0.0.0.0:5000");
+    
+    // Configure port - use PORT env var for AWS EB compatibility, default to 5000
+    var port = GetEnv("PORT", "5000");
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+    Log.Information($"Configured to listen on port {port}");
 
     // Environment detection
     var env = builder.Environment;
@@ -251,8 +255,19 @@ try
     app.MapControllers();
     app.MapHealthChecks("/health");
 
-    // Database initialization (async, with proper cancellation support)
-    await InitializeDatabaseAsync(app, isDev);
+    // Start the app first so health checks can respond
+    // Run database initialization in background to avoid blocking startup
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            await InitializeDatabaseAsync(app, isDev);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Database initialization failed - application may not function correctly");
+        }
+    });
 
     Log.Information("Application started successfully");
     await app.RunAsync();
