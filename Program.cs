@@ -23,15 +23,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
-    // Configure port - use PORT env var for AWS EB compatibility, default to 5000
-    var port = GetEnv("PORT", "5000");
-    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
-
-    // Environment detection
-    var env = builder.Environment;
-    var isDev = env.IsDevelopment();
-
-    // Helper functions for environment variables
+    // Helper functions for environment variables (define before use)
     static string RequireEnv(string name) =>
         Environment.GetEnvironmentVariable(name)
         ?? throw new InvalidOperationException($"Required environment variable '{name}' is not set");
@@ -44,6 +36,14 @@ builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
     static bool GetEnvBool(string name, bool defaultValue) =>
         bool.TryParse(Environment.GetEnvironmentVariable(name), out var value) ? value : defaultValue;
+
+    // Configure port - use PORT env var for AWS EB compatibility, default to 5000
+    var port = GetEnv("PORT", "5000");
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+    // Environment detection
+    var env = builder.Environment;
+    var isDev = env.IsDevelopment();
 
     // Database configuration
     var connectionString = RequireEnv(AppConstants.PostgresConnString);
