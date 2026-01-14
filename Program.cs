@@ -258,7 +258,7 @@ try
     await InitializeDatabaseAsync(app, isDev);
 
     Log.Information("Application started successfully");
-    await app.RunAsync();
+    app.Run();
 }
 catch (Exception ex)
 {
