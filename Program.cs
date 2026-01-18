@@ -63,6 +63,9 @@ try
     var maxRetryDelaySeconds = GetEnvInt("DB_MAX_RETRY_DELAY_SECONDS", (int)AppConstants.MaxRetryDelay.TotalSeconds);
     var commandTimeoutSeconds = GetEnvInt("DB_COMMAND_TIMEOUT_SECONDS", AppConstants.CommandTimeoutSeconds);
     var enableSensitiveDataLogging = GetEnvBool("DB_SENSITIVE_LOGGING", isDev);
+    var runMigrations = GetEnvBool("DB_RUN_MIGRATIONS", true);
+    var seedData = GetEnvBool("DB_SEED_DATA", isDev);
+    var seedTimeoutMinutes = GetEnvInt("DB_SEED_TIMEOUT_MINUTES", 5);
 
     // DbContext Pool configuration
     builder.Services.AddDbContextPool<AppDbContext>(options =>
@@ -255,7 +258,7 @@ try
     app.MapHealthChecks(AppConstants.HealthCheckEndpoint);
 
     // Database initialization (async, with proper cancellation support)
-    await InitializeDatabaseAsync(app, isDev);
+    await InitializeDatabaseAsync(app, runMigrations, seedData, seedTimeoutMinutes);
 
     Log.Information("Application started successfully");
     await app.RunAsync();
@@ -271,10 +274,14 @@ finally
 }
 
 /// <summary>
-/// Initializes the database: applies migrations and seeds data in development.
+/// Initializes the database: applies migrations and seeds data based on configuration.
 /// Uses async operations to prevent blocking.
 /// </summary>
-static async Task InitializeDatabaseAsync(WebApplication app, bool isDev)
+/// <param name="app">The web application instance</param>
+/// <param name="runMigrations">Whether to run database migrations (controlled by DB_RUN_MIGRATIONS env var)</param>
+/// <param name="seedData">Whether to seed data (controlled by DB_SEED_DATA env var)</param>
+/// <param name="seedTimeoutMinutes">Timeout for seeding operation in minutes (controlled by DB_SEED_TIMEOUT_MINUTES env var)</param>
+static async Task InitializeDatabaseAsync(WebApplication app, bool runMigrations, bool seedData, int seedTimeoutMinutes)
 {
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
@@ -283,22 +290,34 @@ static async Task InitializeDatabaseAsync(WebApplication app, bool isDev)
 
     try
     {
-        logger.LogInformation("Applying database migrations...");
-        await db.Database.MigrateAsync();
-        logger.LogInformation("Migrations applied successfully");
-
-        // Only seed in development
-        if (isDev)
+        if (runMigrations)
         {
+            logger.LogInformation("Applying database migrations...");
+            await db.Database.MigrateAsync();
+            logger.LogInformation("Migrations applied successfully");
+        }
+        else
+        {
+            logger.LogInformation("Database migrations skipped (DB_RUN_MIGRATIONS=false)");
+        }
+
+        if (seedData)
+        {
+            logger.LogInformation("Seeding database data...");
             var initializer = services.GetRequiredService<GROUPFLOW.Common.Data.DataInitializer>();
             
-            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(seedTimeoutMinutes));
             await initializer.SeedAsync(cts.Token);
+            logger.LogInformation("Database seeding completed successfully");
+        }
+        else
+        {
+            logger.LogInformation("Database seeding skipped (DB_SEED_DATA=false)");
         }
     }
     catch (OperationCanceledException)
     {
-        logger.LogError("Database initialization was cancelled (timeout)");
+        logger.LogError("Database initialization was cancelled (timeout after {TimeoutMinutes} minutes)", seedTimeoutMinutes);
         throw;
     }
     catch (Exception ex)
