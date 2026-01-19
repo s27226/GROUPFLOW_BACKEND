@@ -6,6 +6,7 @@ using GROUPFLOW.Features.Chat.Entities;
 
 public class EntrySubscription
 {
+    [Authorize]
     [Subscribe]
     public Entry OnEntryAdded(
         int chatId,
