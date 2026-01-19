@@ -11,8 +11,11 @@ using GROUPFLOW.Features.Blobs.Services;
 using GROUPFLOW.Features.Friendships.Services;
 using GROUPFLOW.Features.Notifications.Services;
 using GROUPFLOW.Features.Projects.Services;
+using HotChocolate.Subscriptions.InMemory;
+
 using Amazon.S3;
 using Serilog;
+using StackExchange.Redis;
 
 // Load environment variables from .env file
 DotNetEnv.Env.Load();
@@ -59,6 +62,7 @@ try
 
     // Database configuration
     var connectionString = RequireEnv(AppConstants.PostgresConnString);
+    var RedisConnectionString = RequireEnv(AppConstants.RedisConnStringProd);
     var maxRetryCount = GetEnvInt("DB_MAX_RETRY_COUNT", AppConstants.MaxRetryCount);
     var maxRetryDelaySeconds = GetEnvInt("DB_MAX_RETRY_DELAY_SECONDS", (int)AppConstants.MaxRetryDelay.TotalSeconds);
     var commandTimeoutSeconds = GetEnvInt("DB_COMMAND_TIMEOUT_SECONDS", AppConstants.CommandTimeoutSeconds);
@@ -134,28 +138,74 @@ try
     // Register GraphQL error filter for unified error handling
     builder.Services.AddSingleton<GraphQLErrorFilter>();
 
-    builder.Services
-        .AddGraphQLServer()
-        .AddQueryType<Query>()
-        .AddMutationType<Mutation>()
-        .AddTypeExtension<GROUPFLOW.Features.Auth.GraphQL.Mutations.AuthMutation>()
-        .AddTypeExtension<GROUPFLOW.Features.Posts.GraphQL.Extensions.PostTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Users.GraphQL.Extensions.UserTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Projects.GraphQL.Extensions.ProjectTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Extensions.BlobFileTypeExtensions>()
-        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Mutations.BlobMutation>()
-        .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Queries.BlobQuery>()
-        .AddErrorFilter<GraphQLErrorFilter>()
-        .AddAuthorization()
-        .AddProjections()
-        .AddFiltering()
-        .AddSorting()
-        .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = includeExceptionDetails)
-        .DisableIntrospection(disableIntrospection);
+    //Register IConnectionMultiplexer in DI
+    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    {
+        var configuration = AppConstants.RedisConnStringProd; 
+        return ConnectionMultiplexer.Connect(configuration);
+    });
+    
+    if (isDev)
+    {
+        builder.Services
+            .AddGraphQLServer()
+            .AddQueryType<Query>()
+            .AddMutationType<Mutation>()
+            .AddTypeExtension<GROUPFLOW.Features.Auth.GraphQL.Mutations.AuthMutation>()
+            .AddTypeExtension<GROUPFLOW.Features.Posts.GraphQL.Extensions.PostTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Users.GraphQL.Extensions.UserTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Projects.GraphQL.Extensions.ProjectTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Extensions.BlobFileTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Mutations.BlobMutation>()
+            .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Queries.BlobQuery>()
+            .AddSubscriptionType<EntrySubscription>()
+            .AddErrorFilter<GraphQLErrorFilter>()
+            .AddInMemorySubscriptions()
+            .AddAuthorization()
+            .AddProjections()
+            .AddFiltering()
+            .AddSorting()
+            .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = includeExceptionDetails)
+            .DisableIntrospection(disableIntrospection);
+
+
+    }
+    else
+    {
+        builder.Services
+            .AddGraphQLServer()
+            .AddQueryType<Query>()
+            .AddMutationType<Mutation>()
+            .AddTypeExtension<GROUPFLOW.Features.Auth.GraphQL.Mutations.AuthMutation>()
+            .AddTypeExtension<GROUPFLOW.Features.Posts.GraphQL.Extensions.PostTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Users.GraphQL.Extensions.UserTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Projects.GraphQL.Extensions.ProjectTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Extensions.BlobFileTypeExtensions>()
+            .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Mutations.BlobMutation>()
+            .AddTypeExtension<GROUPFLOW.Features.Blobs.GraphQL.Queries.BlobQuery>()
+            .AddSubscriptionType<EntrySubscription>()
+            .AddRedisSubscriptions(sp => sp.GetRequiredService<IConnectionMultiplexer>()) 
+            .AddErrorFilter<GraphQLErrorFilter>()
+            .AddAuthorization()
+            .AddProjections()
+            .AddFiltering()
+            .AddSorting()
+            .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = includeExceptionDetails)
+            .DisableIntrospection(disableIntrospection);
+
+
+    }
+    
+    
+    
+    
+    
 
     builder.Services.AddControllers();
     builder.Services.AddHttpContextAccessor();
 
+    
+    
     // JWT Authentication
     builder.Services.AddAuthentication(options =>
     {
@@ -247,7 +297,7 @@ try
 
     // Request logging
     app.UseSerilogRequestLogging();
-
+    app.UseWebSockets();
     app.UseCors(AppConstants.AppCorsPolicy);
     app.UseRouting();
     app.UseAuthentication();
