@@ -32,12 +32,16 @@ public class FriendRequestMutation
         if (requesterId == requesteeId)
             throw BusinessRuleException.CannotFriendYourself();
 
-        // Check if request already exists
+        // Check if request already exists from current user
         var existingRequest = await context.FriendRequests
             .FirstOrDefaultAsync(fr => fr.RequesterId == requesterId && fr.RequesteeId == requesteeId, ct);
 
         if (existingRequest != null)
             throw BusinessRuleException.FriendRequestPending();
+
+        // Check if reverse request exists (other user already sent request to current user)
+        var reverseRequest = await context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.RequesterId == requesteeId && fr.RequesteeId == requesterId, ct);
 
         // Check if already friends
         var alreadyFriends = await context.Friendships
@@ -47,6 +51,53 @@ public class FriendRequestMutation
 
         if (alreadyFriends)
             throw BusinessRuleException.AlreadyFriends();
+
+        // If reverse request exists, accept it instead of creating a new one
+        if (reverseRequest != null)
+        {
+            // Create bidirectional friendship, checking for existing friendships
+            var existingFriendship1 = await context.Friendships
+                .AnyAsync(f => f.UserId == requesteeId && f.FriendId == requesterId, ct);
+            var existingFriendship2 = await context.Friendships
+                .AnyAsync(f => f.UserId == requesterId && f.FriendId == requesteeId, ct);
+
+            if (!existingFriendship1)
+            {
+                context.Friendships.Add(new Friendship
+                {
+                    UserId = requesteeId,
+                    FriendId = requesterId,
+                    IsAccepted = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (!existingFriendship2)
+            {
+                context.Friendships.Add(new Friendship
+                {
+                    UserId = requesterId,
+                    FriendId = requesteeId,
+                    IsAccepted = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            context.FriendRequests.Remove(reverseRequest);
+            await context.SaveChangesAsync(ct);
+
+            _logger.LogInformation("User {RequesterId} auto-accepted reverse friend request from {RequesteeId}", requesterId, requesteeId);
+            
+            // Return a virtual FriendRequest to indicate the friendship was created
+            return new FriendRequest
+            {
+                Id = reverseRequest.Id,
+                RequesterId = requesteeId,
+                RequesteeId = requesterId,
+                Sent = reverseRequest.Sent,
+                Expiring = reverseRequest.Expiring
+            };
+        }
 
         var request = new FriendRequest
         {
@@ -86,23 +137,34 @@ public class FriendRequestMutation
         {
             await using var transaction = await context.Database.BeginTransactionAsync(ct);
 
-            // Create bidirectional friendship
-            context.Friendships.AddRange(
-                new Friendship
+            // Check for existing friendships to prevent duplicate key violations
+            var existingFriendship1 = await context.Friendships
+                .AnyAsync(f => f.UserId == request.RequesterId && f.FriendId == request.RequesteeId, ct);
+            var existingFriendship2 = await context.Friendships
+                .AnyAsync(f => f.UserId == request.RequesteeId && f.FriendId == request.RequesterId, ct);
+
+            // Create bidirectional friendship only if they don't exist
+            if (!existingFriendship1)
+            {
+                context.Friendships.Add(new Friendship
                 {
                     UserId = request.RequesterId,
                     FriendId = request.RequesteeId,
                     IsAccepted = true,
                     CreatedAt = DateTime.UtcNow
-                },
-                new Friendship
+                });
+            }
+
+            if (!existingFriendship2)
+            {
+                context.Friendships.Add(new Friendship
                 {
                     UserId = request.RequesteeId,
                     FriendId = request.RequesterId,
                     IsAccepted = true,
                     CreatedAt = DateTime.UtcNow
-                }
-            );
+                });
+            }
 
             context.FriendRequests.Remove(request);
             await context.SaveChangesAsync(ct);
