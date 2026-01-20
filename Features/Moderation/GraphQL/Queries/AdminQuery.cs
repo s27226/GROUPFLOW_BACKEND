@@ -10,10 +10,7 @@ namespace GROUPFLOW.Features.Moderation.GraphQL.Queries;
 public class AdminQuery
 {
     [GraphQLName("reportedPosts")]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<PostReport> GetReportedPosts(
+    public async Task<List<PostReport>> GetReportedPosts(
         [Service] AppDbContext context,
         [Service] IHttpContextAccessor httpContextAccessor)
     {
@@ -21,17 +18,20 @@ public class AdminQuery
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         // Check if user is moderator
-        var user = context.Users.Find(userId);
+        var user = await context.Users.FindAsync(userId);
         if (user == null || !user.IsModerator)
         {
             throw new GraphQLException("You are not authorized to view reported posts");
         }
 
         // Return only unresolved reports
-        return context.PostReports
+        return await context.PostReports
             .Include(pr => pr.Post)
                 .ThenInclude(p => p.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
             .Include(pr => pr.ReportedByUser)
-            .Where(pr => !pr.IsResolved);
+                .ThenInclude(u => u.ProfilePicBlob)
+            .Where(pr => !pr.IsResolved)
+            .ToListAsync();
     }
 }

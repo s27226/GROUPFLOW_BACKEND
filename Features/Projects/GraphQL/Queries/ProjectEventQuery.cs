@@ -1,26 +1,28 @@
 using GROUPFLOW.Common.Database;
 using GROUPFLOW.Features.Projects.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace GROUPFLOW.Features.Projects.GraphQL.Queries;
 
 public class ProjectEventQuery
 {
     [GraphQLName("allevents")]
-    [UsePaging]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<ProjectEvent> GetProjectEvents(AppDbContext context) => context.ProjectEvents;
+    public async Task<List<ProjectEvent>> GetProjectEvents(AppDbContext context) 
+    {
+        return await context.ProjectEvents.ToListAsync();
+    }
 
     [GraphQLName("eventbyid")]
-    [UseProjection]
-    public ProjectEvent? GetProjectEventById(AppDbContext context, int id) => 
-        context.ProjectEvents.FirstOrDefault(e => e.Id == id);
+    public async Task<ProjectEvent?> GetProjectEventById(AppDbContext context, int id) 
+    {
+        return await context.ProjectEvents.FirstOrDefaultAsync(e => e.Id == id);
+    }
 
     [GraphQLName("eventsbyproject")]
-    [UsePaging]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<ProjectEvent> GetEventsByProject(AppDbContext context, int projectId) => 
-        context.ProjectEvents.Where(e => e.ProjectId == projectId);
+    public async Task<List<ProjectEvent>> GetEventsByProject(AppDbContext context, int projectId) 
+    {
+        return await context.ProjectEvents
+            .Where(e => e.ProjectId == projectId)
+            .ToListAsync();
+    }
 }

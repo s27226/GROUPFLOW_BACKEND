@@ -12,9 +12,6 @@ public class FriendshipQuery
     /// Get user's friends - now uses service layer
     /// </summary>
     [GraphQLName("myfriends")]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
     public async Task<IEnumerable<User>> GetMyFriends(
         [Service] IFriendshipService friendshipService,
         [Service] IHttpContextAccessor httpContextAccessor)

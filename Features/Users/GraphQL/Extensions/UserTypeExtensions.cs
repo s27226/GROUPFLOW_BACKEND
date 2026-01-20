@@ -1,5 +1,7 @@
 using HotChocolate;
 using HotChocolate.Types;
+using Microsoft.EntityFrameworkCore;
+using GROUPFLOW.Common.Database;
 using GROUPFLOW.Features.Users.Entities;
 using GROUPFLOW.Features.Blobs.Services;
 
@@ -14,14 +16,24 @@ public class UserTypeExtensions
     /// </summary>
     public async Task<string> GetProfilePicUrl(
         [Parent] User user,
-        [Service] IS3Service s3Service)
+        [Service] IS3Service s3Service,
+        [Service] AppDbContext context)
     {
+        // If ProfilePicBlob is not loaded, fetch it from the database
+        var profilePicBlob = user.ProfilePicBlob;
+        if (profilePicBlob == null && user.ProfilePicBlobId.HasValue)
+        {
+            profilePicBlob = await context.BlobFiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == user.ProfilePicBlobId.Value);
+        }
+        
         // If user has a blob, return presigned URL
-        if (user.ProfilePicBlob != null && !string.IsNullOrEmpty(user.ProfilePicBlob.BlobPath))
+        if (profilePicBlob != null && !string.IsNullOrEmpty(profilePicBlob.BlobPath))
         {
             try
             {
-                return await s3Service.GetPresignedUrlAsync(user.ProfilePicBlob.BlobPath);
+                return await s3Service.GetPresignedUrlAsync(profilePicBlob.BlobPath);
             }
             catch
             {
@@ -40,14 +52,24 @@ public class UserTypeExtensions
     /// </summary>
     public async Task<string> GetBannerPicUrl(
         [Parent] User user,
-        [Service] IS3Service s3Service)
+        [Service] IS3Service s3Service,
+        [Service] AppDbContext context)
     {
+        // If BannerPicBlob is not loaded, fetch it from the database
+        var bannerPicBlob = user.BannerPicBlob;
+        if (bannerPicBlob == null && user.BannerPicBlobId.HasValue)
+        {
+            bannerPicBlob = await context.BlobFiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == user.BannerPicBlobId.Value);
+        }
+        
         // If user has a blob, return presigned URL
-        if (user.BannerPicBlob != null && !string.IsNullOrEmpty(user.BannerPicBlob.BlobPath))
+        if (bannerPicBlob != null && !string.IsNullOrEmpty(bannerPicBlob.BlobPath))
         {
             try
             {
-                return await s3Service.GetPresignedUrlAsync(user.BannerPicBlob.BlobPath);
+                return await s3Service.GetPresignedUrlAsync(bannerPicBlob.BlobPath);
             }
             catch
             {

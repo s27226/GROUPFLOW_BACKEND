@@ -65,10 +65,10 @@ public class UsersQueryTests : IDisposable
     }
 
     [Fact]
-    public void GetUsers_ShouldReturnAllUsers()
+    public async Task GetUsers_ShouldReturnAllUsers()
     {
         // Act
-        var result = _usersQuery.GetUsers(_context).ToList();
+        var result = await _usersQuery.GetUsers(_context);
 
         // Assert
         result.Should().HaveCount(3);
@@ -78,21 +78,21 @@ public class UsersQueryTests : IDisposable
     }
 
     [Fact]
-    public void GetUsers_ShouldReturnQueryable()
+    public async Task GetUsers_ShouldReturnList()
     {
         // Act
-        var result = _usersQuery.GetUsers(_context);
+        var result = await _usersQuery.GetUsers(_context);
 
         // Assert
-        result.Should().BeAssignableTo<IQueryable<User>>();
+        result.Should().BeAssignableTo<List<User>>();
         result.Should().NotBeNull();
     }
 
     [Fact]
-    public void GetUserById_WithValidId_ShouldReturnUser()
+    public async Task GetUserById_WithValidId_ShouldReturnUser()
     {
         // Act
-        var result = _usersQuery.GetUserById(_context, 1);
+        var result = await _usersQuery.GetUserById(_context, 1);
 
         // Assert
         result.Should().NotBeNull();
@@ -103,44 +103,45 @@ public class UsersQueryTests : IDisposable
     }
 
     [Fact]
-    public void GetUserById_WithInvalidId_ShouldReturnNull()
+    public async Task GetUserById_WithInvalidId_ShouldReturnNull()
     {
         // Act
-        var result = _usersQuery.GetUserById(_context, 999);
+        var result = await _usersQuery.GetUserById(_context, 999);
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public void GetUserById_WithZeroId_ShouldReturnNull()
+    public async Task GetUserById_WithZeroId_ShouldReturnNull()
     {
         // Act
-        var result = _usersQuery.GetUserById(_context, 0);
+        var result = await _usersQuery.GetUserById(_context, 0);
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public void GetUsers_WithEmptyDatabase_ShouldReturnEmptyQueryable()
+    public async Task GetUsers_WithEmptyDatabase_ShouldReturnEmptyList()
     {
         // Arrange
         _context.Users.RemoveRange(_context.Users);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         // Act
-        var result = _usersQuery.GetUsers(_context).ToList();
+        var result = await _usersQuery.GetUsers(_context);
 
         // Assert
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public void GetUsers_SupportsLinqOperations()
+    public async Task GetUsers_SupportsLinqOperations()
     {
         // Act
-        var result = _usersQuery.GetUsers(_context)
+        var allUsers = await _usersQuery.GetUsers(_context);
+        var result = allUsers
             .Where(u => u.Name.StartsWith("A"))
             .OrderBy(u => u.Name)
             .ToList();

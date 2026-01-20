@@ -10,12 +10,17 @@ public class PostTypeExtensions
     /// <summary>
     /// Returns only top-level comments (not replies) for a post
     /// </summary>
-    [UseProjection]
-    public IQueryable<PostComment> GetComments(
+    public async Task<List<PostComment>> GetComments(
         [Parent] Post post,
         [Service] AppDbContext context)
     {
-        return context.PostComments
-            .Where(c => c.PostId == post.Id && c.ParentCommentId == null);
+        return await context.PostComments
+            .Include(c => c.User)
+                .ThenInclude(u => u.ProfilePicBlob)
+            .Include(c => c.Replies)
+                .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
+            .Where(c => c.PostId == post.Id && c.ParentCommentId == null)
+            .ToListAsync();
     }
 }

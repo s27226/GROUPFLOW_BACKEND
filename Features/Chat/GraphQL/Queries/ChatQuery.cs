@@ -8,15 +8,24 @@ namespace GROUPFLOW.Features.Chat.GraphQL.Queries;
 public class ChatQuery
 {
     [GraphQLName("allchats")]
-    [UsePaging]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<Entities.Chat> GetChats(AppDbContext context) => context.Chats;
+    public async Task<List<Entities.Chat>> GetChats(AppDbContext context) 
+    {
+        return await context.Chats
+            .Include(c => c.UserChats)
+                .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
+            .ToListAsync();
+    }
     
     [GraphQLName("chatbyid")]
-    [UseProjection]
-    public IQueryable<Entities.Chat> GetChatById(AppDbContext context, int id) => context.Chats.Where(c => c.Id == id);
+    public async Task<Entities.Chat?> GetChatById(AppDbContext context, int id) 
+    {
+        return await context.Chats
+            .Include(c => c.UserChats)
+                .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
     
     /// <summary>
     /// Get or create a direct message chat between the current user and a friend.
@@ -48,6 +57,7 @@ public class ChatQuery
         var existingChat = await context.Chats
             .Include(c => c.UserChats)
                 .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
             .Where(c => c.ProjectId == null) // Direct message chats
             .Where(c => c.UserChats.Count == 2)
             .Where(c => c.UserChats.Any(uc => uc.UserId == userId) &&
@@ -89,6 +99,7 @@ public class ChatQuery
         return await context.Chats
             .Include(c => c.UserChats)
                 .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
             .FirstAsync(c => c.Id == newChat.Id);
     }
     
@@ -96,15 +107,19 @@ public class ChatQuery
     /// Get all direct message chats for the current user
     /// </summary>
     [GraphQLName("mydirectchats")]
-    public IQueryable<Entities.Chat> GetMyDirectChats(
+    public async Task<List<Entities.Chat>> GetMyDirectChats(
         [Service] AppDbContext context,
         [Service] IHttpContextAccessor httpContextAccessor)
     {
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        return context.Chats
+        return await context.Chats
+            .Include(c => c.UserChats)
+                .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
             .Where(c => c.ProjectId == null) // Direct message chats only
-            .Where(c => c.UserChats.Any(uc => uc.UserId == userId));
+            .Where(c => c.UserChats.Any(uc => uc.UserId == userId))
+            .ToListAsync();
     }
 }

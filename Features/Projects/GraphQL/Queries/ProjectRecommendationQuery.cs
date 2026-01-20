@@ -1,17 +1,20 @@
 using GROUPFLOW.Common.Database;
 using GROUPFLOW.Features.Projects.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace GROUPFLOW.Features.Projects.GraphQL.Queries;
 
 public class ProjectRecommendationQuery
 {
     [GraphQLName("allprojectrecommendations")]
-    [UsePaging]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<ProjectRecommendation> GetProjectRecommendations(AppDbContext context) => context.ProjectRecommendations;
+    public async Task<List<ProjectRecommendation>> GetProjectRecommendations(AppDbContext context) 
+    {
+        return await context.ProjectRecommendations.ToListAsync();
+    }
     
     [GraphQLName("projectrecommendationbyid")]
-    [UseProjection]
-    public ProjectRecommendation? GetProjectRecommendationById(AppDbContext context, int id) => context.ProjectRecommendations.FirstOrDefault(g => g.Id == id);
+    public async Task<ProjectRecommendation?> GetProjectRecommendationById(AppDbContext context, int id) 
+    {
+        return await context.ProjectRecommendations.FirstOrDefaultAsync(g => g.Id == id);
+    }
 }

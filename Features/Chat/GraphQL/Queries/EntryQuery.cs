@@ -7,14 +7,16 @@ namespace GROUPFLOW.Features.Chat.GraphQL.Queries;
 public class EntryQuery
 {
     [GraphQLName("allentries")]
-    [UsePaging]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<Entry> GetEntries(AppDbContext context) => context.Entries;
+    public async Task<List<Entry>> GetEntries(AppDbContext context) 
+    {
+        return await context.Entries
+            .Include(e => e.UserChat)
+                .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
+            .ToListAsync();
+    }
     
     // [GraphQLName("entrybyid")]
-    // [UseProjection]
     // public Entry? GetEntryById(AppDbContext context, int id) => context.Entries.FirstOrDefault(g => g.Id == id);
     
     /// <summary>
@@ -22,11 +24,14 @@ public class EntryQuery
     /// Works for both project chats and direct messages.
     /// </summary>
     [GraphQLName("chatmessages")]
-    [UseProjection]
-    public IQueryable<Entry> GetChatMessages(AppDbContext context, int chatId)
+    public async Task<List<Entry>> GetChatMessages(AppDbContext context, int chatId)
     {
-        return context.Entries
+        return await context.Entries
+            .Include(e => e.UserChat)
+                .ThenInclude(uc => uc.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
             .Where(e => e.UserChat.ChatId == chatId)
-            .OrderBy(e => e.Sent);
+            .OrderBy(e => e.Sent)
+            .ToListAsync();
     }
 }

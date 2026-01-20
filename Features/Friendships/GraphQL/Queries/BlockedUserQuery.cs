@@ -9,10 +9,7 @@ namespace GROUPFLOW.Features.Friendships.GraphQL.Queries;
 public class BlockedUserQuery
 {
     [GraphQLName("blockedusers")]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<User> GetBlockedUsers(
+    public async Task<List<User>> GetBlockedUsers(
         [Service] AppDbContext context,
         [Service] IHttpContextAccessor httpContextAccessor)
     {
@@ -20,9 +17,15 @@ public class BlockedUserQuery
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
         // Get users that the current user has blocked
-        return context.Users
-            .Where(u => context.BlockedUsers
-                .Any(bu => bu.UserId == userId && bu.BlockedUserId == u.Id));
+        var blockedUserIds = await context.BlockedUsers
+            .Where(bu => bu.UserId == userId)
+            .Select(bu => bu.BlockedUserId)
+            .ToListAsync();
+            
+        return await context.Users
+            .Include(u => u.ProfilePicBlob)
+            .Where(u => blockedUserIds.Contains(u.Id))
+            .ToListAsync();
     }
 
     [GraphQLName("isblockedby")]

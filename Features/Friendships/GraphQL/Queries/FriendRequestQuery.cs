@@ -8,24 +8,24 @@ namespace GROUPFLOW.Features.Friendships.GraphQL.Queries;
 public class FriendRequestQuery
 {
     [GraphQLName("allfriendrequests")]
-    [UsePaging]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<FriendRequest> GetFriendRequests(
+    public async Task<List<FriendRequest>> GetFriendRequests(
         AppDbContext context,
         ClaimsPrincipal claimsPrincipal)
     {
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
         {
-            return Enumerable.Empty<FriendRequest>().AsQueryable();
+            return new List<FriendRequest>();
         }
 
         // Return friend requests where the current user is the requestee (received requests)
-        return context.FriendRequests
+        return await context.FriendRequests
             .Include(fr => fr.Requester)
+                .ThenInclude(r => r.ProfilePicBlob)
             .Include(fr => fr.Requestee)
-            .Where(fr => fr.RequesteeId == userId);
+                .ThenInclude(r => r.ProfilePicBlob)
+            .Where(fr => fr.RequesteeId == userId)
+            .ToListAsync();
     }
 
 }

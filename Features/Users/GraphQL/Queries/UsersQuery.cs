@@ -10,21 +10,25 @@ namespace GROUPFLOW.Features.Users.GraphQL.Queries;
 public class UsersQuery
 {
     [GraphQLName("allusers")]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<User> GetUsers([Service] AppDbContext context) => context.Users;
+    public async Task<List<User>> GetUsers([Service] AppDbContext context) 
+    {
+        return await context.Users
+            .Include(u => u.ProfilePicBlob)
+            .ToListAsync();
+    }
     
     [GraphQLName("getuserbyid")]
-    public User? GetUserById(AppDbContext context, int id) => 
-        context.Users
+    public async Task<User?> GetUserById(AppDbContext context, int id)
+    {
+        return await context.Users
             .Include(u => u.ProfilePicBlob)
             .Include(u => u.BannerPicBlob)
-            .FirstOrDefault(g => g.Id == id);
+            .FirstOrDefaultAsync(u => u.Id == id);
+    }
     
     [Authorize]
     [GraphQLName("me")]
-    public User? GetCurrentUser(AppDbContext context, ClaimsPrincipal claimsPrincipal)
+    public async Task<User?> GetCurrentUser(AppDbContext context, ClaimsPrincipal claimsPrincipal)
     {
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
@@ -32,15 +36,14 @@ public class UsersQuery
             return null;
         }
         
-        return context.Users
+        return await context.Users
             .Include(u => u.ProfilePicBlob)
             .Include(u => u.BannerPicBlob)
-            .FirstOrDefault(u => u.Id == userId);
+            .FirstOrDefaultAsync(u => u.Id == userId);
     }
     
     [Authorize]
     [GraphQLName("searchusers")]
-    [UseProjection]
     public async Task<List<UserWithRequestStatus>> SearchUsers(
         AppDbContext context, 
         ClaimsPrincipal claimsPrincipal,
@@ -59,6 +62,7 @@ public class UsersQuery
             .ToListAsync();
 
         var query = context.Users
+            .Include(u => u.ProfilePicBlob)
             .Include(u => u.Skills)
             .Include(u => u.Interests)
             .Where(u => u.Id != currentUserId && !blockedUserIds.Contains(u.Id))
@@ -119,7 +123,6 @@ public class UsersQuery
     
     [Authorize]
     [GraphQLName("suggestedusers")]
-    [UseProjection]
     public async Task<List<UserMatchScoreWithStatus>> GetSuggestedUsers(
         AppDbContext context, 
         ClaimsPrincipal claimsPrincipal,
@@ -158,6 +161,7 @@ public class UsersQuery
             .ToListAsync();
 
         var allUsers = await context.Users
+            .Include(u => u.ProfilePicBlob)
             .Include(u => u.Skills)
             .Include(u => u.Interests)
             .Where(u => u.Id != currentUserId && 

@@ -8,10 +8,7 @@ namespace GROUPFLOW.Features.Posts.GraphQL.Queries;
 public class PostQuery
 {
     [GraphQLName("allposts")]
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public IQueryable<Post> GetPosts(
+    public async Task<List<Post>> GetPosts(
         [Service] AppDbContext context,
         [Service] IHttpContextAccessor httpContextAccessor)
     {
@@ -38,7 +35,7 @@ public class PostQuery
             .Select(ui => ui.InterestName.ToLower())
             .ToHashSet();
         
-        var posts = context.Posts
+        var posts = await context.Posts
             .Include(p => p.Likes)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
@@ -65,7 +62,9 @@ public class PostQuery
                 (p.Public ||
                 p.UserId == userId ||
                 (p.ProjectId.HasValue && userProjectIds.Contains(p.ProjectId.Value))))
-            .AsEnumerable()
+            .ToListAsync();
+        
+        var sortedPosts = posts
             .Select(p => new 
             {
                 Post = p,
@@ -74,9 +73,9 @@ public class PostQuery
             .OrderByDescending(x => x.RelevanceScore)
             .ThenByDescending(x => x.Post.Created)
             .Select(x => x.Post)
-            .AsQueryable();
+            .ToList();
         
-        return posts;
+        return sortedPosts;
     }
     
     private static int CalculateRelevanceScore(
@@ -131,8 +130,7 @@ public class PostQuery
     }
 
     [GraphQLName("allpostsbyid")]
-    [UseProjection]
-    public Post? GetPostsById(
+    public async Task<Post?> GetPostsById(
         [Service] AppDbContext context,
         [Service] IHttpContextAccessor httpContextAccessor,
         int id)
@@ -140,11 +138,23 @@ public class PostQuery
         var currentUser = httpContextAccessor.HttpContext!.User;
         int userId = int.Parse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        var post = context.Posts
+        var post = await context.Posts
             .Include(p => p.Likes)
+            .Include(p => p.User)
+                .ThenInclude(u => u.ProfilePicBlob)
+            .Include(p => p.Comments)
+                .ThenInclude(c => c.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
+            .Include(p => p.Comments)
+                .ThenInclude(c => c.Replies)
+                    .ThenInclude(r => r.User)
+                        .ThenInclude(u => u.ProfilePicBlob)
+            .Include(p => p.SharedPost)
+                .ThenInclude(sp => sp!.User)
+                    .ThenInclude(u => u.ProfilePicBlob)
             .Include(p => p.Project)
                 .ThenInclude(p => p!.Collaborators)
-            .FirstOrDefault(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == id);
             
         if (post == null)
         {

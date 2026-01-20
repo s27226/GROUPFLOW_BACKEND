@@ -22,6 +22,7 @@ public class FriendshipService : IFriendshipService
     public async Task<IEnumerable<User>> GetUserFriendsAsync(int userId)
     {
         return await _context.Users
+            .Include(u => u.ProfilePicBlob)
             .Where(u => _context.Friendships
                 .Any(f => (f.UserId == userId && f.FriendId == u.Id && f.IsAccepted) ||
                          (f.FriendId == userId && f.UserId == u.Id && f.IsAccepted)))
