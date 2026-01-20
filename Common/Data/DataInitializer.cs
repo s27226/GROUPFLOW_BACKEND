@@ -521,9 +521,9 @@ public class DataInitializer
 
         var friendships = new List<FriendshipModel>
         {
-            new() { UserId = 1, FriendId = 2, IsAccepted = true, CreatedAt = DateTime.UtcNow.AddDays(-7) },
-            new() { UserId = 2, FriendId = 3, IsAccepted = true, CreatedAt = DateTime.UtcNow.AddDays(-5) },
-            new() { UserId = 1, FriendId = 3, IsAccepted = false, CreatedAt = DateTime.UtcNow.AddDays(-2) }
+            new() { UserId = 4, FriendId = 2, IsAccepted = true, CreatedAt = DateTime.UtcNow.AddDays(-7) },
+            new() { UserId = 5, FriendId = 3, IsAccepted = true, CreatedAt = DateTime.UtcNow.AddDays(-5) },
+            new() { UserId = 6, FriendId = 3, IsAccepted = false, CreatedAt = DateTime.UtcNow.AddDays(-2) }
         };
         _db.Friendships.AddRange(friendships);
         await _db.SaveChangesAsync(ct);
