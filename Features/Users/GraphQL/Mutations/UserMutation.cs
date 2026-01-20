@@ -3,6 +3,7 @@ using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Users.Entities;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GROUPFLOW.Features.Users.GraphQL.Mutations;
 
@@ -12,8 +13,14 @@ public class UserMutation
     public async Task<User> UpdateUserProfile(
         UpdateUserProfileInput input,
         AppDbContext context,
-        [GlobalState] int currentUserId)
+        ClaimsPrincipal claimsPrincipal)
     {
+        var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+        {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
         
         if (user == null)
