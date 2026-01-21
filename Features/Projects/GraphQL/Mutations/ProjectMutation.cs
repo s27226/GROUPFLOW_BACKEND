@@ -246,6 +246,8 @@ public class ProjectMutation
             context.ProjectSkills.RemoveRange(context.ProjectSkills.Where(ps => ps.ProjectId == id));
             context.ProjectInterests.RemoveRange(context.ProjectInterests.Where(pi => pi.ProjectId == id));
             context.ProjectRecommendations.RemoveRange(context.ProjectRecommendations.Where(pr => pr.ProjectId == id));
+            context.ProjectViews.RemoveRange(context.ProjectViews.Where(pv => pv.ProjectId == id));
+            context.BlobFiles.RemoveRange(context.BlobFiles.Where(bf => bf.ProjectId == id));
 
             if (project.Chat != null)
             {
@@ -273,8 +275,19 @@ public class ProjectMutation
             foreach (var post in project.Posts)
             {
                 context.PostLikes.RemoveRange(context.PostLikes.Where(pl => pl.PostId == post.Id));
+                
+                // Get comments and delete their likes first
+                var commentIds = await context.PostComments
+                    .Where(pc => pc.PostId == post.Id)
+                    .Select(pc => pc.Id)
+                    .ToListAsync(ct);
+                context.PostCommentLikes.RemoveRange(context.PostCommentLikes.Where(pcl => commentIds.Contains(pcl.PostCommentId)));
+                
                 context.PostComments.RemoveRange(context.PostComments.Where(pc => pc.PostId == post.Id));
                 context.SavedPosts.RemoveRange(context.SavedPosts.Where(sp => sp.PostId == post.Id));
+                context.PostReports.RemoveRange(context.PostReports.Where(pr => pr.PostId == post.Id));
+                context.BlobFiles.RemoveRange(context.BlobFiles.Where(bf => bf.PostId == post.Id));
+                context.Notifications.RemoveRange(context.Notifications.Where(n => n.PostId == post.Id));
             }
             context.Posts.RemoveRange(project.Posts);
 
