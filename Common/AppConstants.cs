@@ -35,6 +35,7 @@ public static class AppConstants
     public const string PostgresConnString = "POSTGRES_CONN_STRING";
     public const string PostgresConnStringDev = "POSTGRES_CONN_STRING_DEV";
     public const string PostgresConnStringProd = "POSTGRES_CONN_STRING_PROD";
+    public const string RedisConnStringProd = "Redis_CONN_STRING";
     public const string JwtSecret = "JWT_SECRET";
     public const string CorsOrigins = "CORS_ORIGINS";
 

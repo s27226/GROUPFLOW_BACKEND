@@ -23,6 +23,9 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
     <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="15.1.10" />
     <PackageReference Include="HotChocolate.AspNetCore.Authorization.Opa" Version="15.1.10" />
+    <PackageReference Include="HotChocolate.Subscriptions" Version="15.1.12" />
+    <PackageReference Include="HotChocolate.Subscriptions.InMemory" Version="15.1.12" />
+    <PackageReference Include="HotChocolate.Subscriptions.Redis" Version="15.1.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.6">
@@ -34,6 +37,7 @@
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
 	<PackageReference Include="HotChocolate.AspNetCore" Version="15.1.10" />
   <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.10" />
