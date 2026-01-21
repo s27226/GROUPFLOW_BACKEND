@@ -241,7 +241,11 @@ public class ProjectMutation
         {
             await using var transaction = await context.Database.BeginTransactionAsync(ct);
 
+            // Remove project-related data that has foreign key constraints
             context.ProjectInvitations.RemoveRange(context.ProjectInvitations.Where(pi => pi.ProjectId == id));
+            context.ProjectSkills.RemoveRange(context.ProjectSkills.Where(ps => ps.ProjectId == id));
+            context.ProjectInterests.RemoveRange(context.ProjectInterests.Where(pi => pi.ProjectId == id));
+            context.ProjectRecommendations.RemoveRange(context.ProjectRecommendations.Where(pr => pr.ProjectId == id));
 
             if (project.Chat != null)
             {
