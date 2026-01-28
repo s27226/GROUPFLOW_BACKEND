@@ -55,17 +55,24 @@ public class ProjectQuery
             
             if (existingView == null)
             {
-                // Create new view record
-                var view = new ProjectView
+                // Create new view record - use try/catch to handle race conditions
+                try
                 {
-                    ProjectId = id,
-                    UserId = userId.Value,
-                    ViewDate = today,
-                    Created = DateTime.UtcNow
-                };
-                
-                context.ProjectViews.Add(view);
-                await context.SaveChangesAsync();
+                    var view = new ProjectView
+                    {
+                        ProjectId = id,
+                        UserId = userId.Value,
+                        ViewDate = today,
+                        Created = DateTime.UtcNow
+                    };
+                    
+                    context.ProjectViews.Add(view);
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    // Ignore duplicate key error - view already exists due to race condition
+                }
             }
         }
         
