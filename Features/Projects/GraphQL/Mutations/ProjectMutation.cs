@@ -321,10 +321,10 @@ public class ProjectMutation
             throw AuthorizationException.NotProjectOwner();
 
         if (userId == project.OwnerId)
-            throw new BusinessRuleException("Cannot remove the project owner");
+            throw BusinessRuleException.CannotRemoveProjectOwner();
 
         var collaborator = project.Collaborators.FirstOrDefault(c => c.UserId == userId)
-            ?? throw new BusinessRuleException("User is not a member of this project");
+            ?? throw BusinessRuleException.UserNotProjectMember();
 
         var strategy = context.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>

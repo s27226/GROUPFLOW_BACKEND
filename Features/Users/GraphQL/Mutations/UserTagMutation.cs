@@ -65,7 +65,7 @@ public class UserTagMutation
 
         var skill = await context.UserSkills
             .FirstOrDefaultAsync(s => s.Id == skillId && s.UserId == userId, ct)
-            ?? throw new EntityNotFoundException("UserSkill", skillId);
+            ?? throw EntityNotFoundException.UserSkill(skillId);
 
         context.UserSkills.Remove(skill);
         await context.SaveChangesAsync(ct);
@@ -117,7 +117,7 @@ public class UserTagMutation
 
         var interest = await context.UserInterests
             .FirstOrDefaultAsync(i => i.Id == interestId && i.UserId == userId, ct)
-            ?? throw new EntityNotFoundException("UserInterest", interestId);
+            ?? throw EntityNotFoundException.UserInterest(interestId);
 
         context.UserInterests.Remove(interest);
         await context.SaveChangesAsync(ct);

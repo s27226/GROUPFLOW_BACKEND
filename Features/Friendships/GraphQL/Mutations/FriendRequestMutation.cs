@@ -127,10 +127,10 @@ public class FriendRequestMutation
         var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var request = await context.FriendRequests.FindAsync(new object[] { friendRequestId }, ct)
-            ?? throw new EntityNotFoundException("FriendRequest", friendRequestId);
+            ?? throw EntityNotFoundException.FriendRequest(friendRequestId);
 
         if (request.RequesteeId != userId)
-            throw new AuthorizationException("You can only accept friend requests sent to you");
+            throw AuthorizationException.NotFriendRequestRecipient();
 
         var strategy = context.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
@@ -184,10 +184,10 @@ public class FriendRequestMutation
         var userId = claimsPrincipal.GetAuthenticatedUserId();
 
         var request = await context.FriendRequests.FindAsync(new object[] { friendRequestId }, ct)
-            ?? throw new EntityNotFoundException("FriendRequest", friendRequestId);
+            ?? throw EntityNotFoundException.FriendRequest(friendRequestId);
 
         if (request.RequesteeId != userId)
-            throw new AuthorizationException("You can only reject friend requests sent to you");
+            throw AuthorizationException.NotFriendRequestRecipient();
 
         context.FriendRequests.Remove(request);
         await context.SaveChangesAsync(ct);

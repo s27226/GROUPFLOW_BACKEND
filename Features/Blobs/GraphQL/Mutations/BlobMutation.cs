@@ -2,6 +2,7 @@ using HotChocolate;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Common.GraphQL;
 using GROUPFLOW.Features.Blobs.Entities;
 using GROUPFLOW.Features.Blobs.GraphQL.Inputs;
@@ -31,13 +32,13 @@ public class BlobMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         var user = await context.Users.FindAsync(userId);
         if (user == null)
         {
-            throw new Exception("User not found");
+            throw EntityNotFoundException.User(userId);
         }
 
         // Parse blob type - map frontend types to backend enum
@@ -54,7 +55,7 @@ public class BlobMutation
         
         if (!Enum.TryParse<BlobType>(mappedBlobType, true, out var blobType))
         {
-            throw new ArgumentException($"Invalid blob type: {input.BlobType}");
+            throw ValidationException.InvalidBlobType(input.BlobType);
         }
 
         // Decode base64 data
@@ -65,19 +66,19 @@ public class BlobMutation
         }
         catch (Exception)
         {
-            throw new ArgumentException("Invalid base64 data");
+            throw ValidationException.InvalidBase64Data();
         }
 
         // Validate file size (25MB max)
         if (!BlobStorageHelper.ValidateFileSize(fileBytes.Length))
         {
-            throw new ArgumentException($"File size exceeds maximum allowed size of {BlobStorageHelper.GetFileSizeString(BlobStorageHelper.MaxFileSize)}");
+            throw ValidationException.FileSizeExceeded();
         }
 
         // Validate content type
         if (!BlobStorageHelper.IsAllowedFileType(input.ContentType, blobType))
         {
-            throw new ArgumentException($"File type {input.ContentType} is not allowed for {blobType}");
+            throw ValidationException.FileTypeNotAllowed();
         }
 
         // Authorization checks
@@ -129,7 +130,7 @@ public class BlobMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         var blobFile = await context.BlobFiles
@@ -138,7 +139,7 @@ public class BlobMutation
 
         if (blobFile == null)
         {
-            throw new Exception("Blob file not found");
+            throw EntityNotFoundException.BlobFile(input.BlobId);
         }
 
         // Authorization checks
@@ -176,7 +177,7 @@ public class BlobMutation
 
         if (!canDelete)
         {
-            throw new UnauthorizedAccessException("You don't have permission to delete this file");
+            throw AuthorizationException.CannotDeleteFile();
         }
 
         // Soft delete in database
@@ -202,12 +203,12 @@ public class BlobMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         if (input.UserId != userId)
         {
-            throw new UnauthorizedAccessException("You can only update your own profile picture");
+            throw AuthorizationException.CannotUpdateProfilePicture();
         }
 
         var user = await context.Users
@@ -216,7 +217,7 @@ public class BlobMutation
             
         if (user == null)
         {
-            throw new Exception("User not found");
+            throw EntityNotFoundException.User(userId);
         }
 
         user.ProfilePicBlobId = input.ProfilePicBlobId;
@@ -241,12 +242,12 @@ public class BlobMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         if (input.UserId != userId)
         {
-            throw new UnauthorizedAccessException("You can only update your own banner");
+            throw AuthorizationException.CannotUpdateBanner();
         }
 
         var user = await context.Users
@@ -255,7 +256,7 @@ public class BlobMutation
             
         if (user == null)
         {
-            throw new Exception("User not found");
+            throw EntityNotFoundException.User(userId);
         }
 
         user.BannerPicBlobId = input.BannerPicBlobId;
@@ -280,18 +281,18 @@ public class BlobMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         var project = await context.Projects.FindAsync(input.ProjectId);
         if (project == null)
         {
-            throw new Exception("Project not found");
+            throw EntityNotFoundException.Project(input.ProjectId);
         }
 
         if (project.OwnerId != userId)
         {
-            throw new UnauthorizedAccessException("Only the project owner can update the project image");
+            throw AuthorizationException.CannotUpdateProjectImage();
         }
 
         project.ImageBlobId = input.ImageBlobId;
@@ -312,18 +313,18 @@ public class BlobMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         var project = await context.Projects.FindAsync(input.ProjectId);
         if (project == null)
         {
-            throw new Exception("Project not found");
+            throw EntityNotFoundException.Project(input.ProjectId);
         }
 
         if (project.OwnerId != userId)
         {
-            throw new UnauthorizedAccessException("Only the project owner can update the project banner");
+            throw AuthorizationException.CannotUpdateProjectBanner();
         }
 
         project.BannerBlobId = input.BannerBlobId;
@@ -350,31 +351,31 @@ public class BlobMutation
             case BlobType.ProjectBanner:
                 if (!projectId.HasValue)
                 {
-                    throw new ArgumentException("Project ID is required for project images");
+                    throw new ValidationException("projectId", "errors.PROJECT_ID_REQUIRED");
                 }
 
                 var projectForLogo = await context.Projects.FindAsync(projectId.Value);
                 if (projectForLogo == null)
                 {
-                    throw new Exception("Project not found");
+                    throw EntityNotFoundException.Project(projectId.Value);
                 }
 
                 if (projectForLogo.OwnerId != userId)
                 {
-                    throw new UnauthorizedAccessException("Only the project owner can upload project logo/banner");
+                    throw AuthorizationException.CannotUploadProjectMedia();
                 }
                 break;
 
             case BlobType.ProjectFile:
                 if (!projectId.HasValue)
                 {
-                    throw new ArgumentException("Project ID is required for project files");
+                    throw new ValidationException("projectId", "errors.PROJECT_ID_REQUIRED");
                 }
 
                 var project = await context.Projects.FindAsync(projectId.Value);
                 if (project == null)
                 {
-                    throw new Exception("Project not found");
+                    throw EntityNotFoundException.Project(projectId.Value);
                 }
 
                 var isOwner = project.OwnerId == userId;
@@ -383,25 +384,25 @@ public class BlobMutation
 
                 if (!isOwner && !isCollaborator)
                 {
-                    throw new UnauthorizedAccessException("Only project owner and collaborators can upload project files");
+                    throw AuthorizationException.CannotUploadProjectFiles();
                 }
                 break;
 
             case BlobType.PostImage:
                 if (!postId.HasValue)
                 {
-                    throw new ArgumentException("Post ID is required for post images");
+                    throw new ValidationException("postId", "errors.POST_ID_REQUIRED");
                 }
 
                 var post = await context.Posts.FindAsync(postId.Value);
                 if (post == null)
                 {
-                    throw new Exception("Post not found");
+                    throw EntityNotFoundException.Post(postId.Value);
                 }
 
                 if (post.UserId != userId)
                 {
-                    throw new UnauthorizedAccessException("Only the post creator can upload images to the post");
+                    throw AuthorizationException.CannotUploadPostImages();
                 }
                 break;
         }

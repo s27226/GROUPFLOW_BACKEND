@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Users.Entities;
 using System.Security.Claims;
 
@@ -14,7 +15,7 @@ public class ModerationQuery
         
         if (moderator == null || !moderator.IsModerator)
         {
-            throw new UnauthorizedAccessException("Only moderators can view all users.");
+            throw AuthorizationException.NotModerator();
         }
 
         return await context.Users
@@ -30,7 +31,7 @@ public class ModerationQuery
         
         if (moderator == null || !moderator.IsModerator)
         {
-            throw new UnauthorizedAccessException("Only moderators can view banned users.");
+            throw AuthorizationException.NotModerator();
         }
 
         return await context.Users
@@ -47,7 +48,7 @@ public class ModerationQuery
         
         if (moderator == null || !moderator.IsModerator)
         {
-            throw new UnauthorizedAccessException("Only moderators can view suspended users.");
+            throw AuthorizationException.NotModerator();
         }
 
         return await context.Users

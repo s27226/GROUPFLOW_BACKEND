@@ -18,7 +18,7 @@ public class UserMutation
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
         {
-            throw new UnauthorizedAccessException("User not authenticated");
+            throw new AuthenticationException();
         }
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);

@@ -64,7 +64,7 @@ public class SavedPostMutation
 
         var savedPost = await context.SavedPosts
             .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId, ct)
-            ?? throw new EntityNotFoundException("SavedPost");
+            ?? throw EntityNotFoundException.SavedPost();
 
         context.SavedPosts.Remove(savedPost);
         await context.SaveChangesAsync(ct);

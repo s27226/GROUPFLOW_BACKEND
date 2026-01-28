@@ -33,7 +33,7 @@ public class ProjectInvitationMutation
             .AnyAsync(up => up.ProjectId == input.ProjectId && up.UserId == input.InvitedId, ct);
 
         if (existingMembership)
-            throw new BusinessRuleException("User is already a member of this project.");
+            throw BusinessRuleException.UserAlreadyProjectMember();
 
         // Validate that inviting and invited users are friends
         var areFriends = await context.Friendships
@@ -42,14 +42,14 @@ public class ProjectInvitationMutation
                  (f.UserId == input.InvitedId && f.FriendId == input.InvitingId)), ct);
 
         if (!areFriends)
-            throw new BusinessRuleException("You can only invite friends to your projects.");
+            throw BusinessRuleException.CanOnlyInviteFriends();
 
         // Check if invitation already exists
         var existingInvite = await context.ProjectInvitations
             .AnyAsync(pi => pi.ProjectId == input.ProjectId && pi.InvitedId == input.InvitedId, ct);
 
         if (existingInvite)
-            throw new DuplicateEntityException("ProjectInvitation");
+            throw DuplicateEntityException.ProjectInvitation();
 
         var invite = new ProjectInvitation
         {
@@ -115,16 +115,16 @@ public class ProjectInvitationMutation
         var invitation = await context.ProjectInvitations
             .Include(pi => pi.Project).ThenInclude(p => p.Chat)
             .FirstOrDefaultAsync(pi => pi.Id == invitationId, ct)
-            ?? throw new EntityNotFoundException("ProjectInvitation", invitationId);
+            ?? throw EntityNotFoundException.ProjectInvitation(invitationId);
 
         if (invitation.InvitedId != userId)
-            throw new AuthorizationException("This invitation is not for you");
+            throw AuthorizationException.NotInvitationRecipient();
 
         if (invitation.Expiring < DateTime.UtcNow)
         {
             context.ProjectInvitations.Remove(invitation);
             await context.SaveChangesAsync(ct);
-            throw new BusinessRuleException("This invitation has expired");
+            throw BusinessRuleException.InvitationExpired();
         }
 
         var strategy = context.Database.CreateExecutionStrategy();
@@ -185,10 +185,10 @@ public class ProjectInvitationMutation
         var userId = httpContextAccessor.GetAuthenticatedUserId();
 
         var invitation = await context.ProjectInvitations.FindAsync(new object[] { invitationId }, ct)
-            ?? throw new EntityNotFoundException("ProjectInvitation", invitationId);
+            ?? throw EntityNotFoundException.ProjectInvitation(invitationId);
 
         if (invitation.InvitedId != userId)
-            throw new AuthorizationException("This invitation is not for you");
+            throw AuthorizationException.NotInvitationRecipient();
 
         context.ProjectInvitations.Remove(invitation);
         await context.SaveChangesAsync(ct);

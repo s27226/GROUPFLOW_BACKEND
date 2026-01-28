@@ -5,6 +5,7 @@ using HotChocolate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Common.GraphQL;
 using GROUPFLOW.Features.Auth.Entities;
 using GROUPFLOW.Features.Auth.GraphQL.Inputs;
@@ -23,7 +24,7 @@ public class AuthMutation
         
         if (await db.Users.AnyAsync(u => u.Email == input.Email))
         {
-            throw new GraphQLException(new Error("Email already exists", "EMAIL_EXISTS"));
+            throw DuplicateEntityException.Email();
         }
 
         var user = new User
@@ -57,7 +58,7 @@ public class AuthMutation
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == input.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
             {
-                throw new GraphQLException(new Error("Invalid email or password", "INVALID_LOGIN"));
+                throw AuthErrorException.InvalidLogin();
             }
 
             if (user.IsBanned)
@@ -73,7 +74,7 @@ public class AuthMutation
                         banMessage += $" Ban expires: {user.BanExpiresAt:yyyy-MM-dd HH:mm}";
                     }
                     
-                    throw new GraphQLException(new Error(banMessage, "ACCOUNT_BANNED"));
+                    throw AuthErrorException.AccountBanned(user.BanReason, user.BanExpiresAt);
                 }
                 else
                 {
@@ -87,9 +88,7 @@ public class AuthMutation
 
             if (user.SuspendedUntil != null && user.SuspendedUntil > DateTime.UtcNow)
             {
-                throw new GraphQLException(new Error(
-                    $"Your account is suspended until {user.SuspendedUntil:yyyy-MM-dd HH:mm}", 
-                    "ACCOUNT_SUSPENDED"));
+                throw AuthErrorException.AccountSuspended(user.SuspendedUntil.Value);
             }
             else if (user.SuspendedUntil != null)
             {
@@ -109,7 +108,7 @@ public class AuthMutation
         }
         catch (Exception)
         {
-            throw new GraphQLException(new Error("An error occurred during login", "LOGIN_ERROR"));
+            throw AuthErrorException.LoginError();
         }
     }
 
@@ -128,7 +127,7 @@ public class AuthMutation
         
         if (!context.Request.Cookies.TryGetValue("refresh_token", out var refreshToken))
         {
-            throw new GraphQLException(new Error("No refresh token provided", "NO_REFRESH_TOKEN"));
+            throw AuthErrorException.NoRefreshToken();
         }
 
         try
@@ -153,25 +152,25 @@ public class AuthMutation
             var tokenTypeClaim = principal.FindFirst("token_type");
             if (tokenTypeClaim?.Value != "refresh")
             {
-                throw new GraphQLException(new Error("Invalid token type", "INVALID_TOKEN_TYPE"));
+                throw AuthErrorException.InvalidTokenType();
             }
             
             var userIdClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub) 
                 ?? principal.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             {
-                throw new GraphQLException(new Error("Invalid token claims", "INVALID_TOKEN"));
+                throw AuthErrorException.InvalidToken();
             }
 
             var user = await db.Users.FindAsync(userId);
             if (user == null)
             {
-                throw new GraphQLException(new Error("User not found", "USER_NOT_FOUND"));
+                throw EntityNotFoundException.User(userId);
             }
 
             if (user.IsBanned)
             {
-                throw new GraphQLException(new Error("User is banned", "USER_BANNED"));
+                throw AuthErrorException.UserBanned();
             }
 
             var newAccessToken = GenerateAccessToken(user);
@@ -182,11 +181,11 @@ public class AuthMutation
         }
         catch (SecurityTokenExpiredException)
         {
-            throw new GraphQLException(new Error("Refresh token expired", "TOKEN_EXPIRED"));
+            throw AuthErrorException.TokenExpired();
         }
-        catch (Exception ex) when (ex is not GraphQLException)
+        catch (Exception ex) when (ex is not DomainException)
         {
-            throw new GraphQLException(new Error("Invalid refresh token", "INVALID_TOKEN"));
+            throw AuthErrorException.InvalidToken();
         }
     }
 
@@ -292,18 +291,18 @@ public class AuthMutation
         
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {
-            throw new GraphQLException(new Error("Not authenticated", "NOT_AUTHENTICATED"));
+            throw new AuthenticationException();
         }
 
         var user = await db.Users.FindAsync(userId);
         if (user == null)
         {
-            throw new GraphQLException(new Error("User not found", "USER_NOT_FOUND"));
+            throw EntityNotFoundException.User(userId);
         }
 
         if (!BCrypt.Net.BCrypt.Verify(input.CurrentPassword, user.Password))
         {
-            throw new GraphQLException(new Error("Current password is incorrect", "INVALID_PASSWORD"));
+            throw AuthErrorException.InvalidPassword();
         }
 
         user.Password = BCrypt.Net.BCrypt.HashPassword(input.NewPassword);

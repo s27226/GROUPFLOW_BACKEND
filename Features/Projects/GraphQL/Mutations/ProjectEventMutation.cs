@@ -75,11 +75,11 @@ public class ProjectEventMutation
         var projectEvent = await context.ProjectEvents
             .Include(pe => pe.Project)
             .FirstOrDefaultAsync(pe => pe.Id == id, ct)
-            ?? throw new EntityNotFoundException("ProjectEvent", id);
+            ?? throw EntityNotFoundException.ProjectEvent(id);
 
         // Check if user is the event creator or project owner
         if (projectEvent.CreatedById != userId && projectEvent.Project.OwnerId != userId)
-            throw new AuthorizationException("You don't have permission to delete this event");
+            throw AuthorizationException.CannotDeleteEvent();
 
         context.ProjectEvents.Remove(projectEvent);
         await context.SaveChangesAsync(ct);

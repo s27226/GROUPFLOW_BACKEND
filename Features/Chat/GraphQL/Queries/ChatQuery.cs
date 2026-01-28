@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Chat.Entities;
 
 namespace GROUPFLOW.Features.Chat.GraphQL.Queries;
@@ -49,7 +50,7 @@ public class ChatQuery
         
         if (!areFriends)
         {
-            throw new GraphQLException("Users are not friends");
+            throw BusinessRuleException.UsersNotFriends();
         }
         
         // Find existing direct chat between these two users

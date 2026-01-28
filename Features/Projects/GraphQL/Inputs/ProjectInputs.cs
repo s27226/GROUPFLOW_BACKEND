@@ -32,7 +32,6 @@ public record CreateProjectWithMembersInput(
 
     bool IsPublic,
 
-    [property: MinLength(1)]
     int[] MemberUserIds,
     string[]? Skills,
     string[]? Interests

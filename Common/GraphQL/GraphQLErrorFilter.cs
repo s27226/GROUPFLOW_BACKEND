@@ -29,23 +29,24 @@ public class GraphQLErrorFilter : IErrorFilter
 
         return exception switch
         {
-            AuthenticationException authEx => CreateError(error, authEx.Message, "AUTHENTICATION_ERROR", 401),
-            AuthorizationException authzEx => CreateError(error, authzEx.Message, "AUTHORIZATION_ERROR", 403),
-            EntityNotFoundException notFoundEx => CreateError(error, notFoundEx.Message, "NOT_FOUND", 404, 
+            AuthenticationException authEx => CreateError(error, authEx.ErrorCode, "AUTHENTICATION_ERROR", 401),
+            AuthorizationException authzEx => CreateError(error, authzEx.ErrorCode, "AUTHORIZATION_ERROR", 403),
+            AuthErrorException authErrEx => CreateError(error, authErrEx.ErrorCode, "AUTH_ERROR", 401),
+            EntityNotFoundException notFoundEx => CreateError(error, notFoundEx.ErrorCode, "NOT_FOUND", 404, 
                 new Dictionary<string, object?>
                 {
                     ["entityType"] = notFoundEx.EntityType,
                     ["entityId"] = notFoundEx.EntityId
                 }),
-            DuplicateEntityException dupEx => CreateError(error, dupEx.Message, "DUPLICATE_ENTITY", 409,
+            DuplicateEntityException dupEx => CreateError(error, dupEx.ErrorCode, "DUPLICATE_ENTITY", 409,
                 new Dictionary<string, object?>
                 {
                     ["entityType"] = dupEx.EntityType,
                     ["field"] = dupEx.Field
                 }),
             ValidationException valEx => CreateValidationError(error, valEx),
-            BusinessRuleException bizEx => CreateError(error, bizEx.Message, "BUSINESS_RULE_VIOLATION", 400),
-            OperationCanceledException => CreateError(error, "The operation was cancelled", "OPERATION_CANCELLED", 499),
+            BusinessRuleException bizEx => CreateError(error, bizEx.ErrorCode, "BUSINESS_RULE_VIOLATION", 400),
+            OperationCanceledException => CreateError(error, "errors.OPERATION_CANCELLED", "OPERATION_CANCELLED", 499),
             _ => HandleUnexpectedException(error, exception)
         };
     }
@@ -72,7 +73,7 @@ public class GraphQLErrorFilter : IErrorFilter
     private IError CreateValidationError(IError originalError, ValidationException valEx)
     {
         return ErrorBuilder.New()
-            .SetMessage(valEx.Message)
+            .SetMessage(valEx.ErrorCode)
             .SetCode("VALIDATION_ERROR")
             .SetExtension("statusCode", 400)
             .SetExtension("errors", valEx.Errors)
@@ -87,17 +88,18 @@ public class GraphQLErrorFilter : IErrorFilter
         if (_environment.IsDevelopment())
         {
             return ErrorBuilder.New()
-                .SetMessage(exception.Message)
+                .SetMessage("errors.INTERNAL_ERROR")
                 .SetCode("INTERNAL_ERROR")
                 .SetExtension("statusCode", 500)
                 .SetExtension("stackTrace", exception.StackTrace)
                 .SetExtension("exceptionType", exception.GetType().Name)
+                .SetExtension("devMessage", exception.Message)
                 .Build();
         }
         
         // In production, hide internal details
         return ErrorBuilder.New()
-            .SetMessage("An unexpected error occurred. Please try again later.")
+            .SetMessage("errors.INTERNAL_ERROR")
             .SetCode("INTERNAL_ERROR")
             .SetExtension("statusCode", 500)
             .Build();

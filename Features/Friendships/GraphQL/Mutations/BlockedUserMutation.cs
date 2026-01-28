@@ -39,14 +39,14 @@ public class BlockedUserMutation
                 f.IsAccepted, ct);
 
         if (areFriends)
-            throw new BusinessRuleException("You cannot block a friend. Please remove them as a friend first.");
+            throw BusinessRuleException.CannotBlockFriend();
 
         // Check if already blocked
         var existingBlock = await context.BlockedUsers
             .FirstOrDefaultAsync(bu => bu.UserId == userId && bu.BlockedUserId == userIdToBlock, ct);
 
         if (existingBlock != null)
-            throw new DuplicateEntityException("BlockedUser");
+            throw DuplicateEntityException.BlockedUser();
 
         var blockedUser = new BlockedUser
         {
@@ -72,7 +72,7 @@ public class BlockedUserMutation
 
         var blockedUser = await context.BlockedUsers
             .FirstOrDefaultAsync(bu => bu.UserId == userId && bu.BlockedUserId == userIdToUnblock, ct)
-            ?? throw new EntityNotFoundException("BlockedUser");
+            ?? throw EntityNotFoundException.BlockedUser();
 
         context.BlockedUsers.Remove(blockedUser);
         await context.SaveChangesAsync(ct);

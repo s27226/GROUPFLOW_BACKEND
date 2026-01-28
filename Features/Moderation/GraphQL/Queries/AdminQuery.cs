@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Users.Entities;
 using GROUPFLOW.Features.Moderation.Entities;
 using GROUPFLOW.Features.Posts.Entities;
@@ -21,7 +22,7 @@ public class AdminQuery
         var user = await context.Users.FindAsync(userId);
         if (user == null || !user.IsModerator)
         {
-            throw new GraphQLException("You are not authorized to view reported posts");
+            throw AuthorizationException.NotModerator();
         }
 
         // Return only unresolved reports

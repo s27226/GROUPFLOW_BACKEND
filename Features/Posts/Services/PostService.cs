@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Notifications.Entities;
 using GROUPFLOW.Features.Posts.Entities;
 
@@ -36,7 +37,7 @@ public class PostService : IPostService
 
                 if (project == null)
                 {
-                    throw new InvalidOperationException("Project not found");
+                    throw EntityNotFoundException.Project(projectId.Value);
                 }
 
                 var isOwner = project.OwnerId == userId;
@@ -44,7 +45,7 @@ public class PostService : IPostService
 
                 if (!isOwner && !isCollaborator)
                 {
-                    throw new UnauthorizedAccessException("You are not a member of this project");
+                    throw AuthorizationException.NotProjectMember();
                 }
             }
 
@@ -53,7 +54,7 @@ public class PostService : IPostService
                 var sharedPost = await _context.Posts.FindAsync(sharedPostId.Value);
                 if (sharedPost == null)
                 {
-                    throw new InvalidOperationException("Shared post not found");
+                    throw EntityNotFoundException.Post(sharedPostId.Value);
                 }
             }
 
@@ -96,7 +97,7 @@ public class PostService : IPostService
             
             if (post == null)
             {
-                throw new InvalidOperationException("Post not found");
+                throw EntityNotFoundException.Post(postId);
             }
 
             var existingLike = await _context.PostLikes
@@ -104,7 +105,7 @@ public class PostService : IPostService
 
             if (existingLike != null)
             {
-                throw new InvalidOperationException("Post is already liked");
+                throw DuplicateEntityException.PostLike();
             }
 
             var postLike = new PostLike
@@ -168,7 +169,7 @@ public class PostService : IPostService
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
             {
-                throw new InvalidOperationException("Post not found");
+                throw EntityNotFoundException.Post(postId);
             }
 
             if (parentCommentId.HasValue)
@@ -176,7 +177,7 @@ public class PostService : IPostService
                 var parentComment = await _context.PostComments.FindAsync(parentCommentId.Value);
                 if (parentComment == null)
                 {
-                    throw new InvalidOperationException("Parent comment not found");
+                    throw EntityNotFoundException.Comment(parentCommentId.Value);
                 }
             }
 
@@ -238,7 +239,7 @@ public class PostService : IPostService
 
             if (comment.UserId != userId)
             {
-                throw new UnauthorizedAccessException("You can only delete your own comments");
+                throw AuthorizationException.NotCommentOwner();
             }
 
             if (comment.Replies != null && comment.Replies.Any())
@@ -271,7 +272,7 @@ public class PostService : IPostService
             
             if (comment == null)
             {
-                throw new InvalidOperationException("Comment not found");
+                throw EntityNotFoundException.Comment(commentId);
             }
 
             var existingLike = await _context.PostCommentLikes
@@ -279,7 +280,7 @@ public class PostService : IPostService
 
             if (existingLike != null)
             {
-                throw new InvalidOperationException("Comment is already liked");
+                throw DuplicateEntityException.CommentLike();
             }
 
             var commentLike = new PostCommentLike
@@ -320,7 +321,7 @@ public class PostService : IPostService
         var post = await _context.Posts.FindAsync(postId);
         if (post == null)
         {
-            throw new InvalidOperationException("Post not found");
+            throw EntityNotFoundException.Post(postId);
         }
 
         var existingSave = await _context.SavedPosts
@@ -382,7 +383,7 @@ public class PostService : IPostService
 
             if (post.UserId != userId)
             {
-                throw new UnauthorizedAccessException("You can only delete your own posts");
+                throw AuthorizationException.NotPostOwner();
             }
 
             if (post.Likes != null && post.Likes.Any())

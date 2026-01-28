@@ -34,7 +34,7 @@ public class FriendshipMutation
         var result = await friendshipService.RemoveFriendshipAsync(userId, friendId);
 
         if (!result)
-            throw new EntityNotFoundException("Friendship");
+            throw EntityNotFoundException.Friendship();
 
         _logger.LogInformation("User {UserId} removed friend {FriendId}", userId, friendId);
         return true;

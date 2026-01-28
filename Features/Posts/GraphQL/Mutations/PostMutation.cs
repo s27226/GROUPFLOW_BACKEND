@@ -165,7 +165,7 @@ public class PostMutation
             .FirstOrDefaultAsync(pr => pr.PostId == input.PostId && pr.ReportedBy == userId && !pr.IsResolved, ct);
 
         if (existingReport != null)
-            throw new DuplicateEntityException("PostReport", "postId");
+            throw DuplicateEntityException.PostReport();
 
         var report = new PostReport
         {
@@ -199,7 +199,7 @@ public class PostMutation
             ?? throw EntityNotFoundException.User(userId);
 
         if (!user.IsModerator)
-            throw new AuthorizationException("You are not authorized to delete reported posts");
+            throw AuthorizationException.CannotDeleteReportedPost();
 
         var post = await context.Posts.FindAsync(new object[] { postId }, ct)
             ?? throw EntityNotFoundException.Post(postId);
@@ -238,10 +238,10 @@ public class PostMutation
             ?? throw EntityNotFoundException.User(userId);
 
         if (!user.IsModerator)
-            throw new AuthorizationException("You are not authorized to discard reports");
+            throw AuthorizationException.CannotDiscardReport();
 
         var report = await context.PostReports.FindAsync(new object[] { reportId }, ct)
-            ?? throw new EntityNotFoundException("PostReport", reportId);
+            ?? throw EntityNotFoundException.PostReport(reportId);
 
         report.IsResolved = true;
         await context.SaveChangesAsync(ct);

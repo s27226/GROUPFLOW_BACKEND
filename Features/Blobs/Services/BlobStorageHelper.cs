@@ -1,4 +1,5 @@
 using GROUPFLOW.Features.Blobs.Entities;
+using GROUPFLOW.Common.Exceptions;
 
 namespace GROUPFLOW.Features.Blobs.Services;
 
@@ -32,7 +33,7 @@ public static class BlobStorageHelper
             BlobType.ProjectBanner => $"project/{projectId}/banner/{uniqueFileName}",
             BlobType.ProjectFile => $"project/{projectId}/files/{uniqueFileName}",
             BlobType.PostImage => $"post/{postId}/{uniqueFileName}",
-            _ => throw new ArgumentException($"Unknown blob type: {type}")
+            _ => throw ValidationException.InvalidBlobType(type.ToString())
         };
     }
 

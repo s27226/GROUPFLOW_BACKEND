@@ -30,7 +30,7 @@ public class ModerationMutation
             ?? throw EntityNotFoundException.User(moderatorId);
 
         if (!moderator.IsModerator)
-            throw new AuthorizationException("Only moderators can perform this action");
+            throw AuthorizationException.NotModerator();
 
         return moderator;
     }

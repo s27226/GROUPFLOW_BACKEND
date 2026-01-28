@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Friendships.GraphQL.Responses;
 using GROUPFLOW.Features.Friendships.Entities;
 using GROUPFLOW.Features.Users.Entities;
@@ -113,9 +114,14 @@ public class FriendshipService : IFriendshipService
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var request = await _context.FriendRequests.FindAsync(friendRequestId);
-            if (request == null || request.RequesteeId != userId)
+            if (request == null)
             {
-                throw new InvalidOperationException("Friend request not found or not authorized");
+                throw EntityNotFoundException.FriendRequest(friendRequestId);
+            }
+            
+            if (request.RequesteeId != userId)
+            {
+                throw AuthorizationException.NotFriendRequestRecipient();
             }
 
             var friendship1 = new Friendship

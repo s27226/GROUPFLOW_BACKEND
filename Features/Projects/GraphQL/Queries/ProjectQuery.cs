@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using GROUPFLOW.Common.Database;
+using GROUPFLOW.Common.Exceptions;
 using GROUPFLOW.Features.Projects.Entities;
 using GROUPFLOW.Features.Projects.GraphQL.Inputs;
 using GROUPFLOW.Features.Posts.Entities;
@@ -80,7 +81,7 @@ public class ProjectQuery
         var userIdClaim = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userIdClaim == null)
         {
-            throw new GraphQLException("User not authenticated");
+            throw new AuthenticationException();
         }
         int userId = int.Parse(userIdClaim);
         
